@@ -1,0 +1,3 @@
+[["diesel::delete"]]
+marker = "db_user"
+on_argument = [0]

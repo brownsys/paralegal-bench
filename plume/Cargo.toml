@@ -1,0 +1,79 @@
+[package]
+authors = ["Plume contributors"]
+name = "plume"
+version = "0.7.3-dev"
+repository = "https://github.com/Plume-org/Plume"
+edition = "2018"
+
+[dependencies]
+atom_syndication = "0.12.0"
+clap = "2.33"
+dotenv = "0.15.0"
+gettext = "0.4.0"
+gettext-macros = "0.6.1"
+gettext-utils = "0.1.0"
+guid-create = "0.2"
+lettre_email = "0.9.2"
+num_cpus = "1.10"
+rocket = "0.4.11"
+rocket_contrib = { version = "0.4.11", features = ["json"] }
+rocket_i18n = "0.4.1"
+scheduled-thread-pool = "0.2.6"
+serde = "1.0.137"
+serde_json = "1.0.81"
+shrinkwraprs = "0.3.0"
+validator = { version = "0.15", features = ["derive"] }
+webfinger = "0.4.1"
+tracing = "0.1.35"
+tracing-subscriber = "0.3.10"
+riker = "0.4.2"
+activitystreams = "=0.7.0-alpha.20"
+
+[[bin]]
+name = "plume"
+path = "src/main.rs"
+
+[dependencies.chrono]
+features = ["serde"]
+version = "0.4"
+
+[dependencies.ctrlc]
+features = ["termination"]
+version = "3.2.2"
+
+[dependencies.diesel]
+features = ["r2d2", "chrono"]
+version = "1.4.5"
+
+[dependencies.multipart]
+default-features = false
+features = ["server"]
+version = "0.18"
+
+[dependencies.plume-api]
+path = "plume-api"
+
+[dependencies.plume-common]
+path = "plume-common"
+
+[dependencies.plume-models]
+path = "plume-models"
+
+[dependencies.rocket_csrf]
+git = "https://git.joinplu.me/plume/rocket_csrf"
+rev = "0.1.2"
+
+[build-dependencies]
+ructe = "0.15.0"
+rsass = "0.26"
+
+[features]
+default = ["postgres"]
+postgres = ["plume-models/postgres", "diesel/postgres"]
+sqlite = ["plume-models/sqlite", "diesel/sqlite"]
+debug-mailer = []
+test = []
+search-lindera = ["plume-models/search-lindera"]
+
+[workspace]
+members = ["plume-api", "plume-cli", "plume-models", "plume-common", "plume-macro"]

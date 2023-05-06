@@ -1,0 +1,173 @@
+label {
+  display: block;
+  margin: 2em auto .5em;
+  font-size: 1.2em;
+}
+input, textarea, select {
+  transition: all 0.1s ease-in;
+  display: block;
+  width: 100%;
+  margin: auto;
+  padding: 1em;
+  box-sizing: border-box;
+  -webkit-appearance: textarea;
+
+  background: $form-input-background;
+  color: $text-color;
+  border: solid $form-input-border thin;
+
+  font-size: 1.2em;
+  font-weight: 400;
+
+  &:focus {
+    border-color: $primary;
+  }
+}
+form input[type="submit"] {
+ margin: 2em auto;
+ -webkit-appearance: none;
+}
+
+textarea {
+  resize: vertical;
+  overflow-y: scroll;
+  font-family: $lora;
+  font-size: 1.1em;
+  line-height: 1.5;
+}
+
+input[type="checkbox"] {
+  display: inline;
+  margin: initial;
+  min-width: initial;
+  width: initial;
+  -webkit-appearance: checkbox;
+}
+
+/* Inline forms (containing only CSRF token and a <submit>, for protected links) */
+
+form.inline {
+  display: inline;
+  margin: 0px;
+  padding: 0px;
+  width: auto;
+
+  input[type="submit"] {
+    display: inline-block;
+    cursor: pointer;
+    font-size: 1em;
+    width: auto;
+    -webkit-appearance: none;
+
+    &:not(.button) {
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: $primary;
+      font-weight: normal;
+    }
+  }
+}
+
+.button, .button:visited, input[type="submit"], input[type="submit"].button {
+  transition: all 0.1s ease-in;
+  display: inline-block;
+  -webkit-appearance: none;
+
+  margin: 0.5em auto;
+  padding: 0.75em 1em;
+
+  background: $primary;
+  color: $primary-text-color;
+  font-weight: bold;
+  border: none;
+
+  cursor: pointer;
+
+  &:hover {
+    background: transparentize($primary, 0.1);
+  }
+
+  &.destructive {
+    background: $red;
+
+    &:hover {
+      background: transparentize($red, 0.1);
+    }
+  }
+
+  &.secondary {
+    background: $gray;
+    color: $text-color;
+
+    &:hover {
+      background: transparentize($text-color, 0.9);
+    }
+  }
+}
+input[type="submit"] {
+ display: block;
+ -webkit-appearance: none;
+}
+
+/*  The writing page */
+form.new-post {
+  max-width: 60em;
+  .title {
+    margin: 0 auto;
+    padding: 0.75em 0;
+
+    background: none;
+    border: none;
+
+    font-family: $playfair;
+    font-size: 2em;
+    text-align: left;
+  }
+  textarea {
+    min-height: 20em;
+    overflow-y: scroll;
+    resize: none;
+   -webkit-appearance: textarea;
+  }
+}
+
+.button + .button {
+  margin-left: 1em;
+  margin-inline-start: 1em;
+}
+
+.split {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  & > * {
+    flex-grow: 1;
+    max-width: 40%;
+  }
+}
+
+header.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  opacity: 1;
+  font-weight: normal;
+  text-align: left;
+
+  > * {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+form > header {
+  display: flex;
+
+  input[type="submit"] {
+    margin-left: 1em;
+  }
+}

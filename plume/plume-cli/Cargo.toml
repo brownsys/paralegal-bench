@@ -1,0 +1,26 @@
+[package]
+name = "plume-cli"
+version = "0.7.2"
+authors = ["Plume contributors"]
+edition = "2018"
+
+[[bin]]
+name = "plm"
+path = "src/main.rs"
+
+[dependencies]
+clap = "2.33"
+dotenv = "0.15"
+rpassword = "6.0.1"
+
+[dependencies.diesel]
+features = ["r2d2", "chrono"]
+version = "1.4.5"
+
+[dependencies.plume-models]
+path = "../plume-models"
+
+[features]
+postgres = ["plume-models/postgres", "diesel/postgres"]
+sqlite = ["plume-models/sqlite", "diesel/sqlite"]
+search-lindera = ["plume-models/search-lindera"]

@@ -1,0 +1,87 @@
+use crate::Perform;
+use actix_web::web::Data;
+use chrono::NaiveDateTime;
+use bcrypt::verify;
+use lemmy_api_common::{
+  person::{Login, LoginResponse},
+  utils::{blocking, check_registration_application},
+};
+use lemmy_db_schema::source::site::Site;
+use lemmy_db_schema::impls::person::is_banned;
+use lemmy_db_views::structs::LocalUserView;
+use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
+use lemmy_websocket::LemmyContext;
+
+#[dfpp::label(noinline)]
+fn apply_label(l2 : &LocalUserView) -> &LocalUserView {
+  return l2;
+}
+
+#[async_trait::async_trait(?Send)]
+impl Perform for Login {
+  type Response = LoginResponse;
+
+  #[dfpp::analyze]
+  #[tracing::instrument(skip(context, _websocket_id))]
+  async fn perform(
+    &self,
+    context: &Data<LemmyContext>,
+    _websocket_id: Option<ConnectionId>,
+  ) -> Result<LoginResponse, LemmyError> {
+    let data: &Login = self;
+
+    // Fetch that username / email
+    let username_or_email = data.username_or_email.clone();
+    // TODO: open a bug report for this.
+    // problem with async blocking function (we use a type walk, need to go handle impl Future structure to infer the type here)
+    let local_user_view_og = blocking(context.pool(), move |conn| {
+      LocalUserView::find_by_email_or_name(conn, &username_or_email)
+    })
+    .await?
+    .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_that_username_or_email"))?;
+
+    // FIXME: be able to get rid of this
+    // With just find_email_or_name, it applies label fine --> problem is the blocking / closure
+    let local_user_view = apply_label(&local_user_view_og);
+
+    // Verify the password
+    let valid: bool = verify(
+      &data.password,
+      &local_user_view.local_user.password_encrypted,
+    )
+    .unwrap_or(false);
+    if !valid {
+      return Err(LemmyError::from_message("password_incorrect"));
+    }
+
+    if is_banned(local_user_view.person.banned, local_user_view.person.ban_expires) {
+      return Err(LemmyError::from_message("site_ban"));
+    }
+  
+    // check for account deletion
+    if local_user_view.person.deleted {
+      return Err(LemmyError::from_message("deleted"));
+    }
+  
+    let site = blocking(context.pool(), Site::read_local_site).await??;
+    if site.require_email_verification && !local_user_view.local_user.email_verified {
+      return Err(LemmyError::from_message("email_not_verified"));
+    }
+
+    check_registration_application(&site, &local_user_view, context.pool()).await?;
+
+    // Return the jwt
+    Ok(LoginResponse {
+      jwt: Some(
+        Claims::jwt(
+          local_user_view.local_user.id.0,
+          &context.secret().jwt_secret,
+          &context.settings().hostname,
+        )?
+        .into(),
+      ),
+      verify_email_sent: false,
+      registration_created: false,
+    })
+  }
+}

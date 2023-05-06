@@ -1,0 +1,37 @@
+[package]
+name = "lemmy_api"
+version = "0.16.5"
+edition = "2021"
+description = "A link aggregator for the fediverse"
+license = "AGPL-3.0"
+homepage = "https://join-lemmy.org/"
+documentation = "https://join-lemmy.org/docs/en/index.html"
+rust-version = "1.57"
+
+[lib]
+name = "lemmy_api"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+lemmy_apub = { version = "=0.16.5", path = "../apub" }
+lemmy_utils = { version = "=0.16.5", path = "../utils" }
+lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = ["full"] }
+lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = ["full"] }
+lemmy_db_views_moderator = { version = "=0.16.5", path = "../db_views_moderator", features = ["full"] }
+lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = ["full"] }
+lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = ["full"] }
+lemmy_websocket = { version = "=0.16.5", path = "../websocket" }
+activitypub_federation = "0.2.0"
+diesel = "1.4.8"
+bcrypt = "0.12.1"
+chrono = { version = "0.4.19", features = ["serde"], default-features = false }
+serde_json = { version = "1.0.79", features = ["preserve_order"] }
+serde = { version = "1.0.136", features = ["derive"] }
+actix-web = { version = "4.0.1", default-features = false }
+base64 = "0.13.0"
+uuid = { version = "0.8.2", features = ["serde", "v4"] }
+async-trait = "0.1.53"
+captcha = "0.0.9"
+anyhow = "1.0.56"
+tracing = "0.1.32"
