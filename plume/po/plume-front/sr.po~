@@ -1,0 +1,59 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: plume\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-06-15 16:33-0700\n"
+"PO-Revision-Date: 2022-01-12 01:20\n"
+"Last-Translator: \n"
+"Language-Team: Serbian (Latin)\n"
+"Language: sr_CS\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Crowdin-Project: plume\n"
+"X-Crowdin-Project-ID: 352097\n"
+"X-Crowdin-Language: sr-CS\n"
+"X-Crowdin-File: /master/po/plume-front/plume-front.pot\n"
+"X-Crowdin-File-ID: 12\n"
+
+# plume-front/src/editor.rs:326
+#~ msgid "Open the rich text editor"
+#~ msgstr "Otvori uređivač sa stilizacijom"
+
+# plume-front/src/editor.rs:385
+#~ msgid "Title"
+#~ msgstr "Naslov"
+
+# plume-front/src/editor.rs:389
+#~ msgid "Subtitle, or summary"
+#~ msgstr "Podnaslov, ili sažetak"
+
+# plume-front/src/editor.rs:396
+#~ msgid "Write your article here. Markdown is supported."
+#~ msgstr "Napišite vaš članak ovde. Na raspolaganju vam je Markdown."
+
+# plume-front/src/editor.rs:407
+#~ msgid "Around {} characters left"
+#~ msgstr "Preostalo oko {} znakova"
+
+# plume-front/src/editor.rs:517
+#~ msgid "Tags"
+#~ msgstr "Markeri"
+
+# plume-front/src/editor.rs:518
+#~ msgid "License"
+#~ msgstr "Licenca"
+
+# plume-front/src/editor.rs:524
+#~ msgid "Cover"
+#~ msgstr "Naslovna strana"
+
+# plume-front/src/editor.rs:564
+#~ msgid "This is a draft"
+#~ msgstr "Ovo je nacrt"
+
+# plume-front/src/editor.rs:575
+#~ msgid "Publish"
+#~ msgstr "Objavi"
