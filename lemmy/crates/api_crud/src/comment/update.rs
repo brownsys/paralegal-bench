@@ -7,6 +7,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     check_post_deleted_or_removed,
     get_local_user_view_from_jwt,
+    apply_localuserview_label
   },
 };
 use lemmy_apub::protocol::activities::{
@@ -14,6 +15,7 @@ use lemmy_apub::protocol::activities::{
   CreateOrUpdateType,
 };
 use lemmy_db_schema::source::comment::Comment;
+use lemmy_db_schema::source::post::Post;
 use lemmy_db_views::structs::CommentView;
 use lemmy_utils::{
   error::LemmyError,
@@ -28,25 +30,35 @@ use lemmy_websocket::{
 
 use crate::PerformCrud;
 
+#[dfpp::label(noinline)]
+fn apply_comment_label(l2 : &CommentView) -> &CommentView {
+  return l2;
+}
+
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for EditComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
     websocket_id: Option<ConnectionId>,
   ) -> Result<CommentResponse, LemmyError> {
     let data: &EditComment = self;
-    let local_user_view =
+    let local_user_view_og =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
+    let local_user_view = apply_localuserview_label(&local_user_view_og);
+
     let comment_id = data.comment_id;
-    let orig_comment = blocking(context.pool(), move |conn| {
+    let orig_comment_og = blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, None)
     })
     .await??;
+
+    let orig_comment = apply_comment_label(&orig_comment_og);
 
     // TODO is this necessary? It should really only need to check on create
     check_community_ban(
@@ -89,7 +101,7 @@ impl PerformCrud for EditComment {
     // Send the apub update
     CreateOrUpdateComment::send(
       updated_comment.into(),
-      &local_user_view.person.into(),
+      &local_user_view_og.person.into(),
       CreateOrUpdateType::Update,
       context,
       &mut 0,

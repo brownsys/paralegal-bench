@@ -1,3 +1,6 @@
+#![feature(register_tool)]
+#![register_tool(dfpp)]
+
 use crate::fetcher::post_or_comment::PostOrComment;
 use activitypub_federation::{
   core::signatures::PublicKey,

@@ -9,6 +9,7 @@ use lemmy_api_common::{
     check_post_deleted_or_removed,
     get_local_user_view_from_jwt,
     get_post,
+    apply_localuserview_label
   },
 };
 use lemmy_apub::{
@@ -20,6 +21,7 @@ use lemmy_apub::{
 use lemmy_db_schema::{
   source::{
     comment::{Comment, CommentForm, CommentLike, CommentLikeForm},
+    post::{Post},
     person_mention::PersonMention,
   },
   traits::{Crud, Likeable},
@@ -36,31 +38,40 @@ use lemmy_websocket::{
   UserOperationCrud,
 };
 
+#[dfpp::label(noinline)]
+fn apply_post_label(l2 : &Post) -> &Post {
+  return l2;
+}
+
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for CreateComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
     websocket_id: Option<ConnectionId>,
   ) -> Result<CommentResponse, LemmyError> {
     let data: &CreateComment = self;
-    let local_user_view =
+    let local_user_view_og =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
+
+    let local_user_view = apply_localuserview_label(&local_user_view_og);
 
     let content_slurs_removed =
       remove_slurs(&data.content.to_owned(), &context.settings().slur_regex());
 
     // Check for a community ban
     let post_id = data.post_id;
-    let post = get_post(post_id, context.pool()).await?;
+    let post_og = get_post(post_id, context.pool()).await?;
+    let post = apply_post_label(&post_og);
     let community_id = post.community_id;
 
     check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
     check_community_deleted_or_removed(community_id, context.pool()).await?;
-    check_post_deleted_or_removed(&post)?;
+    check_post_deleted_or_removed(post)?;
 
     // Check if post is locked, no new comments
     if post.locked {

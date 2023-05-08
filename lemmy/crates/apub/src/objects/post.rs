@@ -37,6 +37,7 @@ use std::ops::Deref;
 use url::Url;
 
 #[derive(Clone, Debug)]
+
 pub struct ApubPost(Post);
 
 impl Deref for ApubPost {

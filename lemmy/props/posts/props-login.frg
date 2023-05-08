@@ -1,6 +1,6 @@
 #lang forge
 
-open "analysis_result.frg"
+open "login.frg"
 open "basic_helpers.frg"
 
 // no successful login for a user that is banned

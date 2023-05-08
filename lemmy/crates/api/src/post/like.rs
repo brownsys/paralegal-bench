@@ -9,6 +9,7 @@ use lemmy_api_common::{
     check_downvotes_enabled,
     get_local_user_view_from_jwt,
     mark_post_as_read,
+    apply_localuserview_label,
   },
 };
 use lemmy_apub::{
@@ -25,19 +26,26 @@ use lemmy_db_schema::{
 };
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperation};
+use lemmy_db_views::structs::LocalUserView;
+
+#[dfpp::label(noinline)]
+fn apply_post_label(l2 : &ApubPost) -> &ApubPost {
+  return l2;
+}
 
 #[async_trait::async_trait(?Send)]
 impl Perform for CreatePostLike {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  //#[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
     let data: &CreatePostLike = self;
-    let local_user_view =
+    let local_user_view_og =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     // Don't do a downvote if site has downvotes disabled
@@ -45,9 +53,12 @@ impl Perform for CreatePostLike {
 
     // Check for a community ban
     let post_id = data.post_id;
-    let post: ApubPost = blocking(context.pool(), move |conn| Post::read(conn, post_id))
+    let post_og: ApubPost = blocking(context.pool(), move |conn| Post::read(conn, post_id))
       .await??
       .into();
+
+    let local_user_view = apply_localuserview_label(&local_user_view_og);
+    let post = apply_post_label(&post_og);
 
     check_community_ban(local_user_view.person.id, post.community_id, context.pool()).await?;
     check_community_deleted_or_removed(post.community_id, context.pool()).await?;
@@ -66,7 +77,7 @@ impl Perform for CreatePostLike {
     .await??;
 
     let community_id = post.community_id;
-    let object = PostOrComment::Post(Box::new(post));
+    let object = PostOrComment::Post(Box::new(post_og));
 
     // Only add the like if the score isnt 0
     let do_add = like_form.score != 0 && (like_form.score == 1 || like_form.score == -1);

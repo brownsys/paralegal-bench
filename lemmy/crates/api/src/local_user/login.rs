@@ -4,24 +4,20 @@ use chrono::NaiveDateTime;
 use bcrypt::verify;
 use lemmy_api_common::{
   person::{Login, LoginResponse},
-  utils::{blocking, check_registration_application},
+  utils::{blocking, check_registration_application, apply_localuserview_label},
 };
 use lemmy_db_schema::source::site::Site;
 use lemmy_db_schema::impls::person::is_banned;
+use lemmy_db_schema::impls::person::is_deleted;
 use lemmy_db_views::structs::LocalUserView;
 use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
-
-#[dfpp::label(noinline)]
-fn apply_label(l2 : &LocalUserView) -> &LocalUserView {
-  return l2;
-}
 
 #[async_trait::async_trait(?Send)]
 impl Perform for Login {
   type Response = LoginResponse;
 
-  #[dfpp::analyze]
+  //#[dfpp::analyze]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -42,7 +38,7 @@ impl Perform for Login {
 
     // FIXME: be able to get rid of this
     // With just find_email_or_name, it applies label fine --> problem is the blocking / closure
-    let local_user_view = apply_label(&local_user_view_og);
+    let local_user_view = apply_localuserview_label(&local_user_view_og);
 
     // Verify the password
     let valid: bool = verify(
@@ -58,8 +54,7 @@ impl Perform for Login {
       return Err(LemmyError::from_message("site_ban"));
     }
   
-    // check for account deletion
-    if local_user_view.person.deleted {
+    if is_deleted(local_user_view.person.deleted) {
       return Err(LemmyError::from_message("deleted"));
     }
   

@@ -22,7 +22,7 @@ pub(crate) trait GetCommunity {
     &self,
     context: &LemmyContext,
     request_counter: &mut i32,
-  ) -> Result<ApubCommunity, LemmyError>;
+  ) -> Result<ApubCommunity, LemmyError> {Err(LemmyError::from_message("whyyyyyy"))}
 }
 
 impl AnnounceActivity {

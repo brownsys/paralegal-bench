@@ -1,6 +1,63 @@
-[["lemmy_db_schema::impls::person::is_banned"]]
-marker = "banned_arg"
-on_argument = [0]
-
+# STRUCTS
 [["lemmy_db_views::structs::LocalUserView"]]
 marker = "local_user_view"
+
+[["lemmy_db_schema::source::post::Post"]]
+marker = "post"
+
+[["lemmy_db_schema::source::community::Community"]]
+marker = "community"
+
+[["lemmy_db_views::structs::CommentView"]]
+marker = "comment"
+
+[["lemmy_api_common::post::CreatePost"]]
+marker = "post"
+
+[["lemmy_apub::objects::post::ApubPost"]]
+marker = "post"
+
+[["lemmy_api_common::community::FollowCommunity"]]
+marker = "community"
+
+
+
+#[["lemmy_db_schema::source::comment::Comment"]]
+#marker = "comment"
+
+#[["lemmy_apub::objects::community::ApubCommunity"]]
+#marker = "community"
+
+#[["lemmy_db_schema::source::community::CommunityFollowerForm"]]
+#marker = "community"
+
+#[["lemmy_apub::objects::comment::ApubComment"]]
+#marker = "comment"
+
+
+# FUNCTIONS
+[["lemmy_api_common::utils::check_community_deleted_or_removed"]]
+marker = "delete_check"
+on_argument = [0]
+
+# just for apub
+[["lemmy_apub::activities::check_community_deleted_or_removed"]]
+marker = "delete_check"
+on_argument = [0]
+
+[["lemmy_api_common::utils::check_post_deleted_or_removed"]]
+marker = "delete_check"
+on_argument = [0]
+
+[["lemmy_api_common::utils::check_community_ban"]]
+marker = "ban_check"
+on_argument = [0]
+
+# just for login
+[["lemmy_db_schema::impls::person::is_banned"]]
+marker = "ban_check"
+on_argument = [0]
+
+[["lemmy_db_schema::impls::person::is_deleted"]]
+marker = "delete_check"
+on_argument = [0]
