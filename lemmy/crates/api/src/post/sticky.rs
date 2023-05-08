@@ -35,7 +35,7 @@ impl Perform for StickyPost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

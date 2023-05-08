@@ -1,7 +1,12 @@
 #lang forge
 
-open "api/createpostlike.frg"
-open "basic_helpers.frg"
+// open "createpostlike.frg"
+// open "followcommunity.frg"
+// open "lockpost.frg"
+// open "login.frg"
+open "stickypost.frg"
+
+open "../basic_helpers.frg"
 
 // obj flows to an argument labeled ls, and there's a control flow edge between the argument and return
 pred flows_to_label[c: Ctrl, flow: set Ctrl->Src->CallArgument, labels: set Object->Label, obj: Object, ls: Label] {
@@ -30,12 +35,10 @@ pred properCheck[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
 
 test expect {
 
-    vacuityUser : {
-        some c : Ctrl | some user : labeled_objects_with_types[c, Type, local_user_view, labels]| (flows_to[c, user, Return, flow])
-    } for Flows is sat
-
-    vacuityPost: {
-        some c : Ctrl | some post : labeled_objects_with_types[c, Type, post, labels]| (flows_to[c, post, Return, flow])
+    vacuity : {
+        (some c : Ctrl | some user : labeled_objects_with_types[c, Type, local_user_view, labels]| (flows_to[c, user, Return, flow])) or
+        (some c : Ctrl | some comm : labeled_objects_with_types[c, Type, community, labels] | (flows_to[c, comm, Return, flow])) or 
+        (some c : Ctrl | some p : labeled_objects_with_types[c, Type, post, labels]| (flows_to[c, p, Return, flow]))
     } for Flows is sat
 
     login: {
