@@ -36,7 +36,7 @@ sanitize-filename = "0.4"
 serde_json = "1"
 simple-server-timing-header = "0.1.0"
 static-files = "0.2"
-tantivy = "0.19"
+tantivy = { path = "../../tantivy" }
 tracing = "0.1"
 tracing-actix-web = "0.6"
 tracing-chrome = "0.6"
@@ -113,3 +113,6 @@ telemetry = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger"]
 [lib]
 name = "atomic_server_lib"
 path = "src/lib.rs"
+
+# [replace]
+# "tantivy:0.19.2" = { path = "../../tantivy" }
