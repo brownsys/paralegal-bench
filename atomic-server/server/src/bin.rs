@@ -1,3 +1,4 @@
+#![feature(let_else)]
 use atomic_lib::{agents::ForAgent, urls, Storelike};
 use atomic_server_lib::config::Opts;
 use std::{fs::File, io::Write};

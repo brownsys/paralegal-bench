@@ -4,3 +4,5 @@ trace-*.json
 **/.temp
 .DS_Store
 .cargo
+
+analysis_result.*
