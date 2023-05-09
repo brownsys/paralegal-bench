@@ -141,6 +141,7 @@ pub(crate) fn verify_is_public(to: &[Url], cc: &[Url]) -> Result<(), LemmyError>
   Ok(())
 }
 
+#[dfpp::label(delete_check, arguments = [0])]
 pub(crate) fn check_community_deleted_or_removed(community: &Community) -> Result<(), LemmyError> {
   if community.deleted || community.removed {
     Err(LemmyError::from_message(
