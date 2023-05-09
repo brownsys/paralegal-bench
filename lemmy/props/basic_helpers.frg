@@ -1,10 +1,15 @@
 #lang forge
 
-// open "api/createpostlike.frg"
 // open "api/followcommunity.frg"
-// open "api/lockpost.frg"
 // open "api/login.frg"
+// open "api/createpostlike.frg"
+// open "api/lockpost.frg"
 open "api/stickypost.frg"
+// open "api_crud/createcomment.frg"
+// open "api_crud/editcomment.frg"
+// open "api_crud/createpost.frg"
+// open "api_crud/deletepost.frg"
+// open "api_crud/editpost.frg"
 
 sig ErroneousFlow {
     minimal_subflow: set CallSite->CallArgument

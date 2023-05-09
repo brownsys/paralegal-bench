@@ -53,14 +53,14 @@ impl PerformCrud for CreatePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[dfpp::analyze]
+  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
     let data: &CreatePost = apply_post_label(&self);
-    let local_user_view =
+    let local_user_view_og =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let slur_regex = &context.settings().slur_regex();
@@ -72,7 +72,7 @@ impl PerformCrud for CreatePost {
       return Err(LemmyError::from_message("invalid_post_title"));
     }
 
-    //let local_user_view = apply_localuserview_label(&local_user_view_og);
+    let local_user_view = apply_localuserview_label(&local_user_view_og);
     
     check_community_ban(local_user_view.person.id, data.community_id, context.pool()).await?;
     check_community_deleted_or_removed(data.community_id, context.pool()).await?;

@@ -48,7 +48,7 @@ impl PerformCrud for CreateComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[dfpp::analyze]
+  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

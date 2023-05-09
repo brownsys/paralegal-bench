@@ -40,7 +40,7 @@ impl PerformCrud for EditComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[dfpp::analyze]
+  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -60,7 +60,6 @@ impl PerformCrud for EditComment {
 
     let orig_comment = apply_comment_label(&orig_comment_og);
 
-    // TODO is this necessary? It should really only need to check on create
     check_community_ban(
       local_user_view.person.id,
       orig_comment.community.id,

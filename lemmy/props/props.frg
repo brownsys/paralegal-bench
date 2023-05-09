@@ -1,12 +1,17 @@
 #lang forge
 
-// open "createpostlike.frg"
-// open "followcommunity.frg"
-// open "lockpost.frg"
-// open "login.frg"
-open "stickypost.frg"
+// open "api/followcommunity.frg"
+// open "api/login.frg"
+// open "api/createpostlike.frg"
+// open "api/lockpost.frg"
+open "api/stickypost.frg"
+// open "api_crud/createcomment.frg"
+// open "api_crud/editcomment.frg"
+// open "api_crud/createpost.frg"
+// open "api_crud/deletepost.frg"
+// open "api_crud/editpost.frg"
 
-open "../basic_helpers.frg"
+open "basic_helpers.frg"
 
 // obj flows to an argument labeled ls, and there's a control flow edge between the argument and return
 pred flows_to_label[c: Ctrl, flow: set Ctrl->Src->CallArgument, labels: set Object->Label, obj: Object, ls: Label] {

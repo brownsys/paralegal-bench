@@ -17,7 +17,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for Login {
   type Response = LoginResponse;
 
-  //#[dfpp::analyze]
+  // #[dfpp::analyze]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -50,9 +50,9 @@ impl Perform for Login {
       return Err(LemmyError::from_message("password_incorrect"));
     }
 
-    // if is_banned(local_user_view.person.banned, local_user_view.person.ban_expires) {
-    //   return Err(LemmyError::from_message("site_ban"));
-    // }
+    if is_banned(local_user_view.person.banned, local_user_view.person.ban_expires) {
+      return Err(LemmyError::from_message("site_ban"));
+    }
   
     if is_deleted(local_user_view.person.deleted) {
       return Err(LemmyError::from_message("deleted"));
