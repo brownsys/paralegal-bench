@@ -1,0 +1,115 @@
+[package]
+authors = ["Joep Meindertsma <joep@ontola.io>"]
+default-run = "atomic-server"
+description = "Create, share and model Atomic Data with this graph database server. Run atomic-server without any arguments to start the server. Use --help to learn about the options."
+edition = "2021"
+license = "MIT"
+name = "atomic-server"
+repository = "https://github.com/atomicdata-dev/atomic-server"
+version = "0.34.2"
+[[bin]]
+name = "atomic-server"
+path = "src/bin.rs"
+
+[build-dependencies]
+static-files = "0.2"
+
+[dependencies]
+actix = ">= 0.12, < 0.14"
+actix-cors = "0.6"
+actix-files = "0.6"
+actix-multipart = "0.4"
+actix-web-actors = "4"
+base64 = "0.13"
+chrono = "0.4"
+colored = "2"
+dialoguer = "0.10"
+directories = ">= 2, < 5"
+dotenv = "0.15"
+futures = "0.3"
+percent-encoding = "2.2.0"
+regex = "1"
+rio_api = "0.7"
+rio_turtle = "0.7"
+rustls-pemfile = "1"
+sanitize-filename = "0.4"
+serde_json = "1"
+simple-server-timing-header = "0.1.0"
+static-files = "0.2"
+tantivy = "0.19"
+tracing = "0.1"
+tracing-actix-web = "0.6"
+tracing-chrome = "0.6"
+tracing-log = "0.1"
+ureq = "2"
+urlencoding = "2"
+
+[dependencies.instant-acme]
+optional = true
+version = "0.1"
+
+[dependencies.rcgen]
+optional = true
+version = "0.10"
+
+[dependencies.tracing-opentelemetry]
+optional = true
+version = "0.18.0"
+
+[dependencies.opentelemetry]
+optional = true
+version = "0.18.0"
+
+[dependencies.opentelemetry-jaeger]
+optional = true
+version = "0.17.0"
+
+[dependencies.sysinfo]
+optional = true
+version = "0.26"
+
+[dependencies.actix-web]
+features = ["rustls"]
+version = "4"
+
+[dependencies.actix-web-static-files]
+version = ">= 4.0.1"
+
+[dependencies.atomic_lib]
+features = ["config", "db", "rdf", "html"]
+path = "../lib"
+version = "0.34.2"
+
+[dependencies.clap]
+features = ["derive", "env", "cargo"]
+version = "4"
+
+[dependencies.rustls]
+optional = true
+version = "0.20"
+
+[dependencies.serde]
+features = ["derive"]
+version = "1"
+
+[dependencies.tokio]
+features = ["time"]
+version = "1"
+
+[dependencies.tracing-subscriber]
+features = ["env-filter"]
+version = "0.3"
+
+[dev-dependencies]
+actix-rt = "2"
+assert_cmd = "2"
+
+[features]
+default = ["https", "telemetry"]
+https = ["rustls", "instant-acme", "rcgen"]
+process-management = ["sysinfo"]
+telemetry = ["tracing-opentelemetry", "opentelemetry", "opentelemetry-jaeger"]
+
+[lib]
+name = "atomic_server_lib"
+path = "src/lib.rs"
