@@ -274,10 +274,6 @@ impl Person {
   }
 }
 
-pub fn is_deleted(deleted_: bool) -> bool {
-  deleted_
-}
-
 pub fn is_banned(banned_: bool, expires: Option<chrono::NaiveDateTime>) -> bool {
   if let Some(expires) = expires {
     banned_ && expires.gt(&naive_now())

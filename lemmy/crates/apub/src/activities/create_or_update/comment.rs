@@ -120,16 +120,16 @@ impl ActivityHandler for CreateOrUpdateComment {
   }
 
   #[tracing::instrument(skip_all)]
-  #[dfpp::analyze]
+  // #[dfpp::analyze]
   async fn verify(
     &self,
     context: &Data<LemmyContext>,
     request_counter: &mut i32,
   ) -> Result<(), LemmyError> {
     verify_is_public(&self.to, &self.cc)?;
-    let post_og = self.object.get_parents(context, request_counter).await?.0; // type ApubPost
+    let post_og = self.object.get_parents(context, request_counter).await?.0;
     let post = apply_post_label(&post_og);
-    let community_og = self.get_community(context, request_counter).await?; // type ApubCommunity
+    let community_og = self.get_community(context, request_counter).await?;
     let community = apply_community_label(&community_og);
 
     verify_person_in_community(&self.actor, &community_og, context, request_counter).await?;

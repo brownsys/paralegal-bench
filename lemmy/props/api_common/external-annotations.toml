@@ -1,0 +1,15 @@
+# STRUCTS
+[["lemmy_db_views::structs::LocalUserView"]]
+marker = "local_user_view"
+
+[["lemmy_db_views::structs::LocalUserSettingsView"]]
+marker = "local_user_view"
+
+# FUNCTIONS
+[["lemmy_api_common::utils::check_user_valid"]]
+marker = "ban_check"
+on_argument = [0]
+
+[["lemmy_api_common::utils::check_user_valid"]]
+marker = "delete_check"
+on_argument = [2]

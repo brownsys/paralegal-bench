@@ -4,11 +4,9 @@ use chrono::NaiveDateTime;
 use bcrypt::verify;
 use lemmy_api_common::{
   person::{Login, LoginResponse},
-  utils::{blocking, check_registration_application, apply_localuserview_label},
+  utils::{blocking, check_registration_application, apply_localuserview_label, check_user_valid},
 };
 use lemmy_db_schema::source::site::Site;
-use lemmy_db_schema::impls::person::is_banned;
-use lemmy_db_schema::impls::person::is_deleted;
 use lemmy_db_views::structs::LocalUserView;
 use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
@@ -50,13 +48,11 @@ impl Perform for Login {
       return Err(LemmyError::from_message("password_incorrect"));
     }
 
-    if is_banned(local_user_view.person.banned, local_user_view.person.ban_expires) {
-      return Err(LemmyError::from_message("site_ban"));
-    }
-  
-    if is_deleted(local_user_view.person.deleted) {
-      return Err(LemmyError::from_message("deleted"));
-    }
+    check_user_valid(
+      local_user_view.person.banned,
+      local_user_view.person.ban_expires,
+      local_user_view.person.deleted,
+    )?;
   
     let site = blocking(context.pool(), Site::read_local_site).await??;
     if site.require_email_verification && !local_user_view.local_user.email_verified {

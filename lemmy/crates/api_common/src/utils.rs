@@ -130,6 +130,7 @@ fn apply_label(l2 : &LocalUserView) -> &LocalUserView {
 }
 
 #[tracing::instrument(skip_all)]
+#[dfpp::analyze]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,
   pool: &DbPool,
@@ -184,6 +185,7 @@ fn apply_label_settings(l2 : &LocalUserSettingsView) -> &LocalUserSettingsView {
 }
 
 #[tracing::instrument(skip_all)]
+#[dfpp::analyze]
 pub async fn get_local_user_settings_view_from_jwt_opt(
   jwt: Option<&Sensitive<String>>,
   pool: &DbPool,

@@ -41,9 +41,9 @@ marker = "delete_check"
 on_argument = [0]
 
 # just for apub
-#[["lemmy_apub::activities::check_community_deleted_or_removed"]]
-#marker = "delete_check"
-#on_argument = [0]
+[["lemmy_apub::activities::check_community_deleted_or_removed"]]
+marker = "delete_check"
+on_argument = [0]
 
 #[["lemmy_api_common::utils::check_post_deleted_or_removed"]]
 #marker = "delete_check"
@@ -53,11 +53,10 @@ on_argument = [0]
 marker = "ban_check"
 on_argument = [0]
 
-# just for login
-[["lemmy_db_schema::impls::person::is_banned"]]
+[["lemmy_api_common::utils::check_user_valid"]]
 marker = "ban_check"
 on_argument = [0]
 
-[["lemmy_db_schema::impls::person::is_deleted"]]
+[["lemmy_api_common::utils::check_user_valid"]]
 marker = "delete_check"
-on_argument = [0]
+on_argument = [2]
