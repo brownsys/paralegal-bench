@@ -57,6 +57,8 @@ let fetched_new_resource = store.get_resource(&subject).unwrap();
 assert!(fetched_new_resource.get_shortname("description", &store).unwrap().to_string() == "the age of a person");
 ```
 */
+#![feature(register_tool)]
+#![register_tool(dfpp)]
 
 pub mod agents;
 pub mod atoms;

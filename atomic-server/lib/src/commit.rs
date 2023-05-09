@@ -89,6 +89,7 @@ impl Commit {
     /// Allows for control over which validations should be performed.
     /// Returns the generated Commit, the old Resource and the new Resource.
     #[tracing::instrument(skip(store))]
+    #[dfpp::analyze]
     pub fn apply_opts(
         &self,
         store: &impl Storelike,
@@ -101,6 +102,7 @@ impl Commit {
             return Err("Subject URL cannot have query parameters".into());
         }
 
+        /*
         if opts.validate_signature {
             let signature = match self.signature.as_ref() {
                 Some(sig) => sig,
@@ -128,6 +130,7 @@ impl Commit {
         if opts.validate_timestamp {
             check_timestamp(self.created_at)?;
         }
+        */
         let commit_resource: Resource = self.into_resource(store)?;
         let mut is_new = false;
         // Create a new resource if it doens't exist yet
