@@ -1,0 +1,60 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "run atomic-server (cargo run)",
+			"type": "shell",
+			"command": "~/.cargo/bin/cargo",
+			"args": [
+				"run",
+				"--bin",
+				"atomic-server"
+			],
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "test atomic-server (cargo nextest run)",
+			"type": "shell",
+			"command": "~/.cargo/bin/cargo",
+			"args": [
+				"nextest",
+				"run"
+			],
+			"group": "test"
+		},
+		{
+			"label": "test end-to-end / E2E (npm playwright)",
+			"type": "shell",
+			"command": "cd server/e2e_tests/ && npm i && npm run test",
+			"group": "test"
+		},
+		{
+			"label": "build desktop atomic-server tauri",
+			"type": "shell",
+			"command": "cd desktop && cargo tauri build",
+			"group": "build"
+		},
+		{
+			"label": "dev desktop atomic-server tauri",
+			"type": "shell",
+			"command": "cd desktop && cargo tauri dev",
+			"group": "build"
+		},
+		{
+			"label": "benchmark criterion atomic-server",
+			"type": "shell",
+			"command": "cd server && cargo criterion",
+			"group": "test"
+		},
+		{
+			"label": "run jaeger for tracing (using docker)",
+			"type": "shell",
+			"command": "docker run -d -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 9411:9411 jaegertracing/all-in-one",
+			"group": "none",
+			"problemMatcher": []
+		}
+	]
+}

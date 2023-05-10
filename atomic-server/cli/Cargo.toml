@@ -1,0 +1,29 @@
+[package]
+authors = ["Joep Meindertsma <joep@argu.co>"]
+description = "CLI tool to create, store, query, validate and convert Atomic Data"
+edition = "2021"
+license = "MIT"
+name = "atomic-cli"
+readme = "README.md"
+repository = "https://github.com/atomicdata-dev/atomic-server"
+version = "0.34.4"
+
+[dependencies]
+atomic_lib = {version = "0.34.3", path = "../lib", features = ["config", "rdf"]}
+colored = "2"
+dirs = "4"
+edit = {version = "0.1", optional = true}
+promptly = "0.3"
+regex = "1"
+# pinned this
+clap = {version = "=4.0.1", features = ["cargo"]}
+# added this
+clap_lex = "=0.3.0"
+
+[dev-dependencies]
+assert_cmd = "2"
+
+[features]
+default = ["native"]
+# Non-wasi interface. These features cannot be compiled to WASI.
+native = ["edit"]
