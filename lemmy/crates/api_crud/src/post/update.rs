@@ -7,7 +7,7 @@ use lemmy_api_common::{
     check_community_ban,
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
-    apply_localuserview_label
+    apply_post_label
   },
 };
 use lemmy_apub::protocol::activities::{
@@ -28,11 +28,6 @@ use lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperationCru
 
 use crate::PerformCrud;
 
-#[dfpp::label(noinline)]
-fn apply_post_label(l2 : &Post) -> &Post {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for EditPost {
   type Response = PostResponse;
@@ -45,10 +40,8 @@ impl PerformCrud for EditPost {
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
     let data: &EditPost = self;
-    let local_user_view_og =
+    let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
-    
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
 
     let slur_regex = &context.settings().slur_regex();
     check_slurs_opt(&data.name, slur_regex)?;
@@ -61,8 +54,7 @@ impl PerformCrud for EditPost {
     }
 
     let post_id = data.post_id;
-    let orig_post_og = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
-    let orig_post = apply_post_label(&orig_post_og);
+    let orig_post = apply_post_label(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
 
     check_community_ban(
       local_user_view.person.id,
@@ -88,7 +80,7 @@ impl PerformCrud for EditPost {
     let post_form = PostForm {
       creator_id: orig_post.creator_id.to_owned(),
       community_id: orig_post.community_id,
-      name: data.name.to_owned().unwrap_or(orig_post_og.name),
+      name: data.name.to_owned().unwrap_or(orig_post.name),
       url: data_url.map(|u| clean_url_params(u.to_owned()).into()),
       body: clean_optional_text(&data.body),
       nsfw: data.nsfw,

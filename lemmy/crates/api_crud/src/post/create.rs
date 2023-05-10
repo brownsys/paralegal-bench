@@ -10,7 +10,7 @@ use lemmy_api_common::{
     get_local_user_view_from_jwt,
     honeypot_check,
     mark_post_as_read,
-    apply_localuserview_label
+    apply_post_label
   },
 };
 use lemmy_apub::{
@@ -43,11 +43,6 @@ use tracing::{warn, Instrument};
 use url::Url;
 use webmention::{Webmention, WebmentionError};
 
-#[dfpp::label(noinline)]
-fn apply_post_label(l2 : &CreatePost) -> &CreatePost {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for CreatePost {
   type Response = PostResponse;
@@ -60,7 +55,7 @@ impl PerformCrud for CreatePost {
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
     let data: &CreatePost = apply_post_label(&self);
-    let local_user_view_og =
+    let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let slur_regex = &context.settings().slur_regex();
@@ -71,8 +66,6 @@ impl PerformCrud for CreatePost {
     if !is_valid_post_title(&data.name) {
       return Err(LemmyError::from_message("invalid_post_title"));
     }
-
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
     
     check_community_ban(local_user_view.person.id, data.community_id, context.pool()).await?;
     check_community_deleted_or_removed(data.community_id, context.pool()).await?;

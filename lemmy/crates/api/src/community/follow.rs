@@ -7,7 +7,7 @@ use lemmy_api_common::{
     check_community_ban,
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
-    apply_localuserview_label
+    apply_community_label
   },
 };
 use lemmy_apub::{
@@ -25,11 +25,6 @@ use lemmy_db_views_actor::structs::CommunityView;
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
 
-#[dfpp::label(noinline)]
-fn apply_community_label(l2: &FollowCommunity) -> &FollowCommunity {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl Perform for FollowCommunity {
   type Response = CommunityResponse;
@@ -42,10 +37,8 @@ impl Perform for FollowCommunity {
     _websocket_id: Option<ConnectionId>,
   ) -> Result<CommunityResponse, LemmyError> {
     let data: &FollowCommunity = apply_community_label(&self);
-    let local_user_view_og =
+    let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
-    
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
 
     let community_id = data.community_id;
     let community: ApubCommunity = blocking(context.pool(), move |conn| {

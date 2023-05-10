@@ -19,7 +19,7 @@ use activitypub_federation::{
   utils::{verify_domains_match, verify_urls_match},
 };
 use activitystreams_kinds::public;
-use lemmy_api_common::utils::blocking;
+use lemmy_api_common::utils::{blocking};
 use lemmy_db_schema::{
   source::{
     community::Community,
@@ -74,11 +74,6 @@ impl CreateOrUpdatePost {
   }
 }
 
-#[dfpp::label(noinline)]
-fn apply_community_label(l2 : &Community) -> &Community {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl ActivityHandler for CreateOrUpdatePost {
   type DataType = LemmyContext;
@@ -93,17 +88,16 @@ impl ActivityHandler for CreateOrUpdatePost {
   }
 
   #[tracing::instrument(skip_all)]
-  // #[dfpp::analyze]
+  #[dfpp::analyze]
   async fn verify(
     &self,
     context: &Data<LemmyContext>,
     request_counter: &mut i32,
   ) -> Result<(), LemmyError> {
     verify_is_public(&self.to, &self.cc)?;
-    let community_og = self.get_community(context, request_counter).await?;
-    verify_person_in_community(&self.actor, &community_og, context, request_counter).await?;
-    let community = apply_community_label(&community_og);
-    check_community_deleted_or_removed(community)?;
+    let community = self.get_community(context, request_counter).await?;
+    verify_person_in_community(&self.actor, &community, context, request_counter).await?;
+    check_community_deleted_or_removed(&community)?;
 
     match self.kind {
       CreateOrUpdateType::Create => {
@@ -127,7 +121,7 @@ impl ActivityHandler for CreateOrUpdatePost {
           verify_mod_action(
             &self.actor,
             self.object.id.inner(),
-            &community_og,
+            &community,
             context,
             request_counter,
           )

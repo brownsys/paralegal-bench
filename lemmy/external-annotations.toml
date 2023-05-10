@@ -1,53 +1,38 @@
-# STRUCTS
-[["lemmy_db_views::structs::LocalUserView"]]
+[["lemmy_api_common::utils::get_local_user_view_from_jwt"]]
 marker = "local_user_view"
+on_return = true
 
-[["lemmy_db_schema::source::post::Post"]]
+[["lemmy_api_common::utils::apply_localuserview_label"]]
+marker = "local_user_view"
+on_return = true
+
+[["lemmy_api_common::utils::apply_post_label"]]
 marker = "post"
+on_return = true
 
-[["lemmy_db_schema::source::community::Community"]]
-marker = "community"
+[["lemmy_api_common::utils::get_post"]]
+marker = "post"
+on_return = true
 
-[["lemmy_db_views::structs::CommentView"]]
+[["lemmy_api_common::utils::apply_comment_label"]]
 marker = "comment"
+on_return = true
 
-[["lemmy_api_common::post::CreatePost"]]
-marker = "post"
-
-[["lemmy_apub::objects::post::ApubPost"]]
-marker = "post"
-
-[["lemmy_api_common::community::FollowCommunity"]]
+[["lemmy_api_common::utils::apply_community_label"]]
 marker = "community"
+on_return = true
 
+[["lemmy_apub::activities::community::announce::GetCommunity::get_community"]]
+marker = "community"
+on_return = true
 
-
-#[["lemmy_db_schema::source::comment::Comment"]]
-#marker = "comment"
-
-#[["lemmy_apub::objects::community::ApubCommunity"]]
-#marker = "community"
-
-#[["lemmy_db_schema::source::community::CommunityFollowerForm"]]
-#marker = "community"
-
-#[["lemmy_apub::objects::comment::ApubComment"]]
-#marker = "comment"
-
-
-# FUNCTIONS
 [["lemmy_api_common::utils::check_community_deleted_or_removed"]]
 marker = "delete_check"
 on_argument = [0]
 
-# just for apub
 [["lemmy_apub::activities::check_community_deleted_or_removed"]]
 marker = "delete_check"
 on_argument = [0]
-
-#[["lemmy_api_common::utils::check_post_deleted_or_removed"]]
-#marker = "delete_check"
-#on_argument = [0]
 
 [["lemmy_api_common::utils::check_community_ban"]]
 marker = "ban_check"

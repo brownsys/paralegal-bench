@@ -28,15 +28,11 @@ impl Perform for Login {
     let username_or_email = data.username_or_email.clone();
     // TODO: open a bug report for this.
     // problem with async blocking function (we use a type walk, need to go handle impl Future structure to infer the type here)
-    let local_user_view_og = blocking(context.pool(), move |conn| {
+    let local_user_view = apply_localuserview_label(blocking(context.pool(), move |conn| {
       LocalUserView::find_by_email_or_name(conn, &username_or_email)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_that_username_or_email"))?;
-
-    // FIXME: be able to get rid of this
-    // With just find_email_or_name, it applies label fine --> problem is the blocking / closure
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
 
     // Verify the password
     let valid: bool = verify(

@@ -40,10 +40,10 @@ use rosetta_i18n::{Language, LanguageId};
 use std::str::FromStr;
 use tracing::warn;
 
-#[dfpp::label(noinline)]
-pub fn apply_localuserview_label(l2 : &LocalUserView) -> &LocalUserView {
-  return l2;
-}
+pub fn apply_localuserview_label<T>(t: T) -> T { t }
+pub fn apply_post_label<T>(t: T) -> T { t }
+pub fn apply_comment_label<T>(t: T) -> T { t }
+pub fn apply_community_label<T>(t: T) -> T { t }
 
 pub async fn blocking<F, T>(pool: &DbPool, f: F) -> Result<T, LemmyError>
 where
@@ -124,13 +124,8 @@ pub async fn mark_post_as_unread(
   .map_err(|e| LemmyError::from_error_message(e, "couldnt_mark_post_as_read"))
 }
 
-#[dfpp::label(noinline)]
-fn apply_label(l2 : &LocalUserView) -> &LocalUserView {
-  return l2;
-}
-
 #[tracing::instrument(skip_all)]
-#[dfpp::analyze]
+// #[dfpp::analyze]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,
   pool: &DbPool,
@@ -140,9 +135,9 @@ pub async fn get_local_user_view_from_jwt(
     .map_err(|e| e.with_message("not_logged_in"))?
     .claims;
   let local_user_id = LocalUserId(claims.sub);
-  let local_user_view_og =
-    blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??;
-  let local_user_view = apply_label(&local_user_view_og);
+  let local_user_view =
+    apply_localuserview_label(
+      blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??);
   check_user_valid(
     local_user_view.person.banned,
     local_user_view.person.ban_expires,
@@ -151,7 +146,7 @@ pub async fn get_local_user_view_from_jwt(
 
   check_validator_time(&local_user_view.local_user.validator_time, &claims)?;
 
-  Ok(local_user_view_og)
+  Ok(local_user_view)
 }
 
 /// Checks if user's token was issued before user's password reset.
@@ -179,13 +174,8 @@ pub async fn get_local_user_view_from_jwt_opt(
   }
 }
 
-#[dfpp::label(noinline)]
-fn apply_label_settings(l2 : &LocalUserSettingsView) -> &LocalUserSettingsView {
-  return l2;
-}
-
 #[tracing::instrument(skip_all)]
-#[dfpp::analyze]
+// #[dfpp::analyze]
 pub async fn get_local_user_settings_view_from_jwt_opt(
   jwt: Option<&Sensitive<String>>,
   pool: &DbPool,
@@ -197,11 +187,11 @@ pub async fn get_local_user_settings_view_from_jwt_opt(
         .map_err(|e| e.with_message("not_logged_in"))?
         .claims;
       let local_user_id = LocalUserId(claims.sub);
-      let local_user_view_og = blocking(pool, move |conn| {
+      let local_user_view =
+        apply_localuserview_label(blocking(pool, move |conn| {
         LocalUserSettingsView::read(conn, local_user_id)
       })
-      .await??;
-      let local_user_view = apply_label_settings(&local_user_view_og);
+      .await??);
       check_user_valid(
         local_user_view.person.banned,
         local_user_view.person.ban_expires,
@@ -210,7 +200,7 @@ pub async fn get_local_user_settings_view_from_jwt_opt(
 
       check_validator_time(&local_user_view.local_user.validator_time, &claims)?;
 
-      Ok(Some(local_user_view_og))
+      Ok(Some(local_user_view))
     }
     None => Ok(None),
   }

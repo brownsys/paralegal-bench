@@ -96,16 +96,6 @@ impl CreateOrUpdateComment {
   }
 }
 
-#[dfpp::label(noinline)]
-fn apply_post_label(l2 : &Post) -> &Post {
-  return l2;
-}
-
-#[dfpp::label(noinline)]
-fn apply_community_label(l2 : &Community) -> &Community {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl ActivityHandler for CreateOrUpdateComment {
   type DataType = LemmyContext;
@@ -127,15 +117,13 @@ impl ActivityHandler for CreateOrUpdateComment {
     request_counter: &mut i32,
   ) -> Result<(), LemmyError> {
     verify_is_public(&self.to, &self.cc)?;
-    let post_og = self.object.get_parents(context, request_counter).await?.0;
-    let post = apply_post_label(&post_og);
-    let community_og = self.get_community(context, request_counter).await?;
-    let community = apply_community_label(&community_og);
+    let post = self.object.get_parents(context, request_counter).await?.0;
+    let community = self.get_community(context, request_counter).await?;
 
-    verify_person_in_community(&self.actor, &community_og, context, request_counter).await?;
+    verify_person_in_community(&self.actor, &community, context, request_counter).await?;
     verify_domains_match(self.actor.inner(), self.object.id.inner())?;
-    check_community_deleted_or_removed(community)?;
-    check_post_deleted_or_removed(post)?;
+    check_community_deleted_or_removed(&community)?;
+    check_post_deleted_or_removed(&post)?;
 
     ApubComment::verify(&self.object, self.actor.inner(), context, request_counter).await?;
     Ok(())

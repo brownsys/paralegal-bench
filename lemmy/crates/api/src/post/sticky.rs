@@ -8,7 +8,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
     is_mod_or_admin,
-    apply_localuserview_label,
+    apply_post_label,
   },
 };
 use lemmy_apub::{
@@ -25,10 +25,6 @@ use lemmy_db_schema::{
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperation};
 
-#[dfpp::label(noinline)]
-fn apply_post_label(l2 : &Post) -> &Post {
-  return l2;
-}
 
 #[async_trait::async_trait(?Send)]
 impl Perform for StickyPost {
@@ -42,14 +38,11 @@ impl Perform for StickyPost {
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
     let data: &StickyPost = self;
-    let local_user_view_og =
+    let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let post_id = data.post_id;
-    let orig_post_og = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
-
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
-    let orig_post = apply_post_label(&orig_post_og);
+    let orig_post = apply_post_label(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
 
     check_community_ban(
       local_user_view.person.id,

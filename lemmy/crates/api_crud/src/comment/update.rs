@@ -7,7 +7,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     check_post_deleted_or_removed,
     get_local_user_view_from_jwt,
-    apply_localuserview_label
+    apply_comment_label
   },
 };
 use lemmy_apub::protocol::activities::{
@@ -30,11 +30,6 @@ use lemmy_websocket::{
 
 use crate::PerformCrud;
 
-#[dfpp::label(noinline)]
-fn apply_comment_label(l2 : &CommentView) -> &CommentView {
-  return l2;
-}
-
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for EditComment {
   type Response = CommentResponse;
@@ -47,18 +42,14 @@ impl PerformCrud for EditComment {
     websocket_id: Option<ConnectionId>,
   ) -> Result<CommentResponse, LemmyError> {
     let data: &EditComment = self;
-    let local_user_view_og =
+    let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-    let local_user_view = apply_localuserview_label(&local_user_view_og);
-
     let comment_id = data.comment_id;
-    let orig_comment_og = blocking(context.pool(), move |conn| {
+    let orig_comment = apply_comment_label(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, None)
     })
-    .await??;
-
-    let orig_comment = apply_comment_label(&orig_comment_og);
+    .await??);
 
     check_community_ban(
       local_user_view.person.id,
@@ -100,7 +91,7 @@ impl PerformCrud for EditComment {
     // Send the apub update
     CreateOrUpdateComment::send(
       updated_comment.into(),
-      &local_user_view_og.person.into(),
+      &local_user_view.person.into(),
       CreateOrUpdateType::Update,
       context,
       &mut 0,
