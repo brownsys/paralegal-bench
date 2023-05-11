@@ -1,7 +1,10 @@
 //! Describe changes / mutations to data
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    f32::consts::E,
+};
 use urls::{SET, SIGNER};
 
 use crate::{
@@ -142,28 +145,28 @@ impl Commit {
             }
         };
 
-        // Make sure the one creating the commit had the same idea of what the current state is.
-        if !is_new && opts.validate_previous_commit {
-            if let Ok(last_commit_val) = resource_old.get(urls::LAST_COMMIT) {
-                let last_commit = last_commit_val.to_string();
+        // // Make sure the one creating the commit had the same idea of what the current state is.
+        // if !is_new && opts.validate_previous_commit {
+        //     if let Ok(last_commit_val) = resource_old.get(urls::LAST_COMMIT) {
+        //         let last_commit = last_commit_val.to_string();
 
-                if let Some(prev_commit) = self.previous_commit.clone() {
-                    // TODO: try auto merge
-                    if last_commit != prev_commit {
-                        return Err(format!(
-                            "previousCommit mismatch. Had lastCommit '{}' in Resource {}, but got in Commit '{}'. Perhaps you created the Commit based on an outdated version of the Resource.",
-                            last_commit, subject_url, prev_commit,
-                        )
-                        .into());
-                    }
-                } else {
-                    return Err(format!("Missing `previousCommit`. Resource {} already exists, and it has a `lastCommit` field, so a `previousCommit` field is required in your Commit.", self.subject).into());
-                }
-            } else {
-                // If there is no lastCommit in the Resource, we'll accept the Commit.
-                tracing::warn!("No `lastCommit` in Resource. This can be a bug, or it could be that the resource was never properly updated.");
-            }
-        };
+        //         if let Some(prev_commit) = self.previous_commit.clone() {
+        //             // TODO: try auto merge
+        //             if last_commit != prev_commit {
+        //                 return Err(format!(
+        //                     "previousCommit mismatch. Had lastCommit '{}' in Resource {}, but got in Commit '{}'. Perhaps you created the Commit based on an outdated version of the Resource.",
+        //                     last_commit, subject_url, prev_commit,
+        //                 )
+        //                 .into());
+        //             }
+        //         } else {
+        //             return Err(format!("Missing `previousCommit`. Resource {} already exists, and it has a `lastCommit` field, so a `previousCommit` field is required in your Commit.", self.subject).into());
+        //         }
+        //     } else {
+        //         // If there is no lastCommit in the Resource, we'll accept the Commit.
+        //         tracing::warn!("No `lastCommit` in Resource. This can be a bug, or it could be that the resource was never properly updated.");
+        //     }
+        // };
 
         let mut resource_new = self
             .apply_changes(resource_old.clone(), store, false)
@@ -171,73 +174,78 @@ impl Commit {
 
         if opts.validate_rights {
             let validate_for = opts.validate_for_agent.as_ref().unwrap_or(&self.signer);
-            if is_new {
-                hierarchy::check_append(store, &resource_new, &validate_for.into())?;
-            } else {
-                // Set a parent only if the rights checks are to be validated.
-                // If there is no explicit parent set on the previous resource, use a default.
-                // Unless it's a Drive!
-                if resource_old.get(urls::PARENT).is_err() {
-                    let default_parent = store.get_self_url().ok_or("There is no self_url set, and no parent in the Commit. The commit can not be applied.")?;
-                    resource_old.set_propval(
-                        urls::PARENT.into(),
-                        Value::AtomicUrl(default_parent),
-                        store,
-                    )?;
-                }
-                // This should use the _old_ resource, no the new one, as the new one might maliciously give itself write rights.
-                hierarchy::check_write(store, &resource_old, &validate_for.into())?;
+            // if is_new {
+            //     hierarchy::check_append(store, &resource_new, &validate_for.into())?;
+            // } else {
+            // Set a parent only if the rights checks are to be validated.
+            // If there is no explicit parent set on the previous resource, use a default.
+            // Unless it's a Drive!
+            if resource_old.get(urls::PARENT).is_err() {
+                let default_parent = store.get_self_url().ok_or("There is no self_url set, and no parent in the Commit. The commit can not be applied.")?;
+                resource_old.set_propval(
+                    urls::PARENT.into(),
+                    Value::AtomicUrl(default_parent),
+                    store,
+                )?;
             }
+            // This should use the _old_ resource, no the new one, as the new one might maliciously give itself write rights.
+
+            // NOTE: (livia) THIS IS THE CORRECT CODE
+            hierarchy::check_write(store, &resource_old, &validate_for.into())?;
+            // NOTE: (livia) THIS IS INCORRECT CODE, OR COMMENT OUT ALL TOGETHER
+            // hierarchy::check_write(store, &resource_new, &validate_for.into())?;
+
+            // }
         };
-        // Check if all required props are there
-        if opts.validate_schema {
-            resource_new.check_required_props(store)?;
-        }
+        // // Check if all required props are there
+        // if opts.validate_schema {
+        //     resource_new.check_required_props(store)?;
+        // }
 
-        // Set the `lastCommit` to the newly created Commit
-        resource_new.set_propval(
-            urls::LAST_COMMIT.to_string(),
-            Value::AtomicUrl(commit_resource.get_subject().into()),
-            store,
-        )?;
+        // // Set the `lastCommit` to the newly created Commit
+        // resource_new.set_propval(
+        //     urls::LAST_COMMIT.to_string(),
+        //     Value::AtomicUrl(commit_resource.get_subject().into()),
+        //     store,
+        // )?;
 
-        let _resource_new_classes = resource_new.get_classes(store)?;
+        // let _resource_new_classes = resource_new.get_classes(store)?;
 
-        // BEFORE APPLY COMMIT HANDLERS
-        #[cfg(feature = "db")]
-        for class in &_resource_new_classes {
-            match class.subject.as_str() {
-                urls::COMMIT => return Err("Commits can not be edited or created directly.".into()),
-                urls::INVITE => {
-                    crate::plugins::invite::before_apply_commit(store, self, &resource_new)?
-                }
-                _other => {}
-            };
-        }
+        // // BEFORE APPLY COMMIT HANDLERS
+        // #[cfg(feature = "db")]
+        // for class in &_resource_new_classes {
+        //     match class.subject.as_str() {
+        //         urls::COMMIT => return Err("Commits can not be edited or created directly.".into()),
+        //         urls::INVITE => {
+        //             crate::plugins::invite::before_apply_commit(store, self, &resource_new)?
+        //         }
+        //         _other => {}
+        //     };
+        // }
 
-        // If a Destroy field is found, remove the resource and return early
-        // TODO: Should we remove the existing commits too? Probably.
-        if let Some(destroy) = self.destroy {
-            if destroy {
-                // Note: the value index is updated before this action, in resource.apply_changes()
-                store.remove_resource(&self.subject)?;
-                store.add_resource_opts(&commit_resource, false, opts.update_index, false)?;
-                return Ok(CommitResponse {
-                    resource_new: None,
-                    resource_old: Some(resource_old),
-                    commit_resource,
-                    commit_struct: self.clone(),
-                });
-            }
-        }
+        // // If a Destroy field is found, remove the resource and return early
+        // // TODO: Should we remove the existing commits too? Probably.
+        // if let Some(destroy) = self.destroy {
+        //     if destroy {
+        //         // Note: the value index is updated before this action, in resource.apply_changes()
+        //         store.remove_resource(&self.subject)?;
+        //         store.add_resource_opts(&commit_resource, false, opts.update_index, false)?;
+        //         return Ok(CommitResponse {
+        //             resource_new: None,
+        //             resource_old: Some(resource_old),
+        //             commit_resource,
+        //             commit_struct: self.clone(),
+        //         });
+        //     }
+        // }
 
-        // We apply the changes again, but this time also update the index
-        self.apply_changes(resource_old.clone(), store, opts.update_index)?;
+        // // We apply the changes again, but this time also update the index
+        // self.apply_changes(resource_old.clone(), store, opts.update_index)?;
 
-        // Save the Commit to the Store. We can skip the required props checking, but we need to make sure the commit hasn't been applied before.
-        store.add_resource_opts(&commit_resource, false, opts.update_index, false)?;
-        // Save the resource, but skip updating the index - that has been done in a previous step.
-        store.add_resource_opts(&resource_new, false, false, true)?;
+        // // Save the Commit to the Store. We can skip the required props checking, but we need to make sure the commit hasn't been applied before.
+        // store.add_resource_opts(&commit_resource, false, opts.update_index, false)?;
+        // // Save the resource, but skip updating the index - that has been done in a previous step.
+        // store.add_resource_opts(&resource_new, false, false, true)?;
 
         let commit_response = CommitResponse {
             resource_new: Some(resource_new.clone()),
