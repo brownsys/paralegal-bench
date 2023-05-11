@@ -251,17 +251,17 @@ impl Commit {
         // AFTER APPLY COMMIT HANDLERS
         // Commit has been checked and saved.
         // Here you can add side-effects, such as creating new Commits.
-        #[cfg(feature = "db")]
-        for class in _resource_new_classes {
-            match class.subject.as_str() {
-                urls::MESSAGE => crate::plugins::chatroom::after_apply_commit_message(
-                    store,
-                    self,
-                    &resource_new,
-                )?,
-                _other => {}
-            };
-        }
+        // #[cfg(feature = "db")]
+        // for class in _resource_new_classes {
+        //     match class.subject.as_str() {
+        //         urls::MESSAGE => crate::plugins::chatroom::after_apply_commit_message(
+        //             store,
+        //             self,
+        //             &resource_new,
+        //         )?,
+        //         _other => {}
+        //     };
+        // }
 
         Ok(commit_response)
     }

@@ -1,8 +1,9 @@
-[["atomic_lib::commit::Commit"]]
-marker = "commit"
+[["atomic_lib::storelike::Storelike::get_resource"]]
+marker = "resource"
+on_return = true
 
 [["atomic_lib::commit::Commit::apply_changes"]]
-marker = "new_commit"
+marker = "new_resource"
 on_return = true
 
 [["atomic_lib::hierarchy::check_rights"]]
