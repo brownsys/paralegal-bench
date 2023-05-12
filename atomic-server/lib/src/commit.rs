@@ -105,7 +105,6 @@ impl Commit {
             return Err("Subject URL cannot have query parameters".into());
         }
 
-        /*
         if opts.validate_signature {
             let signature = match self.signature.as_ref() {
                 Some(sig) => sig,
@@ -133,7 +132,7 @@ impl Commit {
         if opts.validate_timestamp {
             check_timestamp(self.created_at)?;
         }
-        */
+
         let commit_resource: Resource = self.into_resource(store)?;
         let mut is_new = false;
         // Create a new resource if it doens't exist yet
@@ -258,17 +257,17 @@ impl Commit {
         // AFTER APPLY COMMIT HANDLERS
         // Commit has been checked and saved.
         // Here you can add side-effects, such as creating new Commits.
-        // #[cfg(feature = "db")]
-        // for class in _resource_new_classes {
-        //     match class.subject.as_str() {
-        //         urls::MESSAGE => crate::plugins::chatroom::after_apply_commit_message(
-        //             store,
-        //             self,
-        //             &resource_new,
-        //         )?,
-        //         _other => {}
-        //     };
-        // }
+        #[cfg(feature = "db")]
+        for class in _resource_new_classes {
+            match class.subject.as_str() {
+                urls::MESSAGE => crate::plugins::chatroom::after_apply_commit_message(
+                    store,
+                    self,
+                    &resource_new,
+                )?,
+                _other => {}
+            };
+        }
 
         Ok(commit_response)
     }
