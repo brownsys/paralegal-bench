@@ -31,3 +31,19 @@ test expect {
 }
 
 // run {} for Flows
+// pred find_erroneous_my_pred_int[ef: ErroneousFlow] {
+//     some c : Ctrl | {
+// 		(c->ef.minimal_subflow in flow)
+// 		(not checks_old_rights_before_storage[flow])
+// 		(checks_old_rights_before_storage[(flow - (c->ef.minimal_subflow))]) }
+// }
+
+// pred find_erroneous_my_pred {
+//     some ef: ErroneousFlow {
+//         find_erroneous_my_pred_int[ef]
+//     }
+// }
+
+// run {
+//     find_erroneous_my_pred
+// } for 1 ErroneousFlow for Flows
