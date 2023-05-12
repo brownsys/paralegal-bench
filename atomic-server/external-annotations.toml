@@ -30,9 +30,6 @@ on_argument = [1]
 marker = "sink"
 on_argument = [1]
 
-[["atomic_lib::storelike::Storelike::get_resource"]]
-marker = "noinline"
-
 [["atomic_lib::resources::Resource::get"]]
 marker = "noinline"
 
