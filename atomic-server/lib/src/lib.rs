@@ -1,27 +1,9 @@
 /*!
-`atomic_lib` helps you to get, store, serialize, parse and validate Atomic Data.
+`atomic_lib` helps you to get, store, serialize, parse and validate [Atomic Data](https://docs.atomicdata.dev).
 
-See the [Atomic Data Docs](https://docs.atomicdata.dev) for more information.
+The [Store](struct.Store) contains most of the logic that you need.
 
-## Features
-
-- Two stores for Atomic Data:
-  - **In-memory** [Store] for getting / setting data. Useful for client applications.
-  - **On disk** [Db], powered by Sled. Useful for applications that persist Atomic Data, such as [`atomic-server`](https://crates.io/crates/atomic-server).
-- [serialize] and [parse] tools for [JSON-AD](https://docs.atomicdata.dev/core/json-ad.html), plain JSON, RDF, Turtle, N-Triples and JSON-LD.
-- [Resource] with getters, setters and a `.save` function that creates Commits.
-- [Value] converts Atomic Data to Rust native types
-- Validate [Atomic Schema](https://docs.atomicdata.dev/schema/intro.html)
-- [Commit]s (transactions / delta's / changes / updates / versioning / history).
-- [plugins] system (although not very mature)
-- [collections] (pagination, sorting, filtering)
-- Querying (using triple pattern fragments) (see [storelike::Query])
-- [plugins::invite] for sharing
-- [hierarchy] for authorization
-- [crate::endpoints::Endpoint] for custom API endpoints
-- [config::Config] files.
-
-## Getting started
+# Getting started
 
 ```
 // Import the `Storelike` trait to get access to most functions
@@ -31,7 +13,26 @@ let store = atomic_lib::Store::init().unwrap();
 // Pre-load the default Atomic Data Atoms (from atomicdata.dev),
 // this is not necessary, but will probably make your project a bit faster
 store.populate().unwrap();
-// We can create a new Resource, linked to the store.
+// Let's parse this AD3 string.
+let ad3 = r#"["https://localhost/test","https://atomicdata.dev/properties/description","Test"]"#;
+// The parser returns a Vector of Atoms
+let atoms = atomic_lib::parse::parse_ad3(&ad3).unwrap();
+// Add the Atoms to the Store
+store.add_atoms(atoms).unwrap();
+// Get our resource...
+let my_resource = store.get_resource("https://localhost/test").unwrap();
+// Get our value by filtering on our property...
+let my_value = my_resource
+    .get("https://atomicdata.dev/properties/description")
+    .unwrap();
+assert!(my_value.to_string() == "Test");
+// We can also use the shortname of description
+let my_value_from_shortname = my_resource.get_shortname("description", &store).unwrap();
+assert!(my_value_from_shortname.to_string() == "Test");
+// We can find any Atoms matching some value using Triple Pattern Fragments:
+let found_atoms = store.tpf(None, None, Some("Test"), false).unwrap();
+assert!(found_atoms.len() == 1);
+// We can also create a new Resource, linked to the store.
 // Note that since this store only exists in memory, it's data cannot be accessed from the internet.
 // Let's make a new Property instance! Let's create "age".
 let mut new_property = atomic_lib::Resource::new_instance("https://atomicdata.dev/classes/Property", &store).unwrap();
@@ -43,7 +44,7 @@ let subject = new_property.get_subject().clone();
 // In order to change things in the store, we should use Commits,
 // which are signed pieces of data that contain state changes.
 // Because these are signed, we need an Agent, which has a private key to sign Commits.
-let agent = store.create_agent(Some("my_agent")).unwrap();
+let agent = store.create_agent("my_agent").unwrap();
 store.set_default_agent(agent);
 let _fails   = new_property.save_locally(&store);
 // But.. when we commit, we get an error!
@@ -62,18 +63,18 @@ assert!(fetched_new_resource.get_shortname("description", &store).unwrap().to_st
 
 pub mod agents;
 pub mod atoms;
-pub mod authentication;
 pub mod client;
 pub mod collections;
 pub mod commit;
+pub mod datetime_helpers;
+#[cfg(feature = "db")]
+pub mod db;
 #[cfg(feature = "config")]
 pub mod config;
 pub mod datatype;
-#[cfg(feature = "db")]
-pub mod db;
+pub mod errors;
 #[cfg(feature = "db")]
 pub mod endpoints;
-pub mod errors;
 pub mod hierarchy;
 pub mod mapping;
 pub mod parse;
@@ -85,20 +86,18 @@ pub mod schema;
 pub mod serialize;
 pub mod store;
 pub mod storelike;
-#[cfg(test)]
-mod test_utils;
+mod url_helpers;
 pub mod urls;
-pub mod utils;
 pub mod validate;
 pub mod values;
 
 pub use atoms::Atom;
-pub use commit::Commit;
+pub use atoms::RichAtom;
 #[cfg(feature = "db")]
 pub use db::Db;
-pub use errors::AtomicError;
-pub use errors::AtomicErrorType;
+pub use commit::Commit;
 pub use resources::Resource;
 pub use store::Store;
 pub use storelike::Storelike;
 pub use values::Value;
+

@@ -1,29 +1,26 @@
-//! Serialization / formatting / encoding (JSON, RDF, N-Triples)
+//! Serialization / formatting / encoding (JSON, RDF, N-Triples, AD3)
 
 use serde_json::Map;
 use serde_json::Value as SerdeValue;
-use tracing::instrument;
 
 use crate::{
-    datatype::DataType, errors::AtomicResult, resources::PropVals, Resource, Storelike, Value,
+    datatype::DataType, errors::AtomicResult, resources::PropVals, Atom, Resource, Storelike, Value,
 };
 
 /// Serializes a vector or Resources to a JSON-AD string
-pub fn resources_to_json_ad(resources: &[Resource]) -> AtomicResult<String> {
-    let mut vec: Vec<serde_json::Value> = Vec::new();
-    for r in resources {
-        vec.push(crate::serialize::propvals_to_json_ad_map(
-            r.get_propvals(),
-            Some(r.get_subject().clone()),
-        )?)
-    }
-    let serde_array = serde_json::Value::from(vec);
+pub fn resources_to_json_ad(resources: Vec<Resource>) -> AtomicResult<String> {
+    let array: Vec<serde_json::Value> = resources
+        .into_iter()
+        .map(|r: Resource| {
+            crate::serialize::propvals_to_json_map(r.get_propvals(), Some(r.get_subject().clone()))
+                .expect("could not serialize to json-ad ")
+        })
+        .collect();
+    let serde_array = serde_json::Value::from(array);
     serde_json::to_string_pretty(&serde_array).map_err(|_| "Could not serialize to JSON-AD".into())
 }
 
 /// Converts an Atomic Value to a Serde Value.
-// TODO: Accept JSON-LD / JSON as options
-// https://github.com/atomicdata-dev/atomic-server/issues/315
 fn val_to_serde(value: Value) -> AtomicResult<SerdeValue> {
     let json_val: SerdeValue = match value {
         Value::AtomicUrl(val) => SerdeValue::String(val),
@@ -32,51 +29,24 @@ fn val_to_serde(value: Value) -> AtomicResult<SerdeValue> {
         Value::Integer(val) => serde_json::from_str(&val.to_string()).unwrap_or_default(),
         Value::Float(val) => serde_json::from_str(&val.to_string()).unwrap_or_default(),
         Value::Markdown(val) => SerdeValue::String(val),
-        Value::ResourceArray(val) => {
-            let mut vec: Vec<SerdeValue> = Vec::new();
-            for resource in val {
-                match resource {
-                    crate::values::SubResource::Resource(r) => {
-                        vec.push(crate::serialize::propvals_to_json_ad_map(
-                            r.get_propvals(),
-                            Some(r.get_subject().clone()),
-                        )?);
-                    }
-                    crate::values::SubResource::Nested(pv) => {
-                        vec.push(crate::serialize::propvals_to_json_ad_map(&pv, None)?);
-                    }
-                    crate::values::SubResource::Subject(s) => {
-                        vec.push(SerdeValue::String(s.clone()))
-                    }
-                }
-            }
-            SerdeValue::Array(vec)
-        }
+        Value::ResourceArray(val) => SerdeValue::Array(
+            val.iter()
+                .map(|item| SerdeValue::String(item.clone()))
+                .collect(),
+        ),
         Value::Slug(val) => SerdeValue::String(val),
         Value::String(val) => SerdeValue::String(val),
         Value::Timestamp(val) => SerdeValue::Number(val.into()),
         Value::Unsupported(val) => SerdeValue::String(val.value),
         Value::Boolean(val) => SerdeValue::Bool(val),
         // TODO: fix this for nested resources in json and json-ld serialization, because this will cause them to fall back to json-ad
-        Value::NestedResource(res) => match res {
-            crate::values::SubResource::Resource(r) => crate::serialize::propvals_to_json_ad_map(
-                r.get_propvals(),
-                Some(r.get_subject().clone()),
-            )?,
-            crate::values::SubResource::Nested(propvals) => {
-                propvals_to_json_ad_map(&propvals, None)?
-            }
-            crate::values::SubResource::Subject(s) => SerdeValue::String(s),
-        },
-        Value::Resource(_) => todo!(),
+        Value::NestedResource(res) => propvals_to_json_map(&res, None)?,
     };
     Ok(json_val)
 }
 
-/// Serializes a Resource to a Serde JSON Map according to the JSON-AD spec.
-/// https://docs.atomicdata.dev/core/json-ad.html
-#[instrument(skip_all)]
-pub fn propvals_to_json_ad_map(
+/// Serializes a Resource to a Serde JSON Map
+pub fn propvals_to_json_map(
     propvals: &PropVals,
     subject: Option<String>,
 ) -> AtomicResult<serde_json::Value> {
@@ -91,10 +61,7 @@ pub fn propvals_to_json_ad_map(
     Ok(obj)
 }
 
-/// Serializes a Resource to a Serde JSON Map.
-/// Supports both JSON and JSON-LD.
-/// If you opt in for JSON-LD, an @context object is created mapping the shortnames to URLs.
-/// https://docs.atomicdata.dev/interoperability/json.html#from-atomic-data-to-json-ld
+/// Serializes a Resource to a Serde JSON Map
 pub fn propvals_to_json_ld(
     propvals: &PropVals,
     subject: Option<String>,
@@ -172,9 +139,22 @@ pub fn serialize_json_array(items: &[String]) -> AtomicResult<String> {
     Ok(string)
 }
 
+/// Serializes Atoms to .ad3.
+/// It is a newline-delimited JSON file (ndjson), where each line is a JSON Array with three string values.
+pub fn serialize_atoms_to_ad3(atoms: Vec<Atom>) -> AtomicResult<String> {
+    let mut string = String::new();
+    for atom in atoms {
+        let mut ad3_atom =
+            serde_json::to_string(&vec![&atom.subject, &atom.property, &atom.value])?;
+        ad3_atom.push('\n');
+        string.push_str(&*ad3_atom);
+    }
+    Ok(string)
+}
+
 #[cfg(feature = "rdf")]
 /// Serializes Atoms to Ntriples (which is also valid Turtle / Notation3).
-pub fn atoms_to_ntriples(atoms: Vec<crate::Atom>, store: &impl Storelike) -> AtomicResult<String> {
+pub fn atoms_to_ntriples(atoms: Vec<Atom>, store: &impl Storelike) -> AtomicResult<String> {
     use rio_api::formatter::TriplesFormatter;
     use rio_api::model::{Literal, NamedNode, Term, Triple};
     use rio_turtle::NTriplesFormatter;
@@ -186,7 +166,7 @@ pub fn atoms_to_ntriples(atoms: Vec<crate::Atom>, store: &impl Storelike) -> Ato
             iri: &atom.property,
         };
         let datatype = store.get_property(&atom.property)?.data_type;
-        let value = &atom.value.to_string();
+        let value = &atom.value;
         let datatype_url = datatype.to_string();
         let object: Term = match &datatype {
             DataType::AtomicUrl => NamedNode { iri: value }.into(),
@@ -206,56 +186,19 @@ pub fn atoms_to_ntriples(atoms: Vec<crate::Atom>, store: &impl Storelike) -> Ato
             object,
         })?
     }
-    let out = String::from_utf8(formatter.finish()?)?;
-    Ok(out)
-}
-
-#[cfg(feature = "rdf")]
-/// Serializes Atoms to Ntriples (which is also valid Turtle / Notation3).
-pub fn atoms_to_turtle(atoms: Vec<crate::Atom>, store: &impl Storelike) -> AtomicResult<String> {
-    use rio_api::formatter::TriplesFormatter;
-    use rio_api::model::{Literal, NamedNode, Term, Triple};
-    use rio_turtle::TurtleFormatter;
-
-    let mut formatter = TurtleFormatter::new(Vec::default());
-
-    for atom in atoms {
-        let subject = NamedNode { iri: &atom.subject }.into();
-        let predicate = NamedNode {
-            iri: &atom.property,
-        };
-        let datatype = store.get_property(&atom.property)?.data_type;
-        let value = &atom.value.to_string();
-        let datatype_url = datatype.to_string();
-        let object: Term = match &datatype {
-            DataType::AtomicUrl => NamedNode { iri: value }.into(),
-            // Maybe these should be converted to RDF collections / lists?
-            // DataType::ResourceArray => {}
-            DataType::String => Literal::Simple { value }.into(),
-            _dt => Literal::Typed {
-                value,
-                datatype: NamedNode { iri: &datatype_url },
-            }
-            .into(),
-        };
-
-        formatter.format(&Triple {
-            subject,
-            predicate,
-            object,
-        })?
-    }
-    let out = String::from_utf8(formatter.finish()?)?;
+    let turtle = formatter.finish();
+    let out = String::from_utf8(turtle)?;
     Ok(out)
 }
 
 /// Should list all the supported serialization formats
 pub enum Format {
-    Json,
-    JsonAd,
-    JsonLd,
-    NTriples,
-    Pretty,
+    JSON,
+    JSONAD,
+    JSONLD,
+    AD3,
+    NT,
+    PRETTY,
 }
 
 #[cfg(test)]
@@ -272,20 +215,18 @@ mod test {
             .unwrap()
             .to_json_ad()
             .unwrap();
-        println!("json-ad: {}", json);
+        println!("json: {}", json);
         let correct_json = r#"{
   "@id": "https://atomicdata.dev/classes/Agent",
   "https://atomicdata.dev/properties/description": "An Agent is a user that can create or modify data. It has two keys: a private and a public one. The private key should be kept secret. The public key is used to verify signatures (on [Commits](https://atomicdata.dev/classes/Commit)) set by the of the Agent.",
   "https://atomicdata.dev/properties/isA": [
      "https://atomicdata.dev/classes/Class"
   ],
-  "https://atomicdata.dev/properties/parent": "https://atomicdata.dev/classes",
   "https://atomicdata.dev/properties/recommends": [
-    "https://atomicdata.dev/properties/name",
-    "https://atomicdata.dev/properties/description",
-    "https://atomicdata.dev/properties/drives"
+    "https://atomicdata.dev/properties/description"
   ],
     "https://atomicdata.dev/properties/requires": [
+    "https://atomicdata.dev/properties/name",
     "https://atomicdata.dev/properties/publicKey"
   ],
   "https://atomicdata.dev/properties/shortname": "agent"
@@ -299,7 +240,7 @@ mod test {
     #[test]
     fn serialize_json_ad_multiple() {
         let vec = vec![Resource::new("subjet".into())];
-        let serialized = resources_to_json_ad(&vec).unwrap();
+        let serialized = resources_to_json_ad(vec).unwrap();
         let correct_json = r#"[
   {
     "@id": "subjet"
@@ -324,13 +265,11 @@ mod test {
             "is-a": [
               "https://atomicdata.dev/classes/Class"
             ],
-            "parent": "https://atomicdata.dev/classes",
             "recommends": [
-              "https://atomicdata.dev/properties/name",
-              "https://atomicdata.dev/properties/description",
-              "https://atomicdata.dev/properties/drives"
+              "https://atomicdata.dev/properties/description"
             ],
             "requires": [
+              "https://atomicdata.dev/properties/name",
               "https://atomicdata.dev/properties/publicKey"
             ],
             "shortname": "agent"
@@ -358,10 +297,6 @@ mod test {
                 "@container": "@list",
                 "@id": "https://atomicdata.dev/properties/isA"
               },
-              "parent": {
-                "@id": "https://atomicdata.dev/properties/parent",
-                "@type": "@id"
-              },
               "recommends": {
                 "@container": "@list",
                 "@id": "https://atomicdata.dev/properties/recommends"
@@ -377,13 +312,11 @@ mod test {
             "is-a": [
               "https://atomicdata.dev/classes/Class"
             ],
-            "parent": "https://atomicdata.dev/classes",
             "recommends": [
-              "https://atomicdata.dev/properties/name",
-              "https://atomicdata.dev/properties/description",
-              "https://atomicdata.dev/properties/drives"
+              "https://atomicdata.dev/properties/description"
             ],
             "requires": [
+              "https://atomicdata.dev/properties/name",
               "https://atomicdata.dev/properties/publicKey"
             ],
             "shortname": "agent"
@@ -402,7 +335,7 @@ mod test {
         store.populate().unwrap();
         let subject = crate::urls::DESCRIPTION;
         let resource = store.get_resource(subject).unwrap();
-        let atoms = resource.to_atoms();
+        let atoms = resource.to_atoms().unwrap();
         let serialized = atoms_to_ntriples(atoms, &store).unwrap();
         let _out = r#"
         <https://atomicdata.dev/properties/description> <https://atomicdata.dev/properties/description> "A textual description of the thing."^^<https://atomicdata.dev/datatypes/markdown> .
@@ -411,6 +344,6 @@ mod test {
 <https://atomicdata.dev/properties/description> <https://atomicdata.dev/properties/shortname> "description"^^<https://atomicdata.dev/datatypes/slug> ."#;
         assert!(serialized.contains(r#""description"^^<https://atomicdata.dev/datatypes/slug>"#));
         // This could fail when the `description` resource changes
-        assert!(serialized.lines().count() == 5);
+        assert!(serialized.lines().count() == 4);
     }
 }

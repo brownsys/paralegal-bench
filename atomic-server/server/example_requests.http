@@ -10,29 +10,31 @@ Accept: application/ad+json
 GET https://atomicdata.dev/properties/isA HTTP/1.1
 Accept: application/ld+json
 
+### Get a thing as AD3
+GET https://atomicdata.dev/properties/isA HTTP/1.1
+Accept: application/ad3-ndjson
+
 ### Get a thing as turtle
 GET https://atomicdata.dev/properties/isA HTTP/1.1
 Accept: text/turtle
 
-### Full text search
-GET http://localhost:9883/search?q=Foo HTTP/1.1
-Accept: application/ld+json
+### Use TPF endpoint to get all atoms with an 'isA' property
+GET https://atomicdata.dev/tpf?property=https://atomicdata.dev/properties/isA HTTP/1.1
+Accept: application/ad3-ndjson
 
-### Full text search, return full resource bodies. A bit slower, but could actually result in a faster UX.
-GET http://localhost:9883/search?q=Foo&include=true HTTP/1.1
-Accept: application/ld+json
+### Use Path endpoint to retrieve a resource or a path
+GET https://atomicdata.dev/path?path=https://atomicdata.dev/properties/isA HTTP/1.1
+Accept: application/ad3-ndjson
 
 ### Send a Commit
-### The hard part here is setting the correct signature.
-### Use a library (@tomic/lib for JS, and atomic_lib for Rust).
-POST http://localhost:9883/commit HTTP/1.1
+POST http://localhost/commit HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 
 {
-  "subject": "http://localhost:9883/test",
+  "subject": "http://localhost:8081/test",
   "created_at": 1601239744,
-  "signer": "http://localhost:9883/agents/root",
+  "signer": "http://localhost:8081/agents/root",
   "set": {
     "https://atomicdata.dev/properties/requires": "[\"http/properties/requires\"]"
   },
@@ -40,3 +42,7 @@ Content-Type: application/json
   "destroy": false,
   "signature": "correct_signature"
 }
+
+### Check if above commit has been applied correctly
+GET http://localhost/somresource HTTP/1.1
+Accept: application/ad3-ndjson

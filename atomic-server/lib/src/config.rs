@@ -18,11 +18,9 @@ pub struct Config {
 
 /// Returns the default path for the config file: `~/.config/atomic`
 pub fn default_config_dir_path() -> AtomicResult<PathBuf> {
-    if let Some(dirs) = directories::UserDirs::new() {
-        let atomic_config_dir = dirs.home_dir().join(".config/atomic");
-        return Ok(atomic_config_dir);
-    }
-    Err("No default config dir can be found, as no Home directory can be found on this operating system".into())
+    Ok(dirs::home_dir()
+        .ok_or("Could not open home dir")?
+        .join(".config/atomic"))
 }
 
 /// Returns the default path for the config file: `~/.config/atomic/config.toml`
@@ -41,20 +39,12 @@ pub fn read_config(path: &Path) -> AtomicResult<Config> {
     Ok(config)
 }
 
-/// Writes config file from a specified path.
-/// Overwrites any existing config.
-/// Creates the config directory if it does not exist.
+/// Writes config file from a specified path
+/// Overwrites any existing config
 pub fn write_config(path: &Path, config: Config) -> AtomicResult<String> {
     let out =
         toml::to_string_pretty(&config).map_err(|e| format!("Error serializing config. {}", e))?;
-
-    let prefix = path
-        .parent()
-        .ok_or("Could not get parent dir of config file")?;
-    std::fs::create_dir_all(prefix)
-        .map_err(|e| format!("Could not create config directory {:?} . {}", prefix, e))?;
-
     std::fs::write(path, out.clone())
-        .map_err(|e| format!("Error writing config file to {:?}. {}", path, e))?;
+        .map_err(|e| format!("Error writing config to {:?}. {}", path, e))?;
     Ok(out)
 }

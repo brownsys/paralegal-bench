@@ -1,11 +1,14 @@
 //! In-memory store of Atomic data.
 //! This provides many methods for finding, changing, serializing and parsing Atomic Data.
+//! Currently, it can only persist its data as .ad3 (Atomic Data Triples) to disk.
+//! A more robust persistent storage option will be used later, such as: https://github.com/TheNeikos/rustbreak
 
-use crate::storelike::QueryResult;
-use crate::Value;
-use crate::{atoms::Atom, storelike::Storelike};
+use crate::{
+    atoms::Atom,
+    storelike::{ResourceCollection, Storelike},
+};
 use crate::{errors::AtomicResult, Resource};
-use std::{collections::HashMap, sync::Arc, sync::Mutex};
+use std::{collections::HashMap, fs, path::PathBuf, sync::Arc, sync::Mutex};
 
 /// The in-memory store of data, containing the Resources, Properties and Classes
 #[derive(Clone)]
@@ -27,95 +30,28 @@ impl Store {
         Ok(store)
     }
 
-    /// Triple Pattern Fragments interface.
-    /// Use this for most queries, e.g. finding all items with some property / value combination.
-    /// Returns an empty array if nothing is found.
-    ///
-    /// # Example
-    ///
-    /// For example, if I want to view all Resources that are instances of the class "Property", I'd do:
-    ///
-    /// ```
-    /// use atomic_lib::Storelike;
-    /// let mut store = atomic_lib::Store::init().unwrap();
-    /// store.populate();
-    /// let atoms = store.tpf(
-    ///     None,
-    ///     Some("https://atomicdata.dev/properties/isA"),
-    ///     Some(&atomic_lib::Value::AtomicUrl("https://atomicdata.dev/classes/Class".into())),
-    ///     true
-    /// ).unwrap();
-    /// assert!(atoms.len() > 11)
-    /// ```
-    // Very costly, slow implementation.
-    // Does not assume any indexing.
-    fn tpf(
-        &self,
-        q_subject: Option<&str>,
-        q_property: Option<&str>,
-        q_value: Option<&Value>,
-        // Whether resources from outside the store should be searched through
-        include_external: bool,
-    ) -> AtomicResult<Vec<Atom>> {
-        let mut vec: Vec<Atom> = Vec::new();
-
-        let hassub = q_subject.is_some();
-        let hasprop = q_property.is_some();
-        let hasval = q_value.is_some();
-
-        // Simply return all the atoms
-        if !hassub && !hasprop && !hasval {
-            for resource in self.all_resources(include_external) {
-                for (property, value) in resource.get_propvals() {
-                    vec.push(Atom::new(
-                        resource.get_subject().clone(),
-                        property.clone(),
-                        value.clone(),
-                    ))
-                }
+    /// Reads an .ad3 (Atomic Data Triples) graph and adds it to the store
+    pub fn read_store_from_file(&self, path: &PathBuf) -> AtomicResult<()> {
+        match std::fs::read_to_string(path) {
+            Ok(contents) => {
+                let atoms = crate::parse::parse_ad3(&contents)?;
+                self.add_atoms(atoms)?;
+                Ok(())
             }
-            return Ok(vec);
+            Err(err) => Err(format!("Parsing error: {}", err).into()),
         }
+    }
 
-        // Find atoms matching the TPF query in a single resource
-        let mut find_in_resource = |resource: &Resource| {
-            let subj = resource.get_subject();
-            for (prop, val) in resource.get_propvals().iter() {
-                if hasprop && q_property.as_ref().unwrap() == prop {
-                    if hasval {
-                        if val.contains_value(q_value.unwrap()) {
-                            vec.push(Atom::new(subj.into(), prop.into(), val.clone()))
-                        }
-                        break;
-                    } else {
-                        vec.push(Atom::new(subj.into(), prop.into(), val.clone()))
-                    }
-                    break;
-                } else if hasval && !hasprop && val.contains_value(q_value.unwrap()) {
-                    vec.push(Atom::new(subj.into(), prop.into(), val.clone()))
-                }
-            }
-        };
-
-        match q_subject {
-            Some(sub) => match self.get_resource(sub) {
-                Ok(resource) => {
-                    if hasprop | hasval {
-                        find_in_resource(&resource);
-                        Ok(vec)
-                    } else {
-                        Ok(resource.to_atoms())
-                    }
-                }
-                Err(_) => Ok(vec),
-            },
-            None => {
-                for resource in self.all_resources(include_external) {
-                    find_in_resource(&resource);
-                }
-                Ok(vec)
-            }
+    /// Serializes the current store and saves to path
+    pub fn write_store_to_disk(&self, path: &PathBuf) -> AtomicResult<()> {
+        let mut file_string: String = String::new();
+        for resource in self.all_resources(true) {
+            file_string.push_str(&*resource.to_ad3()?);
         }
+        fs::create_dir_all(path.parent().expect("Could not find parent folder"))
+            .expect("Unable to create dirs");
+        fs::write(path, file_string).expect("Unable to write file");
+        Ok(())
     }
 }
 
@@ -127,12 +63,12 @@ impl Storelike for Store {
             match map.get_mut(&atom.subject) {
                 // Resource exists in map
                 Some(resource) => {
-                    resource.set_propval(atom.property, atom.value, self)?;
+                    resource.set_propval_string(atom.property, &atom.value, self)?;
                 }
                 // Resource does not exist
                 None => {
                     let mut resource = Resource::new(atom.subject.clone());
-                    resource.set_propval(atom.property, atom.value, self)?;
+                    resource.set_propval_string(atom.property, &atom.value, self)?;
                     map.insert(atom.subject, resource);
                 }
             }
@@ -143,24 +79,16 @@ impl Storelike for Store {
         Ok(())
     }
 
-    fn add_resource_opts(
-        &self,
-        resource: &Resource,
-        check_required_props: bool,
-        update_index: bool,
-        overwrite_existing: bool,
-    ) -> AtomicResult<()> {
-        if check_required_props {
-            resource.check_required_props(self)?;
-        }
-        if !overwrite_existing {
-            let subject = resource.get_subject();
-            if let Some(_r) = self.hashmap.lock().unwrap().get(subject) {
-                return Err(format!("{} already present, will not overwrite.", subject).into());
-            }
-        }
-        let _ = update_index;
-        // This store has no index, so we don't need to update it.
+    /// Adds a Resource to the store.
+    /// Replaces existing resource with the contents.
+    /// In most cases, you should use `.commit()` instead.
+    fn add_resource(&self, resource: &Resource) -> AtomicResult<()> {
+        resource.check_required_props(self)?;
+        self.add_resource_unsafe(resource)?;
+        Ok(())
+    }
+
+    fn add_resource_unsafe(&self, resource: &crate::Resource) -> AtomicResult<()> {
         self.hashmap
             .lock()
             .unwrap()
@@ -168,19 +96,18 @@ impl Storelike for Store {
         Ok(())
     }
 
-    // TODO: Fix this for local stores, include external does not make sense here
-    fn all_resources(&self, _include_external: bool) -> Box<dyn Iterator<Item = Resource>> {
-        Box::new(self.hashmap.lock().unwrap().clone().into_values())
+    fn all_resources(&self, _include_external: bool) -> ResourceCollection {
+        let mut all = Vec::new();
+        for (_subject, resource) in self.hashmap.lock().unwrap().clone().into_iter() {
+            all.push(resource)
+        }
+        all
     }
 
-    fn get_server_url(&self) -> &str {
+    fn get_base_url(&self) -> &str {
         // TODO Should be implemented later when companion functionality is here
-        // https://github.com/atomicdata-dev/atomic-server/issues/6
-        "local:store"
-    }
-
-    fn get_self_url(&self) -> Option<String> {
-        Some(self.get_server_url().into())
+        // https://github.com/joepio/atomic/issues/6
+        "http://localhost"
     }
 
     fn get_default_agent(&self) -> AtomicResult<crate::agents::Agent> {
@@ -212,72 +139,20 @@ impl Storelike for Store {
     fn set_default_agent(&self, agent: crate::agents::Agent) {
         self.default_agent.lock().unwrap().replace(agent);
     }
-
-    fn query(&self, q: &crate::storelike::Query) -> AtomicResult<crate::storelike::QueryResult> {
-        let atoms = self.tpf(
-            None,
-            q.property.as_deref(),
-            q.value.as_ref(),
-            q.include_external,
-        )?;
-
-        // Remove duplicate subjects
-        let mut subjects_deduplicated: Vec<String> = atoms
-            .iter()
-            .map(|atom| atom.subject.clone())
-            .collect::<std::collections::HashSet<String>>()
-            .into_iter()
-            .collect();
-
-        // Sort by subject, better than no sorting
-        subjects_deduplicated.sort();
-
-        // WARNING: Entering expensive loop!
-        // This is needed for sorting, authorization and including nested resources.
-        // It could be skipped if there is no authorization and sorting requirement.
-        let mut resources = Vec::new();
-        for subject in subjects_deduplicated.iter() {
-            // These nested resources are not fully calculated - they will be presented as -is
-            match self.get_resource_extended(subject, true, &q.for_agent) {
-                Ok(resource) => {
-                    resources.push(resource);
-                }
-                Err(e) => match &e.error_type {
-                    crate::AtomicErrorType::NotFoundError => {}
-                    crate::AtomicErrorType::UnauthorizedError => {}
-                    _other => {
-                        return Err(
-                            format!("Error when getting resource in collection: {}", e).into()
-                        )
-                    }
-                },
-            }
-        }
-
-        if let Some(sort) = &q.sort_by {
-            resources = crate::collections::sort_resources(resources, sort, q.sort_desc);
-        }
-        let mut subjects = Vec::new();
-        for r in resources.iter() {
-            subjects.push(r.get_subject().clone())
-        }
-
-        Ok(QueryResult {
-            count: atoms.len(),
-            subjects,
-            resources,
-        })
-    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{agents::ForAgent, urls, Value};
+    use crate::{parse::parse_ad3, urls};
 
     fn init_store() -> Store {
+        let string =
+            String::from("[\"_:test\",\"https://atomicdata.dev/properties/shortname\",\"hi\"]");
         let store = Store::init().unwrap();
         store.populate().unwrap();
+        let atoms = parse_ad3(&string).unwrap();
+        store.add_atoms(atoms).unwrap();
         store
     }
 
@@ -296,6 +171,36 @@ mod test {
         // Should fetch the agent class, since it's not in the store
         let agent = store.get_class(urls::AGENT).unwrap();
         assert_eq!(agent.shortname, "agent")
+    }
+
+    #[test]
+    fn get() {
+        let store = init_store();
+        let my_resource = store.get_resource("_:test").unwrap();
+        let my_value = my_resource
+            .get("https://atomicdata.dev/properties/shortname")
+            .unwrap();
+        println!("My value: {}", my_value);
+        assert!(my_value.to_string() == "hi");
+    }
+
+    #[test]
+    fn validate() {
+        let store = init_store();
+        assert!(store.validate().is_valid())
+    }
+
+    #[test]
+    fn validate_invalid() {
+        let store = init_store();
+        let invalid_ad3 =
+            // 'requires' should be an array, but is a string
+            String::from("[\"_:test\",\"https://atomicdata.dev/properties/requires\",\"Test\"]");
+        let atoms = parse_ad3(&invalid_ad3).unwrap();
+        store.add_atoms(atoms).unwrap_err();
+        // Throws an error before we even need to validate. Which is good. Maybe the validate function should accept something different.
+        // let report = store.validate();
+        // assert!(!report.is_valid());
     }
 
     #[test]
@@ -320,58 +225,47 @@ mod test {
     #[test]
     fn tpf() {
         let store = init_store();
-        let val = &Value::Slug("class".into());
-        let val_url = &Value::AtomicUrl(urls::CLASS.into());
         // All atoms
         let atoms = store.tpf(None, None, None, true).unwrap();
         assert!(atoms.len() > 10);
         // Find by subject
         let atoms = store.tpf(Some(urls::CLASS), None, None, true).unwrap();
-        assert_eq!(atoms.len(), 6);
+        assert!(atoms.len() == 5);
         // Find by value
-        let atoms = store.tpf(None, None, Some(val), true).unwrap();
-        assert_eq!(atoms[0].subject, urls::CLASS);
-        assert_eq!(atoms.len(), 1);
+        let atoms = store.tpf(None, None, Some("class"), true).unwrap();
+        assert!(atoms[0].subject == urls::CLASS);
+        assert!(atoms.len() == 1);
         // Find by property and value
         let atoms = store
-            .tpf(None, Some(urls::SHORTNAME), Some(val), true)
+            .tpf(None, Some(urls::SHORTNAME), Some("class"), true)
             .unwrap();
         assert!(atoms[0].subject == urls::CLASS);
-        assert_eq!(atoms.len(), 1);
+        assert!(atoms.len() == 1);
         // Find item in array
         let atoms = store
-            .tpf(None, Some(urls::IS_A), Some(val_url), true)
+            .tpf(None, Some(urls::IS_A), Some(urls::CLASS), true)
             .unwrap();
-        println!("{:?}", atoms);
-        assert!(atoms.len() > 3, "Find item in array");
+        assert!(atoms.len() > 3);
     }
 
     #[test]
     fn path() {
         let store = init_store();
         let res = store
-            .get_path(
-                "https://atomicdata.dev/classes/Class shortname",
-                None,
-                &ForAgent::Sudo,
-            )
+            .get_path("https://atomicdata.dev/classes/Class shortname", None)
             .unwrap();
         match res {
             crate::storelike::PathReturn::Subject(_) => panic!("Should be an Atom"),
             crate::storelike::PathReturn::Atom(atom) => {
-                assert_eq!(atom.value.to_string(), "class");
+                assert_eq!(atom.value, "class");
             }
         }
         let res = store
-            .get_path(
-                "https://atomicdata.dev/classes/Class requires 0",
-                None,
-                &ForAgent::Sudo,
-            )
+            .get_path("https://atomicdata.dev/classes/Class requires 0", None)
             .unwrap();
         match res {
             crate::storelike::PathReturn::Subject(sub) => {
-                assert_eq!(sub, urls::SHORTNAME);
+                assert_eq!(sub, urls::DESCRIPTION);
             }
             crate::storelike::PathReturn::Atom(_) => panic!("Should be an Subject"),
         }
@@ -386,6 +280,24 @@ mod test {
     }
 
     #[test]
+    fn get_extended_resource() {
+        let store = Store::init().unwrap();
+        store.populate().unwrap();
+        let subject = "https://atomicdata.dev/collections/class?current_page=2";
+        // Should throw, because page 2 is out of bounds for default page size
+        let _wrong_resource = store
+            .get_resource_extended(subject)
+            .unwrap_err();
+        let subject = "https://atomicdata.dev/collections/class?current_page=2&page_size=1";
+        let resource = store
+            .get_resource_extended(subject)
+            .unwrap();
+        let cur_page = resource.get(urls::COLLECTION_CURRENT_PAGE).unwrap().to_int().unwrap();
+        assert_eq!(cur_page, 2);
+        assert_eq!(resource.get_subject(), subject);
+    }
+
+    #[test]
     #[should_panic]
     fn path_fail() {
         let store = init_store();
@@ -393,7 +305,6 @@ mod test {
             .get_path(
                 "https://atomicdata.dev/classes/Class requires isa description",
                 None,
-                &ForAgent::Sudo,
             )
             .unwrap();
     }
@@ -406,7 +317,6 @@ mod test {
             .get_path(
                 "https://atomicdata.dev/classes/Class requires requires",
                 None,
-                &ForAgent::Sudo,
             )
             .unwrap();
     }
