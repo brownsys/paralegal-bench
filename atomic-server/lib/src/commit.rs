@@ -191,7 +191,7 @@ impl Commit {
                 // This should use the _old_ resource, no the new one, as the new one might maliciously give itself write rights.
 
                 // NOTE: (livia) THIS IS THE CORRECT CODE
-                // hierarchy::check_write(store, &resource_old, &validate_for.into())?;
+                hierarchy::check_write(store, &resource_old, &validate_for.into())?;
                 // NOTE: (livia) THIS IS INCORRECT CODE, OR COMMENT OUT ALL TOGETHER
                 // hierarchy::check_write(store, &resource_new, &validate_for.into())?;
             }

@@ -2,12 +2,16 @@
 marker = "resource"
 on_return = true
 
+[["atomic_lib::hierarchy::check_rights"]]
+marker = "check_rights"
+on_argument = [1]
+
 [["atomic_lib::commit::Commit::apply_changes"]]
 marker = "new_resource"
 on_return = true
 
-[["atomic_lib::hierarchy::check_rights"]]
-marker = "check_rights"
+[["atomic_lib::resources::Resource::set_propval"]]
+marker = "new_resource"
 on_argument = [1]
 
 [["atomic_lib::storelike::Storelike::add_resource"]]
@@ -23,9 +27,6 @@ marker = "sink"
 on_argument = [1]
 
 [["atomic_lib::storelike::Storelike::get_resource"]]
-marker = "noinline"
-
-[["atomic_lib::resources::Resource::set_propval"]]
 marker = "noinline"
 
 [["atomic_lib::resources::Resource::get"]]
