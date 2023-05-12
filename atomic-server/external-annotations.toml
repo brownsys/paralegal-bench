@@ -1,3 +1,7 @@
+[["atomic_lib::commit::Commit::into_resource"]]
+marker = "resource"
+on_return = true
+
 [["atomic_lib::storelike::Storelike::get_resource"]]
 marker = "resource"
 on_return = true
@@ -33,9 +37,6 @@ marker = "noinline"
 marker = "noinline"
 
 [["atomic_lib::resources::Resource::get_classes"]]
-marker = "noinline"
-
-[["atomic_lib::commit::Commit::into_resource"]]
 marker = "noinline"
 
 [["atomic_lib::storelike::Storelike::handle_commit"]]
