@@ -39,8 +39,5 @@ marker = "noinline"
 [["atomic_lib::resources::Resource::get_classes"]]
 marker = "noinline"
 
-[["atomic_lib::storelike::Storelike::handle_commit"]]
-marker = "noinline"
-
 [["atomic_lib::plugins::chatroom::after_apply_commit_message"]]
 marker = "noinline"
