@@ -19,6 +19,11 @@ pred deleteUserData[flow: set Ctrl->Src->CallArgument, labels: set Object->Label
 }
 
 test expect {
+    vacuity: {
+        all c : Ctrl | some u : labeled_objects_with_types[c, Object, user, labels], diesel_delete : labeled_objects[CallArgument, db_user, labels] |
+        (flows_to_ctrl[c, u, diesel_delete, flow])
+    } for Flows is sat
+
     properDelete : {
         deleteUserData[flow, labels]
     } for Flows is theorem
