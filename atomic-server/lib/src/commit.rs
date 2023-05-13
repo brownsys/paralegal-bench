@@ -1,7 +1,10 @@
 //! Describe changes / mutations to data
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    f32::consts::E,
+};
 use urls::{SET, SIGNER};
 
 use crate::{
@@ -102,7 +105,6 @@ impl Commit {
             return Err("Subject URL cannot have query parameters".into());
         }
 
-        /*
         if opts.validate_signature {
             let signature = match self.signature.as_ref() {
                 Some(sig) => sig,
@@ -130,7 +132,7 @@ impl Commit {
         if opts.validate_timestamp {
             check_timestamp(self.created_at)?;
         }
-        */
+
         let commit_resource: Resource = self.into_resource(store)?;
         let mut is_new = false;
         // Create a new resource if it doens't exist yet
@@ -186,7 +188,11 @@ impl Commit {
                     )?;
                 }
                 // This should use the _old_ resource, no the new one, as the new one might maliciously give itself write rights.
+
+                // NOTE: (livia) THIS IS THE CORRECT CODE
                 hierarchy::check_write(store, &resource_old, &validate_for.into())?;
+                // NOTE: (livia) THIS IS INCORRECT CODE, OR COMMENT OUT ALL TOGETHER
+                // hierarchy::check_write(store, &resource_new, &validate_for.into())?;
             }
         };
         // Check if all required props are there
