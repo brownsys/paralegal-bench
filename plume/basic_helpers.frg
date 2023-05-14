@@ -2,21 +2,6 @@
 
 open "analysis_result.frg"
 
-sig ErroneousFlow {
-    minimal_subflow: set CallSite->CallArgument
-}
-
-sig IncompleteLabel {
-    missing_labels: set CallArgument->Label
-}
-
-// sig AdditiveRepair {
-//     extra_callsites: set ExtraCallSite, 
-//     extra_callargs: set ExtraCallArgument,
-//     new_flow: set CallSite->CallArgument, 
-//     new_labels: set CallArgument->Label
-// }
-
 fun to_source[c: one Ctrl, o: one Type + Src] : Src {
     {src : Src |
         o in Type and src->o in c.types or o = src
