@@ -1,8 +1,20 @@
 #lang forge
 
-// open "api/comment/like.frg"
-// open "api/comment/mark_and_read.frg"
-open "api/comment/save.frg"
+open "api/createcommentlike.frg"
+// open "api/followcommunity.frg"
+// open "api/login.frg"
+// open "api/createpostlike.frg"
+// open "api/lockpost.frg"
+// open "api/stickypost.frg"
+// open "api_common/get_local_user.frg"
+// open "api_common/get_local_user_opt.frg"
+// open "api_crud/createcomment.frg"
+// open "api_crud/editcomment.frg"
+// open "api_crud/createpost.frg"
+// open "api_crud/deletepost.frg"
+// open "api_crud/editpost.frg"
+// open "apub/comment.frg"
+// open "apub/post.frg"
 
 
 sig ErroneousFlow {

@@ -16,6 +16,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for SaveComment {
   type Response = CommentResponse;
 
+  // #[dfpp::analyze]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,

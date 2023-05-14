@@ -11,10 +11,12 @@ use lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation}
 
 /// Resolves or unresolves a comment report and notifies the moderators of the community
 #[async_trait::async_trait(?Send)]
+
 impl Perform for ResolveCommentReport {
   type Response = CommentReportResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

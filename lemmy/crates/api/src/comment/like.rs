@@ -26,6 +26,7 @@ impl Perform for CreateCommentLike {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

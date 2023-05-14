@@ -42,6 +42,10 @@ on_argument = [0]
 marker = "ban_check"
 on_argument = [0]
 
+[["lemmy_apub::activities::verify_person_in_community"]]
+marker = "ban_check"
+on_argument = [1]
+
 [["lemmy_api_common::utils::check_user_valid"]]
 marker = "delete_check"
 on_argument = [2]

@@ -19,6 +19,7 @@ use lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation}
 impl Perform for CreateCommentReport {
   type Response = CommentReportResponse;
 
+  // #[dfpp::analyze]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,

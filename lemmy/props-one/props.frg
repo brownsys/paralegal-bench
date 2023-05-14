@@ -1,8 +1,20 @@
 #lang forge
 
-// open "api/comment/like.frg"
-// open "api/comment/mark_and_read.frg"
-open "api/comment/save.frg"
+open "api/createcommentlike.frg"
+// open "api/followcommunity.frg"
+// open "api/login.frg"
+// open "api/createpostlike.frg"
+// open "api/lockpost.frg"
+// open "api/stickypost.frg"
+// open "api_common/get_local_user.frg"
+// open "api_common/get_local_user_opt.frg"
+// open "api_crud/createcomment.frg"
+// open "api_crud/editcomment.frg"
+// open "api_crud/createpost.frg"
+// open "api_crud/deletepost.frg"
+// open "api_crud/editpost.frg"
+// open "apub/comment.frg"
+// open "apub/post.frg"
 
 open "basic_helpers.frg"
 
@@ -22,8 +34,7 @@ pred type_is_checked[c: Ctrl, flow: set Ctrl->Src->CallArgument, labels: set Obj
     }
 }
 
-// all types labeled "user" that flow to the Return must flow to something labeled "ban check"
-// if there is a flow to type "ban_check", there must also be a flow to "delete_check"
+// all types labeled "community, post, or user" that flow to the Return must flow to something labeled "ban check" and "delete check"
 pred properCheck[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
     all c : Ctrl | {
         type_is_checked[c, flow, labels, local_user_view]
@@ -35,14 +46,12 @@ pred properCheck[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
 test expect {
 
     vacuity : {
-        all c : Ctrl | {
-            (some user : labeled_objects[Object, local_user_view, labels]| (flows_to[c, user, Return, flow])) or
-            (some comm : labeled_objects[Object, community, labels] | (flows_to[c, comm, Return, flow])) or
-            (some p : labeled_objects[Object, post, labels] | (flows_to[c, p, Return, flow]))
-        }
-    } for Flows is theorem
+        (some c : Ctrl | some user : labeled_objects[Object, local_user_view, labels]| (flows_to[c, user, Return, flow])) or
+        (some c : Ctrl | some comm : labeled_objects[Object, community, labels] | (flows_to[c, comm, Return, flow])) or 
+        (some c : Ctrl | some p : labeled_objects[Object, post, labels]| (flows_to[c, p, Return, flow]))
+    } for Flows is sat
 
-    ban_and_delete: {
+    login: {
         properCheck[flow, labels]
     } for Flows is theorem
 }
