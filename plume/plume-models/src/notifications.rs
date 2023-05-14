@@ -171,7 +171,6 @@ impl Notification {
         }
     }
 
-    #[dfpp::label(to_delete, arguments = [0])]
     pub fn delete(&self, conn: &Connection) -> Result<()> {
         diesel::delete(self)
             .execute(conn)
