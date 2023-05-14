@@ -17,5 +17,5 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-*/analysis-result.frg
-*/analysis-result.info.json
+**/analysis_result.frg
+**/analysis_result.info.json
