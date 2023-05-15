@@ -17,10 +17,10 @@ pred deleteUserData[flow_set: set Ctrl->Src->CallArgument, labels: set Object->L
 }
 
 test expect {
-    // vacuity: {
-    //     all c : Ctrl | some u : labeled_objects_with_types[c, Object, user, labels] | some deleter: labeled_objects[CallArgument, to_delete, labels] | 
-    //     (flows_to_unmodified[c, u, deleter, flow])
-    // } for Flows is sat
+    vacuity: {
+        all c : Ctrl | some u : labeled_objects_with_types[c, Object, user, labels] | some deleter: labeled_objects[CallArgument, to_delete, labels] | 
+        (flows_to_unmodified[c, u, deleter, flow])
+    } for Flows is sat
 
     properDelete : {
         deleteUserData[flow, labels]
