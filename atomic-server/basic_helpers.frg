@@ -3,7 +3,7 @@
 open "analysis_result.frg"
 
 sig ErroneousFlow {
-    minimal_subflow: set CallSite->CallArgument
+    minimal_subflow: set Src->Sink
 }
 
 sig IncompleteLabel {
