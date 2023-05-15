@@ -1,48 +1,39 @@
 #lang forge
 
 // open "api/comment/like.frg"
-// open "api/comment/mark_and_read.frg"
-open "api/comment/save.frg"
+// open "api/comment/mark_as_read.frg"
+// open "api/comment/save.frg"
+open "api/post/like.frg"
 
 open "basic_helpers.frg"
 
-// obj flows to an argument labeled ls, and there's a control flow edge between the argument and return
-pred flows_to_label[c: Ctrl, flow: set Ctrl->Src->CallArgument, labels: set Object->Label, obj: Object, ls: Label] {
-    some cs : labeled_objects[CallArgument, ls, labels] | {
-        flows_to_ctrl[c, obj, cs, flow]
-        flows_to_ctrl_return[c, cs.arg_call_site, flow]
-    }
-}
-
-// all objects labeled ls must flow to labels ban_check and delete_check
-pred type_is_checked[c: Ctrl, flow: set Ctrl->Src->CallArgument, labels: set Object->Label, ls: Label] {
-    all obj : labeled_objects[Object, ls, labels]| (flows_to[c, obj, Return, flow]) implies {
-        flows_to_label[c, flow, labels, obj, ban_check]
-        flows_to_label[c, flow, labels, obj, delete_check]
-    }
-}
-
-// all types labeled "user" that flow to the Return must flow to something labeled "ban check"
-// if there is a flow to type "ban_check", there must also be a flow to "delete_check"
-pred properCheck[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
+pred properBan[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
     all c : Ctrl | {
-        type_is_checked[c, flow, labels, local_user_view]
-        type_is_checked[c, flow, labels, community]
-        type_is_checked[c, flow, labels, post]
+        some fp : (fp_fun_rel.c) | {
+            some ban_cs : labeled_objects[CallSite, ban_check, labels] | {
+                flows_to[c, fp, ban_cs, flow]
+            }
+        }
     }
+}
+
+pred properDelete[flow: set Ctrl->Src->CallArgument, labels: set Object->Label] {
+    all c : Ctrl | {
+        some fp : (fp_fun_rel.c) | {
+            some delete_cs : labeled_objects[CallSite, delete_check, labels] | {
+                flows_to[c, fp, delete_cs, flow]
+             }
+        }
+    }  
 }
 
 test expect {
 
-    vacuity : {
-        all c : Ctrl | {
-            (some user : labeled_objects[Object, local_user_view, labels]| (flows_to[c, user, Return, flow])) or
-            (some comm : labeled_objects[Object, community, labels] | (flows_to[c, comm, Return, flow])) or
-            (some p : labeled_objects[Object, post, labels] | (flows_to[c, p, Return, flow]))
-        }
+    ban: {
+        properBan[flow, labels]
     } for Flows is theorem
 
-    ban_and_delete: {
-        properCheck[flow, labels]
+    delete: {
+        properBan[flow, labels]
     } for Flows is theorem
 }

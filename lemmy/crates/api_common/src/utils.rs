@@ -40,11 +40,6 @@ use rosetta_i18n::{Language, LanguageId};
 use std::str::FromStr;
 use tracing::warn;
 
-pub fn apply_localuserview_label<T>(t: T) -> T { t }
-pub fn apply_post_label<T>(t: T) -> T { t }
-pub fn apply_comment_label<T>(t: T) -> T { t }
-pub fn apply_community_label<T>(t: T) -> T { t }
-
 pub async fn blocking<F, T>(pool: &DbPool, f: F) -> Result<T, LemmyError>
 where
   F: FnOnce(&diesel::PgConnection) -> T + Send + 'static,
@@ -125,7 +120,6 @@ pub async fn mark_post_as_unread(
 }
 
 #[tracing::instrument(skip_all)]
-// #[dfpp::analyze]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,
   pool: &DbPool,
@@ -136,8 +130,7 @@ pub async fn get_local_user_view_from_jwt(
     .claims;
   let local_user_id = LocalUserId(claims.sub);
   let local_user_view =
-    apply_localuserview_label(
-      blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??);
+    blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??;
   check_user_valid(
     local_user_view.person.banned,
     local_user_view.person.ban_expires,
@@ -175,7 +168,6 @@ pub async fn get_local_user_view_from_jwt_opt(
 }
 
 #[tracing::instrument(skip_all)]
-// #[dfpp::analyze]
 pub async fn get_local_user_settings_view_from_jwt_opt(
   jwt: Option<&Sensitive<String>>,
   pool: &DbPool,
@@ -188,10 +180,10 @@ pub async fn get_local_user_settings_view_from_jwt_opt(
         .claims;
       let local_user_id = LocalUserId(claims.sub);
       let local_user_view =
-        apply_localuserview_label(blocking(pool, move |conn| {
+        blocking(pool, move |conn| {
         LocalUserSettingsView::read(conn, local_user_id)
       })
-      .await??);
+      .await??;
       check_user_valid(
         local_user_view.person.banned,
         local_user_view.person.ban_expires,

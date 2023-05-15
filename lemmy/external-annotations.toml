@@ -1,51 +1,24 @@
-[["lemmy_api_common::utils::get_local_user_view_from_jwt"]]
-marker = "local_user_view"
-on_return = true
-
-[["lemmy_api_common::utils::apply_localuserview_label"]]
-marker = "local_user_view"
-on_return = true
-
-[["lemmy_api_common::utils::apply_post_label"]]
-marker = "post"
-on_return = true
-
-[["lemmy_api_common::utils::get_post"]]
-marker = "post"
-on_return = true
-
-[["lemmy_api_common::utils::apply_comment_label"]]
-marker = "comment"
-on_return = true
-
-[["lemmy_api_common::utils::apply_community_label"]]
-marker = "community"
-on_return = true
-
-[["lemmy_apub::activities::community::announce::GetCommunity::get_community"]]
-marker = "community"
-on_return = true
-
 [["lemmy_api_common::utils::check_community_deleted_or_removed"]]
 marker = "delete_check"
-on_argument = [0]
-
-[["lemmy_apub::activities::check_community_deleted_or_removed"]]
-marker = "delete_check"
-on_argument = [0]
+on_return = true
 
 [["lemmy_api_common::utils::check_community_ban"]]
+marker = "ban_check"
+on_return = true
+
+[["lemmy_api_common::utils::check_user_valid"]]
 marker = "ban_check"
 on_argument = [0]
 
 [["lemmy_api_common::utils::check_user_valid"]]
-marker = "ban_check"
+marker = "delete_check"
+on_argument = [2]
+
+# apub specific
+[["lemmy_apub::activities::check_community_deleted_or_removed"]]
+marker = "delete_check"
 on_argument = [0]
 
 [["lemmy_apub::activities::verify_person_in_community"]]
 marker = "ban_check"
 on_argument = [1]
-
-[["lemmy_api_common::utils::check_user_valid"]]
-marker = "delete_check"
-on_argument = [2]

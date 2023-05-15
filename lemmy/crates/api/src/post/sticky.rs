@@ -7,8 +7,7 @@ use lemmy_api_common::{
     check_community_ban,
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
-    is_mod_or_admin,
-    apply_post_label,
+    is_mod_or_admin
   },
 };
 use lemmy_apub::{
@@ -42,7 +41,7 @@ impl Perform for StickyPost {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let post_id = data.post_id;
-    let orig_post = apply_post_label(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
+    let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
 
     check_community_ban(
       local_user_view.person.id,

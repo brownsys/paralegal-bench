@@ -8,8 +8,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     check_post_deleted_or_removed,
     get_local_user_view_from_jwt,
-    get_post,
-    apply_community_label
+    get_post
   },
 };
 use lemmy_apub::{

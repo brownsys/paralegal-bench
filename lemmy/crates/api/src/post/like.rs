@@ -8,9 +8,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     check_downvotes_enabled,
     get_local_user_view_from_jwt,
-    mark_post_as_read,
-    apply_localuserview_label,
-    apply_post_label
+    mark_post_as_read
   },
 };
 use lemmy_apub::{
@@ -35,7 +33,7 @@ impl Perform for CreatePostLike {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -43,15 +41,15 @@ impl Perform for CreatePostLike {
   ) -> Result<PostResponse, LemmyError> {
     let data: &CreatePostLike = self;
     let local_user_view =
-      apply_localuserview_label(get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?);
+      get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     // Don't do a downvote if site has downvotes disabled
     check_downvotes_enabled(data.score, context.pool()).await?;
 
     // Check for a community ban
     let post_id = data.post_id;
-    let post: ApubPost = apply_post_label(blocking(context.pool(), move |conn| Post::read(conn, post_id))
-      .await??)
+    let post: ApubPost = blocking(context.pool(), move |conn| Post::read(conn, post_id))
+      .await??
       .into();
 
     check_community_ban(local_user_view.person.id, post.community_id, context.pool()).await?;

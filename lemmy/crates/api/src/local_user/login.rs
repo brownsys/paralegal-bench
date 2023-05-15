@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use bcrypt::verify;
 use lemmy_api_common::{
   person::{Login, LoginResponse},
-  utils::{blocking, check_registration_application, apply_localuserview_label, check_user_valid},
+  utils::{blocking, check_registration_application, check_user_valid},
 };
 use lemmy_db_schema::source::site::Site;
 use lemmy_db_views::structs::LocalUserView;
@@ -28,10 +28,10 @@ impl Perform for Login {
     let username_or_email = data.username_or_email.clone();
     // TODO: open a bug report for this.
     // problem with async blocking function (we use a type walk, need to go handle impl Future structure to infer the type here)
-    let local_user_view = apply_localuserview_label(blocking(context.pool(), move |conn| {
+    let local_user_view = blocking(context.pool(), move |conn| {
       LocalUserView::find_by_email_or_name(conn, &username_or_email)
     })
-    .await?)
+    .await?
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_that_username_or_email"))?;
 
     // Verify the password

@@ -6,8 +6,7 @@ use lemmy_api_common::{
     blocking,
     check_community_ban,
     check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
-    apply_post_label
+    get_local_user_view_from_jwt
   },
 };
 use lemmy_apub::protocol::activities::{
@@ -54,7 +53,7 @@ impl PerformCrud for EditPost {
     }
 
     let post_id = data.post_id;
-    let orig_post = apply_post_label(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
+    let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
 
     check_community_ban(
       local_user_view.person.id,

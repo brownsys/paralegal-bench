@@ -9,8 +9,7 @@ use lemmy_api_common::{
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
     honeypot_check,
-    mark_post_as_read,
-    apply_post_label
+    mark_post_as_read
   },
 };
 use lemmy_apub::{
@@ -54,7 +53,7 @@ impl PerformCrud for CreatePost {
     context: &Data<LemmyContext>,
     websocket_id: Option<ConnectionId>,
   ) -> Result<PostResponse, LemmyError> {
-    let data: &CreatePost = apply_post_label(&self);
+    let data: &CreatePost = self;
     let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
