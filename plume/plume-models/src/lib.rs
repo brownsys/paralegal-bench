@@ -33,7 +33,6 @@ compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for th
 compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
 
 #[cfg(all(feature = "sqlite", not(feature = "postgres")))]
-// #[dfpp::label(conn)]
 pub type Connection = diesel::SqliteConnection;
 
 #[cfg(all(not(feature = "sqlite"), feature = "postgres"))]

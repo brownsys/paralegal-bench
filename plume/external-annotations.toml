@@ -1,3 +1,7 @@
 [["diesel::delete"]]
-marker = "db_user"
+marker = "to_delete"
 on_argument = [0]
+
+[["activitystreams::activity::Delete::new"]]
+marker = "to_delete"
+on_argument = [0, 1]

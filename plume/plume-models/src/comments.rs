@@ -197,7 +197,6 @@ impl Comment {
         Ok(())
     }
 
-    #[dfpp::label(to_delete, arguments = [0])]
     pub fn build_delete(&self, conn: &Connection) -> Result<Delete> {
         let mut tombstone = Tombstone::new();
         tombstone.set_id(

@@ -357,7 +357,6 @@ impl Blog {
             .and_then(|c| c.url().ok())
     }
 
-    #[dfpp::label(to_delete, arguments = [0])]
     pub fn delete(&self, conn: &Connection) -> Result<()> {
         for post in Post::get_for_blog(conn, self)? {
             post.delete(conn)?;

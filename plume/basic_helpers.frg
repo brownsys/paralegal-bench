@@ -2,24 +2,9 @@
 
 open "analysis_result.frg"
 
-sig ErroneousFlow {
-    minimal_subflow: set CallSite->CallArgument
-}
-
-sig IncompleteLabel {
-    missing_labels: set CallArgument->Label
-}
-
-// sig AdditiveRepair {
-//     extra_callsites: set ExtraCallSite, 
-//     extra_callargs: set ExtraCallArgument,
-//     new_flow: set CallSite->CallArgument, 
-//     new_labels: set CallArgument->Label
-// }
-
-fun to_source[c: one Ctrl, o: one Type + Src] : Src {
+fun to_source[c: one Ctrl, o: one Type + Src + CallSite] : Src {
     {src : Src |
-        o in Type and src->o in c.types or o = src
+        o in Type and src->o in c.types or o = src or src->o in arg_call_site
     }
 }
 
@@ -35,7 +20,23 @@ pred unconditional[c: one Ctrl, cs: one CallSite] {
     no c.ctrl_flow.cs
 }
 
-pred flows_to[cs: Ctrl, o: one Type + Src, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+pred flows_to_unmodified[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+	some c: cs |
+    let a = to_source[c, o] | {
+        some c.flow_set[a] // a exists in cs
+        and a -> f in c.flow_set
+    }
+}
+
+pred flows_to_without[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), without: (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+    some c: cs |
+    let a = to_source[c, o] | {
+        some c.flow_set[a] // a exists in cs
+        and (a -> f in ^(c.flow_set + arg_call_site - (without->CallSite + CallArgument->without)))
+    }
+}
+
+pred flows_to[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
     some c: cs |
     let a = to_source[c, o] | {
         some c.flow_set[a] // a exists in cs
@@ -43,7 +44,7 @@ pred flows_to[cs: Ctrl, o: one Type + Src, f : (CallArgument + CallSite), flow_s
     }
 }
 
-pred flows_to_ctrl[cs: Ctrl, o: Object, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+pred flows_to_ctrl[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
     some c: cs |
     some a : Src | {
         o = a or o in Type and a->o in c.types
@@ -78,5 +79,3 @@ pred always_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite)
 fun arguments[f : CallSite] : set CallArgument {
     arg_call_site.f
 }
-
-

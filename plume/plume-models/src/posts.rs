@@ -100,7 +100,6 @@ impl Post {
         Ok(post)
     }
 
-    #[dfpp::label(to_delete, arguments = [0])]
     pub fn delete(&self, conn: &Connection) -> Result<()> {
         for m in Mention::list_for_post(conn, self.id)? {
             m.delete(conn)?;
