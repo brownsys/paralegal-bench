@@ -10,7 +10,7 @@ pred deleteUserData[flow_set: set Ctrl->Src->CallArgument, labels: set Object->L
     implies {
         all user_type : labeled_objects[Type, user_data, labels] | { // for all Types representing user data
 			some arg : labeled_objects[CallArgument, to_delete, labels] | {
-				flows_to_ctrl[c, user_type, arg, flow_set] // that data is deleted
+				flows_to_unmodified[c, user_type, arg, flow_set] // that data is deleted
 			}
 		}
     }
@@ -19,17 +19,16 @@ pred deleteUserData[flow_set: set Ctrl->Src->CallArgument, labels: set Object->L
 test expect {
     vacuity: {
         all c : Ctrl | some u : labeled_objects_with_types[c, Object, user, labels] | some deleter: labeled_objects[CallArgument, to_delete, labels] | 
-        (flows_to[c, u, deleter, flow])
+        (flows_to_unmodified[c, u, deleter, flow])
     } for Flows is sat
 
     properDelete : {
         deleteUserData[flow, labels]
     } for Flows is theorem
 }
-// run {} for Flows
 
 // sig ErroneousFlow {
-//     minimal_subflow: set CallSite->CallArgument
+//     minimal_subflow: set Src->Sink
 // }
 
 // pred find_erroneous_my_pred_int[ef: ErroneousFlow] {
@@ -48,3 +47,9 @@ test expect {
 // run {
 //     find_erroneous_my_pred
 // } for 1 ErroneousFlow for Flows
+
+// test expect {
+// 	error: {
+// 		find_erroneous_my_pred
+// 	} for 1 ErroneousFlow for Flows is unsat
+// }
