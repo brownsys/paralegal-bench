@@ -1,13 +1,13 @@
 [["atomic_lib::commit::Commit"]]
-marker = "resource"
+marker = "commit"
 on_return = true
 
 [["atomic_lib::commit::Commit::into_resource"]]
-marker = "a"
+marker = "resource"
 on_return = true
 
 [["atomic_lib::storelike::Storelike::get_resource"]]
-marker = "a"
+marker = "resource"
 on_return = true
 
 [["atomic_lib::hierarchy::check_rights"]]
