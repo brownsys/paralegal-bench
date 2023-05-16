@@ -14,7 +14,8 @@ pred checks_old_rights_before_storage[flow_set: set Ctrl->Src->CallArgument] {
 		implies {
 			some chck : labeled_objects[CallArgument, check_rights, labels], res : labeled_objects[Object, resource, labels] | {
 				flows_to[c, com, res, flow_set]
-				flows_to_without[c, res, chck, labeled_objects[Object, new_resource, labels], flow_set]
+				flows_to[c, res, chck, flow_set]
+				all new : labeled_objects[Object, new_resource, labels] | never_happens_before[c, res, new, chck, flow_set]
 				// flows_to_ctrl[c, chck, f, flow_set] // early return control flow influence using ? on downstream fn calls does not appear in control flow. 
 			}
 		}
