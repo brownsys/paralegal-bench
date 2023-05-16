@@ -243,6 +243,7 @@ fn print_results_for_property<W: std::io::Write>(
 	for result in versions.clone().into_iter() {
 		write!(w, "| {:^body_cell_width$} ", format!("{:?}", result.verify_time))?;
 	}
+	writeln!(w, "")?;
 	writeln!(w, "")
 }
 
