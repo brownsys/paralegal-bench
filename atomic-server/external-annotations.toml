@@ -1,3 +1,6 @@
+[["atomic_lib::commit::Commit"]]
+marker = "commit"
+
 [["atomic_lib::commit::Commit::into_resource"]]
 marker = "resource"
 on_return = true
@@ -12,7 +15,7 @@ on_argument = [1]
 
 [["atomic_lib::resources::Resource::set_propval"]]
 marker = "new_resource"
-on_argument = [1]
+on_argument = [0]
 
 [["atomic_lib::storelike::Storelike::add_resource"]]
 marker = "sink"
