@@ -35,3 +35,9 @@ async-trait = "0.1.53"
 captcha = "0.0.9"
 anyhow = "1.0.56"
 tracing = "0.1.32"
+
+[features]
+default = []
+
+comment-like = []
+comment-mark-as-read = []

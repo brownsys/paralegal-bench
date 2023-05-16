@@ -1,0 +1,264 @@
+extern crate clap;
+extern crate indicatif;
+use clap::Parser;
+
+use indicatif::ProgressBar;
+
+use std::collections::HashSet;
+use std::fmt::{Display, Write};
+use std::str::FromStr;
+
+const CONFIGURATIONS: &'static [Property] = &[
+    Property::Delete,
+    Property::Banned,
+];
+
+// TODO: Update these with the feature flags to turn on all of the controllers
+const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
+	"comment-like", 
+	"comment-mark-as-read", 
+];
+
+/// Batch executor for the evaluation of our 2023 Eurosys paper.
+///
+/// Be aware that this tool does not install dfpp itself but assumes the latest
+/// version is already present and in the $PATH.
+#[derive(Parser)]
+struct Args {
+    /// Print complete error messages for called programs on failure (implies
+    /// `--verbose-commands`)
+    #[clap(long)]
+    verbose: bool,
+
+    /// Print the shell commands we are running
+    #[clap(long)]
+    verbose_commands: bool,
+
+    /// Controllers to run in api
+    ctrlers: Vec<String>,
+
+    /// Location of the Lemmy repo
+    #[clap(long, default_value = "..")]
+    directory: std::path::PathBuf,
+}
+
+impl Args {
+    fn verbose_commands(&self) -> bool {
+        self.verbose || self.verbose_commands
+    }
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+enum Property {
+    Delete,
+    Banned,
+}
+
+impl Display for Property {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str(match self {
+            Property::Delete => "del",
+            Property::Banned => "ban",
+        })
+    }
+}
+
+impl FromStr for Property {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "del" => Ok(Property::Delete),
+            "ban" => Ok(Property::Banned),
+            _ => Err(format!("Unknown property type {s}")),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum RunResult {
+    Success,
+    CompilationError,
+    CheckError,
+}
+
+impl From<bool> for RunResult {
+    fn from(b: bool) -> Self {
+        if b {
+            RunResult::Success
+        } else {
+            RunResult::CheckError
+        }
+    }
+}
+
+impl std::fmt::Display for RunResult {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        use std::fmt::Alignment;
+        let width = formatter.width().unwrap_or(2);
+        let (before, after) = match formatter.align() {
+            None => (0, width - 2),
+            _ if width < 2 => (0, 0),
+            Some(Alignment::Left) => (0, width - 2),
+            Some(Alignment::Right) => (width - 2, 0),
+            Some(Alignment::Center) => {
+                let left = (width - 2) / 2;
+                (left, width - 2 - left)
+            }
+        };
+        let fill_chr = formatter.fill();
+        for _ in 0..before {
+            formatter.write_char(fill_chr)?;
+        }
+        match self {
+            RunResult::Success => formatter.write_str("✅"),
+            RunResult::CompilationError => formatter.write_str("️🚧"),
+            RunResult::CheckError => formatter.write_str("❌"),
+        }?;
+        for _ in 0..after {
+            formatter.write_char(fill_chr)?;
+        }
+        Ok(())
+    }
+}
+
+fn run_edit(
+    typ: Property,
+    ctrlers: &[String],
+    cd: &std::path::Path,
+    verbose: bool,
+    verbose_commands: bool,
+    progress: &ProgressBar,
+) -> Vec<RunResult> {
+    use std::process::*;
+
+    ctrlers
+        .iter()
+        .map(|ctrler| {
+            let mut dfpp_cmd = Command::new("cargo");
+            dfpp_cmd.current_dir(cd).arg("dfpp").stdin(Stdio::null());
+
+			// TODO: change this to be the new target name.
+			dfpp_cmd.args(&["--target", "lemmy_api"]);
+
+            let external_ann_file_name = format!("external-annotations.toml");
+            let mut external_ann_file: std::path::PathBuf = cd.into();
+            external_ann_file.push(&external_ann_file_name);
+            if external_ann_file.exists() {
+                dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
+            }
+            dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
+            if !verbose {
+                dfpp_cmd.stderr(Stdio::null()).stdout(Stdio::null());
+            }
+            if verbose_commands {
+                progress.suspend(|| println!("Executing compile command: {:?}", dfpp_cmd));
+            }
+            let status = dfpp_cmd.status().unwrap();
+            progress.inc(1);
+            // if !status.success() {
+            //     progress.inc(1);
+            //     return RunResult::CompilationError;
+            // } // NOTE: This is commented out because `cargo dfpp` always returns error for some reason, but it works (usually).
+
+            let propfile = format!("props/{typ}-props.frg");
+            let mut racket_cmd = Command::new("racket");
+            racket_cmd
+                .current_dir(cd)
+                .arg(propfile)
+                .stdin(Stdio::null());
+            if !verbose {
+                racket_cmd.stderr(Stdio::null()).stdout(Stdio::null());
+            }
+            if verbose_commands {
+                progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
+            }
+            let status = racket_cmd.status().unwrap();
+            progress.inc(1);
+            if status.success() {
+                RunResult::Success
+            } else {
+                RunResult::CheckError
+            }
+        })
+        .collect()
+}
+
+fn print_results_for_property<W: std::io::Write>(
+    mut w: W,
+    num_versions: usize,
+    typ: Property,
+    args: &Args,
+    result: (&Property, Vec<RunResult>),
+) -> std::io::Result<()> {
+    let head_cell_width = 5;
+    let body_cell_width = 20;
+
+    write!(w, " {:head_cell_width$} ", typ.to_string())?;
+    for version in args.ctrlers.iter() {
+        write!(w, "| {:body_cell_width$} ", version)?
+    }
+    writeln!(w, "")?;
+
+    write!(w, "-{:-<head_cell_width$}-", "")?;
+    for _ in 0..args.ctrlers.len() + 1 {
+        write!(w, "+-{:-<body_cell_width$}-", "")?
+    }
+    writeln!(w, "")?;
+
+    let (edit, versions) = result;
+	write!(w, " {:head_cell_width$} ", typ.to_string())?;
+	for (i, result) in versions.into_iter().enumerate() {
+		write!(w, "| {:^body_cell_width$} ", result)?;
+	}
+    writeln!(w, "")
+}
+
+fn main() {
+    use std::io::Write;
+    let args = {
+        let mut args = Args::parse();
+        if args.ctrlers.is_empty() {
+            println!("INFO: No specification variants to run given, running all known ones");
+            args.ctrlers = ALL_KNOWN_CTRLERS
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect();
+        }
+        args
+    };
+
+    let num_versions = args.ctrlers.len();
+
+    let num_configurations = CONFIGURATIONS
+        .len()
+        * (2 // compile 
+            * num_versions);
+
+    let progress = ProgressBar::new(num_configurations as u64).with_style(
+        indicatif::ProgressStyle::default_bar()
+            .template("{msg:11} {bar:40} {pos:>3}/{len:3}")
+            .unwrap(),
+    );
+
+    let mut w = std::io::stdout();
+    for &typ in CONFIGURATIONS {
+        let results = (
+                    &typ,
+                    run_edit(
+                        typ,
+                        args.ctrlers.as_slice(),
+                        &args.directory,
+                        args.verbose,
+                        args.verbose_commands(),
+                        &progress,
+                    ),
+                );
+        progress.suspend(|| {
+            print_results_for_property(&mut w, num_versions, typ, &args, results)
+                .unwrap()
+        })
+    }
+    progress.finish_and_clear();
+}
