@@ -7,6 +7,7 @@ use indicatif::ProgressBar;
 use std::collections::HashSet;
 use std::fmt::{Display, Write};
 use std::str::FromStr;
+use std::time::{Duration, SystemTime};
 
 const CONFIGURATIONS: &'static [Property] = &[
     Property::Delete,
@@ -76,23 +77,30 @@ impl FromStr for Property {
 }
 
 #[derive(Clone, Copy)]
-enum RunResult {
+struct RunResult {
+	error: RunError,
+	analyze_time: Duration,
+	verify_time: Duration,
+}
+
+#[derive(Clone, Copy)]
+enum RunError {
     Success,
     CompilationError,
     CheckError,
 }
 
-impl From<bool> for RunResult {
-    fn from(b: bool) -> Self {
-        if b {
-            RunResult::Success
-        } else {
-            RunResult::CheckError
-        }
-    }
-}
+// impl From<bool> for RunResult {
+//     fn from(b: bool) -> Self {
+//         if b {
+//             RunResult::Success
+//         } else {
+//             RunResult::CheckError
+//         }
+//     }
+// }
 
-impl std::fmt::Display for RunResult {
+impl std::fmt::Display for RunError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         use std::fmt::Alignment;
         let width = formatter.width().unwrap_or(2);
@@ -111,9 +119,9 @@ impl std::fmt::Display for RunResult {
             formatter.write_char(fill_chr)?;
         }
         match self {
-            RunResult::Success => formatter.write_str("✅"),
-            RunResult::CompilationError => formatter.write_str("️🚧"),
-            RunResult::CheckError => formatter.write_str("❌"),
+            RunError::Success => formatter.write_str("✅"),
+            RunError::CompilationError => formatter.write_str("️🚧"),
+            RunError::CheckError => formatter.write_str("❌"),
         }?;
         for _ in 0..after {
             formatter.write_char(fill_chr)?;
@@ -154,7 +162,9 @@ fn run_edit(
             if verbose_commands {
                 progress.suspend(|| println!("Executing compile command: {:?}", dfpp_cmd));
             }
+			let mut now = SystemTime::now();
             let status = dfpp_cmd.status().unwrap();
+			let analyze_time = now.elapsed().unwrap();
             progress.inc(1);
             // if !status.success() {
             //     progress.inc(1);
@@ -173,12 +183,22 @@ fn run_edit(
             if verbose_commands {
                 progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
             }
+			now = SystemTime::now();
             let status = racket_cmd.status().unwrap();
+			let verify_time = now.elapsed().unwrap();
             progress.inc(1);
             if status.success() {
-                RunResult::Success
+                RunResult{
+					analyze_time,
+					verify_time,
+					error: RunError::Success
+				}
             } else {
-                RunResult::CheckError
+                RunResult{
+					analyze_time,
+					verify_time,
+					error: RunError::CheckError
+				}
             }
         })
         .collect()
@@ -206,12 +226,24 @@ fn print_results_for_property<W: std::io::Write>(
     }
     writeln!(w, "")?;
 
-    let (edit, versions) = result;
-	write!(w, " {:head_cell_width$} ", typ.to_string())?;
-	for (i, result) in versions.into_iter().enumerate() {
-		write!(w, "| {:^body_cell_width$} ", result)?;
+    let (_, versions) = result;
+	write!(w, " {:head_cell_width$} ", "pass?")?;
+	for result in versions.clone().into_iter() {
+		write!(w, "| {:^body_cell_width$} ", result.error)?;
 	}
-    writeln!(w, "")
+    writeln!(w, "")?;
+
+	write!(w, " {:head_cell_width$} ", "atime")?;
+	for result in versions.clone().into_iter() {
+		write!(w, "| {:^body_cell_width$} ", format!("{:?}", result.analyze_time))?;
+	}
+	writeln!(w, "")?;
+
+	write!(w, " {:head_cell_width$} ", "vtime")?;
+	for result in versions.clone().into_iter() {
+		write!(w, "| {:^body_cell_width$} ", format!("{:?}", result.verify_time))?;
+	}
+	writeln!(w, "")
 }
 
 fn main() {
