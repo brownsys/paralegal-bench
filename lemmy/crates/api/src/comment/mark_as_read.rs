@@ -14,7 +14,7 @@ impl Perform for MarkCommentAsRead {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-mark-as-read", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

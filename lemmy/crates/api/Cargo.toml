@@ -74,3 +74,8 @@ webmention = "0.4.0"
 
 [build-dependencies]
 rosetta-build = "0.1.2"
+
+[features]
+default = []
+comment-like = []
+comment-mark-as-read = []

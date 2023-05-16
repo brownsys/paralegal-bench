@@ -12,7 +12,7 @@ sig IncompleteLabel {
 
 fun to_source[c: one Ctrl, o: one Type + Src + CallSite] : Src {
     {src : Src |
-        o in Type and src->o in c.types or o = src or src->o in arg_call_site
+        o in Type and src->o in c.types or o = src or o->src in arg_call_site
     }
 }
 
@@ -76,12 +76,21 @@ fun labeled_objects_with_types[cs: Ctrl, obs: Object, ls: Label, labels_set: set
 pred always_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite), next: (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
     not (
         some c: cs | 
-        some a: Object | {
-            o = a or o in Type and a->o in c.types
+        let a = to_source[c, o] | {
             a -> next in ^(c.flow_set + arg_call_site - 
                 (first->CallSite + CallArgument->first))
         }
     )
+}
+
+// verifies that for an object o
+pred never_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite), next: (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+	not (
+		some c: cs | {
+			flows_to[c, o, first, flow_set]
+			flows_to[c, first, next, flow_set]
+		}
+	)
 }
 
 fun arguments[f : CallSite] : set CallArgument {
