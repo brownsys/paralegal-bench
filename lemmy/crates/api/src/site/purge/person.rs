@@ -1,19 +1,19 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   request::purge_image_from_pictrs,
   site::{PurgeItemResponse, PurgePerson},
   utils::{blocking, get_local_user_view_from_jwt, is_admin, purge_image_posts_for_person},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     moderator::{AdminPurgePerson, AdminPurgePersonForm},
     person::Person,
   },
   traits::Crud,
 };
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for PurgePerson {

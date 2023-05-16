@@ -1,13 +1,13 @@
 use crate::Perform;
 use actix_web::web::Data;
 use bcrypt::verify;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{ChangePassword, LoginResponse},
   utils::{blocking, get_local_user_view_from_jwt, password_length_check},
 };
-use lemmy_db_schema::source::local_user::LocalUser;
-use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_schema::source::local_user::LocalUser;
+use crate::lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for ChangePassword {

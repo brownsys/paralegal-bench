@@ -1,10 +1,10 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{LoginResponse, SaveUserSettings},
   utils::{blocking, get_local_user_view_from_jwt, send_verification_email},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserForm},
     person::{Person, PersonForm},
@@ -13,13 +13,13 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::{diesel_option_overwrite, diesel_option_overwrite_to_url, naive_now},
 };
-use lemmy_utils::{
+use crate::lemmy_utils::{
   claims::Claims,
   error::LemmyError,
   utils::{is_valid_display_name, is_valid_matrix_id},
   ConnectionId,
 };
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for SaveUserSettings {

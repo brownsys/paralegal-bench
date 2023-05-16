@@ -1,14 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   community::{AddModToCommunity, AddModToCommunityResponse},
   utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
 };
-use lemmy_apub::{
+use crate::lemmy_apub::{
   objects::{community::ApubCommunity, person::ApubPerson},
   protocol::activities::community::{add_mod::AddMod, remove_mod::RemoveMod},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     community::{Community, CommunityModerator, CommunityModeratorForm},
     moderator::{ModAddCommunity, ModAddCommunityForm},
@@ -16,9 +16,9 @@ use lemmy_db_schema::{
   },
   traits::{Crud, Joinable},
 };
-use lemmy_db_views_actor::structs::CommunityModeratorView;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{messages::SendCommunityRoomMessage, LemmyContext, UserOperation};
+use crate::lemmy_db_views_actor::structs::CommunityModeratorView;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{messages::SendCommunityRoomMessage, LemmyContext, UserOperation};
 
 #[async_trait::async_trait(?Send)]
 impl Perform for AddModToCommunity {
