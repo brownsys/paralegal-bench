@@ -2,10 +2,10 @@ use crate::{captcha_as_wav_base64, Perform};
 use actix_web::web::Data;
 use captcha::{gen, Difficulty};
 use chrono::Duration;
-use lemmy_api_common::person::{CaptchaResponse, GetCaptcha, GetCaptchaResponse};
-use lemmy_db_schema::utils::naive_now;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{messages::CaptchaItem, LemmyContext};
+use crate::lemmy_api_common::person::{CaptchaResponse, GetCaptcha, GetCaptchaResponse};
+use crate::lemmy_db_schema::utils::naive_now;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{messages::CaptchaItem, LemmyContext};
 
 #[async_trait::async_trait(?Send)]
 impl Perform for GetCaptcha {

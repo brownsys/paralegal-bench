@@ -1,16 +1,16 @@
 use crate::Perform;
 use actix_web::web::Data;
 use diesel::NotFound;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   site::{ResolveObject, ResolveObjectResponse},
   utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
 };
-use lemmy_apub::fetcher::search::{search_by_apub_id, SearchableObjects};
-use lemmy_db_schema::{newtypes::PersonId, utils::DbPool};
-use lemmy_db_views::structs::{CommentView, PostView};
-use lemmy_db_views_actor::structs::{CommunityView, PersonViewSafe};
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_apub::fetcher::search::{search_by_apub_id, SearchableObjects};
+use crate::lemmy_db_schema::{newtypes::PersonId, utils::DbPool};
+use crate::lemmy_db_views::structs::{CommentView, PostView};
+use crate::lemmy_db_views_actor::structs::{CommunityView, PersonViewSafe};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for ResolveObject {

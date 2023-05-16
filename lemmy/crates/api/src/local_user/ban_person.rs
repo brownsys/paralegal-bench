@@ -1,14 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{BanPerson, BanPersonResponse},
   utils::{blocking, get_local_user_view_from_jwt, is_admin, remove_user_data},
 };
-use lemmy_apub::{
+use crate::lemmy_apub::{
   activities::block::SiteOrCommunity,
   protocol::activities::block::{block_user::BlockUser, undo_block_user::UndoBlockUser},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     moderator::{ModBan, ModBanForm},
     person::Person,
@@ -16,9 +16,9 @@ use lemmy_db_schema::{
   },
   traits::Crud,
 };
-use lemmy_db_views_actor::structs::PersonViewSafe;
-use lemmy_utils::{error::LemmyError, utils::naive_from_unix, ConnectionId};
-use lemmy_websocket::{messages::SendAllMessage, LemmyContext, UserOperation};
+use crate::lemmy_db_views_actor::structs::PersonViewSafe;
+use crate::lemmy_utils::{error::LemmyError, utils::naive_from_unix, ConnectionId};
+use crate::lemmy_websocket::{messages::SendAllMessage, LemmyContext, UserOperation};
 
 #[async_trait::async_trait(?Send)]
 impl Perform for BanPerson {

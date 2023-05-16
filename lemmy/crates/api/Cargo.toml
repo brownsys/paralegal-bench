@@ -13,17 +13,13 @@ name = "lemmy_api"
 path = "src/lib.rs"
 doctest = false
 
+[features]
+full = []
+default = ["full"]
+
 [dependencies]
-lemmy_apub = { version = "=0.16.5", path = "../apub" }
-lemmy_utils = { version = "=0.16.5", path = "../utils" }
-lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = ["full"] }
-lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = ["full"] }
-lemmy_db_views_moderator = { version = "=0.16.5", path = "../db_views_moderator", features = ["full"] }
-lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = ["full"] }
-lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = ["full"] }
-lemmy_websocket = { version = "=0.16.5", path = "../websocket" }
 activitypub_federation = "0.2.0"
-diesel = "1.4.8"
+diesel = { version = "1.4.8", features = ["postgres","chrono","r2d2","serde_json"]}
 bcrypt = "0.12.1"
 chrono = { version = "0.4.19", features = ["serde"], default-features = false }
 serde_json = { version = "1.0.79", features = ["preserve_order"] }
@@ -35,9 +31,51 @@ async-trait = "0.1.53"
 captcha = "0.0.9"
 anyhow = "1.0.56"
 tracing = "0.1.32"
+url = { version = "2.2.2", features = ["serde"] }
+strum =  "0.24.0"
+strum_macros = "0.24.0"
+diesel-derive-newtype = { version = "0.1.2" }
+diesel_migrations = { version = "1.4.0" }
+sha2 = { version = "0.10.2" }
+regex = { version = "1.5.5" }
+once_cell = { version = "1.10.0" }
+activitystreams-kinds = "0.2.1"
+serde_with = "1.12.0"
+actix = "0.13.0"
+actix-rt = { version = "2.7.0", default-features = false }
+http = "0.2.6"
+http-signature-normalization-actix = { version = "0.6.1", default-features = false, features = ["server", "sha-2"] }
+futures = "0.3.21"
+itertools = "0.10.3"
+reqwest = { version = "0.11.10", features = ["json"] }
+html2md = "0.2.13"
+lettre = "0.10.0-rc.7"
+tracing-error = "0.2.0"
+rand = "0.8.5"
+comrak = { version = "0.12.1", default-features = false }
+openssl = "0.10.38"
+reqwest-middleware = "0.1.5"
+smart-default = "0.6.0"
+jsonwebtoken = "8.0.1"
+doku = { git = "https://github.com/anixe/doku", features = ["url-2"] }
+html2text = "0.3.1"
+rosetta-i18n = "0.1.2"
+parking_lot = "0.12.0"
+percent-encoding = { version = "2.1.0" }
+background-jobs = "0.12.0"
+tokio = "1.17.0"
+actix-web-actors = { version = "4.1.0", default-features = false }
+opentelemetry = "0.17.0"
+tracing-opentelemetry = "0.17.2"
+encoding = { version = "0.2.33" }
+webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
+deser-hjson = "1.0.2"
+webmention = "0.4.0"
+
+[build-dependencies]
+rosetta-build = "0.1.2"
 
 [features]
 default = []
-
 comment-like = []
 comment-mark-as-read = []

@@ -1,10 +1,10 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   site::{GetModlog, GetModlogResponse},
   utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
 };
-use lemmy_db_views_moderator::structs::{
+use crate::lemmy_db_views_moderator::structs::{
   AdminPurgeCommentView,
   AdminPurgeCommunityView,
   AdminPurgePersonView,
@@ -21,8 +21,8 @@ use lemmy_db_views_moderator::structs::{
   ModStickyPostView,
   ModTransferCommunityView,
 };
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for GetModlog {

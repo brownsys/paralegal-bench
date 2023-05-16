@@ -1,6 +1,6 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   community::{CommunityResponse, FollowCommunity},
   utils::{
     blocking,
@@ -9,20 +9,20 @@ use lemmy_api_common::{
     get_local_user_view_from_jwt
   },
 };
-use lemmy_apub::{
+use crate::lemmy_apub::{
   objects::community::ApubCommunity,
   protocol::activities::following::{
     follow::FollowCommunity as FollowCommunityApub,
     undo_follow::UndoFollowCommunity,
   },
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::community::{Community, CommunityFollower, CommunityFollowerForm},
   traits::{Crud, Followable},
 };
-use lemmy_db_views_actor::structs::CommunityView;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views_actor::structs::CommunityView;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for FollowCommunity {

@@ -3,10 +3,23 @@
 
 use actix_web::{web, web::Data};
 use captcha::Captcha;
-use lemmy_api_common::{comment::*, community::*, person::*, post::*, site::*, websocket::*};
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{serialize_websocket_message, LemmyContext, UserOperation};
+use crate::lemmy_api_common::{comment::*, community::*, person::*, post::*, site::*, websocket::*};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{serialize_websocket_message, LemmyContext, UserOperation};
 use serde::Deserialize;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate diesel_derive_newtype;
+// this is used in tests
+#[allow(unused_imports)]
+#[macro_use]
+extern crate diesel_migrations;
+#[macro_use]
+extern crate strum_macros;
+#[macro_use]
+extern crate smart_default;
+
 
 mod comment;
 mod comment_report;
@@ -17,6 +30,15 @@ mod post_report;
 mod private_message;
 mod site;
 mod websocket;
+pub mod lemmy_api_common;
+pub mod lemmy_apub;
+pub mod lemmy_db_schema;
+pub mod lemmy_db_views;
+pub mod lemmy_db_views_actor;
+pub mod lemmy_db_views_moderator;
+pub mod lemmy_utils;
+pub mod lemmy_websocket;
+pub mod lemmy_api_crud;
 
 #[async_trait::async_trait(?Send)]
 pub trait Perform {
@@ -213,8 +235,8 @@ pub(crate) fn captcha_as_wav_base64(captcha: &Captcha) -> String {
 
 #[cfg(test)]
 mod tests {
-  use lemmy_api_common::utils::check_validator_time;
-  use lemmy_db_schema::{
+  use crate::lemmy_api_common::utils::check_validator_time;
+  use crate::lemmy_db_schema::{
     source::{
       local_user::{LocalUser, LocalUserForm},
       person::{Person, PersonForm},
@@ -223,7 +245,7 @@ mod tests {
     traits::Crud,
     utils::establish_unpooled_connection,
   };
-  use lemmy_utils::{claims::Claims, settings::SETTINGS};
+  use crate::lemmy_utils::{claims::Claims, settings::SETTINGS};
 
   #[test]
   fn test_should_not_validate_user_token_after_password_change() {
