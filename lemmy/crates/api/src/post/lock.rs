@@ -30,7 +30,7 @@ impl Perform for LockPost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "post-lock", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

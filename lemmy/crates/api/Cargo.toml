@@ -13,10 +13,6 @@ name = "lemmy_api"
 path = "src/lib.rs"
 doctest = false
 
-[features]
-full = []
-default = ["full"]
-
 [dependencies]
 activitypub_federation = "0.2.0"
 diesel = { version = "1.4.8", features = ["postgres","chrono","r2d2","serde_json"]}
@@ -76,6 +72,48 @@ webmention = "0.4.0"
 rosetta-build = "0.1.2"
 
 [features]
-default = []
+# api
 comment-like = []
 comment-mark-as-read = []
+comment-save = []
+comment-report-create = []
+comment-report-list = []
+comment-report-resolve = []
+community-add-mod = []
+community-ban = []
+community-block = []
+community-follow = []
+community-hide = []
+community-transfer = []
+post-like = []
+post-lock = []
+post-mark-read = []
+post-save = []
+post-sticky = []
+post-report-create = []
+post-report-list = []
+post-report-resolve = []
+login = []
+
+# api crud
+comment-create = []
+comment-delete = []
+comment-list = []
+comment-update = []
+community-create = []
+community-delete = []
+community-list = []
+community-read = []
+community-remove = []
+community-update = []
+post-create = []
+post-delete = []
+post-list = []
+post-read = []
+post-remove = []
+post-update = []
+
+
+
+full = []
+default = ["full"]

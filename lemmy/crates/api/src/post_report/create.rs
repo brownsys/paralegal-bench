@@ -21,6 +21,7 @@ impl Perform for CreatePostReport {
 
   
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-report-create", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

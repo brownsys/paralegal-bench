@@ -20,6 +20,7 @@ impl PerformCrud for GetComments {
   type Response = GetCommentsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "comment-list", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

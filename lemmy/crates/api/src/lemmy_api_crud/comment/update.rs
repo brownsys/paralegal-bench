@@ -34,7 +34,7 @@ impl PerformCrud for EditComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-update", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -20,6 +20,7 @@ use crate::lemmy_websocket::{send::send_community_ws_message, LemmyContext, User
 impl Perform for HideCommunity {
   type Response = CommunityResponse;
 
+  #[cfg_attr(feature = "community-hide", dfpp::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,

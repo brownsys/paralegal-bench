@@ -25,7 +25,7 @@ impl Perform for AddModToCommunity {
   type Response = AddModToCommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "community-add-mod", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

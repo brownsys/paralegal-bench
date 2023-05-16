@@ -19,7 +19,7 @@ use crate::lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOpe
 impl Perform for CreateCommentReport {
   type Response = CommentReportResponse;
 
-//   #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-report-create", dfpp::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,

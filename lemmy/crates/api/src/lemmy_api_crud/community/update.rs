@@ -20,6 +20,7 @@ impl PerformCrud for EditCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-update", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

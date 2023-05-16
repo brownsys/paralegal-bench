@@ -13,6 +13,7 @@ impl Perform for MarkPostAsRead {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-mark-read", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -15,7 +15,7 @@ impl Perform for ListCommentReports {
   type Response = ListCommentReportsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-report-list", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

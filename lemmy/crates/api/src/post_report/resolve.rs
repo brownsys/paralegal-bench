@@ -15,6 +15,7 @@ impl Perform for ResolvePostReport {
   type Response = PostReportResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-report-resolve", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

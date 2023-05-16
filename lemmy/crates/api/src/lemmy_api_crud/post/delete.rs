@@ -22,7 +22,7 @@ impl PerformCrud for DeletePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "post-delete", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

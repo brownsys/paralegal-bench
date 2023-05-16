@@ -1,24 +1,27 @@
-[["lemmy_api_common::utils::check_community_deleted_or_removed"]]
+[["lemmy_api::lemmy_api_common::utils::check_community_deleted_or_removed"]]
 marker = "delete_check"
 on_return = true
 
-[["lemmy_api_common::utils::check_community_ban"]]
+[["lemmy_api::lemmy_api_common::utils::check_community_ban"]]
 marker = "ban_check"
 on_return = true
 
-[["lemmy_api_common::utils::check_user_valid"]]
+[["lemmy_api::lemmy_api_common::utils::check_user_valid"]]
 marker = "ban_check"
-on_argument = [0]
+on_return = true
 
-[["lemmy_api_common::utils::check_user_valid"]]
+[["lemmy_api::lemmy_api_common::utils::check_user_valid"]]
 marker = "delete_check"
-on_argument = [2]
+on_return = true
 
-# apub specific
-[["lemmy_apub::activities::check_community_deleted_or_removed"]]
-marker = "delete_check"
-on_argument = [0]
+[["diesel::update"]]
+marker = "db"
+on_return = true
 
-[["lemmy_apub::activities::verify_person_in_community"]]
-marker = "ban_check"
-on_argument = [1]
+[["diesel::delete"]]
+marker = "db"
+on_return = true
+
+[["diesel::insert_into"]]
+marker = "db"
+on_return = true

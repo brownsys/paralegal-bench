@@ -16,7 +16,7 @@ impl Perform for ResolveCommentReport {
   type Response = CommentReportResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-report-resolve", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -15,6 +15,7 @@ impl PerformCrud for DeleteCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-delete", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

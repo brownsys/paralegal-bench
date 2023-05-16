@@ -32,7 +32,7 @@ impl Perform for BanFromCommunity {
   type Response = BanFromCommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "community-ban", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

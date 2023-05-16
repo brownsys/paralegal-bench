@@ -47,7 +47,6 @@ impl PerformCrud for CreatePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

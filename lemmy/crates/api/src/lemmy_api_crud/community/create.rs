@@ -41,6 +41,7 @@ impl PerformCrud for CreateCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "community-create", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

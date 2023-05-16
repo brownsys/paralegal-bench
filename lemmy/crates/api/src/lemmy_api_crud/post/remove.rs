@@ -21,6 +21,7 @@ impl PerformCrud for RemovePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-remove", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

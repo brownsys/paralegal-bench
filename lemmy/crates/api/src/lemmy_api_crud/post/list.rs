@@ -20,6 +20,7 @@ impl PerformCrud for GetPosts {
   type Response = GetPostsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-list", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

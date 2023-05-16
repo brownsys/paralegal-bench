@@ -17,6 +17,7 @@ impl Perform for SavePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-save", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

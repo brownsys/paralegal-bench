@@ -88,7 +88,6 @@ impl ActivityHandler for CreateOrUpdatePost {
   }
 
   #[tracing::instrument(skip_all)]
-  // #[dfpp::analyze]
   async fn verify(
     &self,
     context: &Data<LemmyContext>,

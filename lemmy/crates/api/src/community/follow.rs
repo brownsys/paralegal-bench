@@ -29,7 +29,7 @@ impl Perform for FollowCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "community-follow", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

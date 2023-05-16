@@ -27,6 +27,7 @@ impl PerformCrud for RemoveComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "comment-remove", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

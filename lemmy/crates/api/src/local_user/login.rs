@@ -15,7 +15,7 @@ use crate::lemmy_websocket::LemmyContext;
 impl Perform for Login {
   type Response = LoginResponse;
 
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "login", dfpp::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -26,8 +26,6 @@ impl Perform for Login {
 
     // Fetch that username / email
     let username_or_email = data.username_or_email.clone();
-    // TODO: open a bug report for this.
-    // problem with async blocking function (we use a type walk, need to go handle impl Future structure to infer the type here)
     let local_user_view = blocking(context.pool(), move |conn| {
       LocalUserView::find_by_email_or_name(conn, &username_or_email)
     })

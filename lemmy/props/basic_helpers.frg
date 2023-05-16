@@ -1,9 +1,5 @@
 #lang forge
 
-// open "api/comment/like.frg"
-// open "api/comment/mark_as_read.frg"
-// open "api/comment/save.frg"
-// open "api/post/like.frg"
 open "../analysis_result.frg"
 
 sig ErroneousFlow {

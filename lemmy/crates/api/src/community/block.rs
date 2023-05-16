@@ -21,7 +21,7 @@ impl Perform for BlockCommunity {
   type Response = BlockCommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "community-block", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

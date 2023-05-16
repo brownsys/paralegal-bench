@@ -17,7 +17,42 @@ const CONFIGURATIONS: &'static [Property] = &[
 // TODO: Update these with the feature flags to turn on all of the controllers
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
 	"comment-like", 
-	"comment-mark-as-read", 
+	"comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "comment-create",
+    "comment-delete",
+    "comment-list",
+    "comment-update",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "login"
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -146,7 +181,6 @@ fn run_edit(
             let mut dfpp_cmd = Command::new("cargo");
             dfpp_cmd.current_dir(cd).arg("dfpp").stdin(Stdio::null());
 
-			// TODO: change this to be the new target name.
 			dfpp_cmd.args(&["--target", "lemmy_api"]);
 
             let external_ann_file_name = format!("external-annotations.toml");

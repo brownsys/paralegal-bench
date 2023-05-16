@@ -23,6 +23,7 @@ use crate::location_info;
 impl Perform for TransferCommunity {
   type Response = GetCommunityResponse;
 
+  #[cfg_attr(feature = "community-transfer", dfpp::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
