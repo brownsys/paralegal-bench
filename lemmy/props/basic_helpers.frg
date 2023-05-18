@@ -57,7 +57,7 @@ pred always_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite)
         some c: cs | 
         some a: Object | {
             o = a or (o in Type and a->o in types and (a in fp_fun_rel.c or a in c.calls))
-            a -> next in ^(flows_for_ctrl[c, flow_set] + arg_call_site - 
+            a -> next in ^(flow_for_ctrl[c, flow_set] + arg_call_site - 
                         (first->CallSite + CallArgument->first))
         }
     )
