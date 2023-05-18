@@ -1,6 +1,6 @@
 #lang forge
 
-open "../small.frg"
+open "../analysis_result.frg"
 open "basic_helpers.frg"
 
 // fp flows to the auth checked labeled lb, and the auth check has control flow influence on the sink
@@ -19,14 +19,16 @@ pred properAuth[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSite
    all c : Ctrl | {
         // if there is a database read (other than reading the user), must enforce instance auth check
         all fp : (fp_fun_rel.c) | all read_sink : labeled_objects[CallSite, db_read, labels] | (flows_to[c, fp, read_sink, flow_set] and (read_sink->db_user_read not in labels)) implies {
-            flowToAuth[c, fp, read_sink, instance_auth_check, flow_set, ctrl_flow, labels]
+            flowToAuth[c, fp, read_sink, instance_ban_check, flow_set, ctrl_flow, labels]
+            flowToAuth[c, fp, read_sink, instance_delete_check, flow_set, ctrl_flow, labels]
         }
 
         // if there is a database write, must enforce instance and community auth check
         all fp : (fp_fun_rel.c) | all write_sink : labeled_objects[CallSite, db_write, labels] | flows_to[c, fp, write_sink, flow_set] implies {
             flowToAuth[c, fp, write_sink, community_delete_check, flow_set, ctrl_flow, labels]
             flowToAuth[c, fp, write_sink, community_ban_check, flow_set, ctrl_flow, labels]
-            flowToAuth[c, fp, write_sink, instance_auth_check, flow_set, ctrl_flow, labels]
+            flowToAuth[c, fp, write_sink, instance_delete_check, flow_set, ctrl_flow, labels]
+            flowToAuth[c, fp, write_sink, instance_ban_check, flow_set, ctrl_flow, labels]
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentResponse, DeleteComment},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, apply_label_write},
+  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, apply_label_write, apply_label_read},
 };
 use crate::lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use crate::lemmy_db_schema::{
@@ -33,10 +33,10 @@ impl PerformCrud for DeleteComment {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let comment_id = data.comment_id;
-    let orig_comment = blocking(context.pool(), move |conn| {
+    let orig_comment = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, None)
     })
-    .await??;
+    .await??);
 
     // Dont delete it if its already been deleted.
     if orig_comment.comment.deleted == data.deleted {
@@ -64,7 +64,7 @@ impl PerformCrud for DeleteComment {
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_comment"))?;
 
     let post_id = updated_comment.post_id;
-    let post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+    let post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
     let recipient_ids = send_local_notifs(
       vec![],
       &updated_comment,
@@ -87,10 +87,10 @@ impl PerformCrud for DeleteComment {
     .await?;
 
     // Send the apub message
-    let community = blocking(context.pool(), move |conn| {
+    let community = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, orig_comment.post.community_id)
     })
-    .await??;
+    .await??);
     let deletable = DeletableObjects::Comment(Box::new(updated_comment.clone().into()));
     send_apub_delete_in_community(
       local_user_view.person,
