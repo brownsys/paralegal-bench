@@ -1,6 +1,6 @@
 #lang forge
 
-open "../analysis_result.frg"
+open "../comment-create.frg"
 
 sig ErroneousFlow {
     minimal_subflow: set CallSite->CallArgument

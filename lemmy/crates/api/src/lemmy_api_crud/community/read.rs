@@ -21,7 +21,7 @@ impl PerformCrud for GetCommunity {
   type Response = GetCommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
-  #[cfg_attr(feature = "comment-read", dfpp::analyze)]
+  #[cfg_attr(feature = "community-read", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

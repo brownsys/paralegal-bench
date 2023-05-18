@@ -43,6 +43,7 @@ use tracing::warn;
 pub fn apply_label_read<T>(t: T) -> T { t }
 pub fn apply_label_user_read<T>(t: T) -> T { t }
 pub fn apply_label_write<T>(t: T) -> T { t }
+pub fn apply_label_community_write<T>(t: T) -> T { t }
 
 pub async fn blocking<F, T>(pool: &DbPool, f: F) -> Result<T, LemmyError>
 where

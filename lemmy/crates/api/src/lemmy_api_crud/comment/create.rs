@@ -10,7 +10,7 @@ use crate::lemmy_api_common::{
     get_local_user_view_from_jwt,
     get_post,
     apply_label_read,
-    apply_label_write
+    apply_label_community_write
   },
 };
 use crate::lemmy_apub::{
@@ -94,7 +94,7 @@ impl PerformCrud for CreateComment {
 
     // Create the comment
     let comment_form2 = comment_form.clone();
-    let inserted_comment = apply_label_write(blocking(context.pool(), move |conn| {
+    let inserted_comment = apply_label_community_write(blocking(context.pool(), move |conn| {
       Comment::create(conn, &comment_form2)
     })
     .await?)
@@ -105,7 +105,7 @@ impl PerformCrud for CreateComment {
     let protocol_and_hostname = context.settings().get_protocol_and_hostname();
 
     let updated_comment: Comment =
-      apply_label_write(blocking(context.pool(), move |conn| -> Result<Comment, LemmyError> {
+      apply_label_community_write(blocking(context.pool(), move |conn| -> Result<Comment, LemmyError> {
         let apub_id = generate_local_apub_endpoint(
           EndpointType::Comment,
           &inserted_comment_id.to_string(),
@@ -127,7 +127,7 @@ impl PerformCrud for CreateComment {
       true,
       context,
     )
-    .await?);
+    .await?;
 
     // You like your own comment by default
     let like_form = CommentLikeForm {
@@ -137,7 +137,7 @@ impl PerformCrud for CreateComment {
       score: 1,
     };
 
-    let like = move |conn: &'_ _| apply_label_write(CommentLike::like(conn, &like_form));
+    let like = move |conn: &'_ _| apply_label_community_write(CommentLike::like(conn, &like_form));
     blocking(context.pool(), like)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_comment"))?;

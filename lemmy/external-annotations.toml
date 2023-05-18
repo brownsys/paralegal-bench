@@ -14,8 +14,20 @@ on_return = true
 marker = "instance_delete_check"
 on_return = true
 
+[["lemmy_api::lemmy_api_common::utils::get_post"]]
+marker = "db_read"
+on_return = true
+
 [["lemmy_api::lemmy_api_common::utils::apply_label_write"]]
 marker = "db_write"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_community_write"]]
+marker = "db_write"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_community_write"]]
+marker = "db_community_write"
 on_return = true
 
 [["lemmy_api::lemmy_api_common::utils::apply_label_read"]]

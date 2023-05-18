@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentResponse, DeleteComment},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, apply_label_write, apply_label_read},
+  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, apply_label_community_write, apply_label_read},
 };
 use crate::lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use crate::lemmy_db_schema::{
@@ -57,7 +57,7 @@ impl PerformCrud for DeleteComment {
 
     // Do the delete
     let deleted = data.deleted;
-    let updated_comment = apply_label_write(blocking(context.pool(), move |conn| {
+    let updated_comment = apply_label_community_write(blocking(context.pool(), move |conn| {
       Comment::update_deleted(conn, comment_id, deleted)
     })
     .await?)
