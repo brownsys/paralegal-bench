@@ -131,6 +131,7 @@ impl Crud for Comment {
     diesel::delete(comment.find(comment_id)).execute(conn)
   }
 
+  // #[dfpp::label(db, return)]
   fn create(conn: &PgConnection, comment_form: &CommentForm) -> Result<Self, Error> {
     use crate::lemmy_db_schema::schema::comment::dsl::*;
     insert_into(comment)

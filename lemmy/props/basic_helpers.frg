@@ -1,6 +1,6 @@
 #lang forge
 
-open "../analysis_result.frg"
+open "../small.frg"
 
 sig ErroneousFlow {
     minimal_subflow: set CallSite->CallArgument
@@ -12,7 +12,7 @@ sig IncompleteLabel {
 
 fun to_source[c: one Ctrl, o: one Type + Src + CallSite] : Src {
     {src : Src |
-        (o in Type and src->o in types and (src in fp_fun_rel.c or src in c.calls)) or 
+        (o in Type and src->o in types)  or 
         (o = src or src->o in arg_call_site)
     }
 }
@@ -27,8 +27,9 @@ fun flow_for_ctrl[c: one Ctrl, flow_set : set Src->Sink] : set Src->Sink {
 }
 
 // just c's ctrl flow
-fun ctrl_flow_for_ctrl[c: one Ctrl, flow_set : set Src->Sink] : set Src->Sink {
-    ((c.calls + fp_fun_rel.c)->Sink) & ctrl_flow
+fun ctrl_flow_for_ctrl[c: one Ctrl, ctrl_flow : set Src->CallSite] : set Src->Sink {
+    (c.calls + fp_fun_rel.c)->CallSite & ctrl_flow
+    
 }
 
 pred flows_to[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Src->Sink] {

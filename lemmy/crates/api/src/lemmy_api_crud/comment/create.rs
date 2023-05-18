@@ -8,7 +8,8 @@ use crate::lemmy_api_common::{
     check_community_deleted_or_removed,
     check_post_deleted_or_removed,
     get_local_user_view_from_jwt,
-    get_post
+    get_post,
+    apply_label_write
   },
 };
 use crate::lemmy_apub::{
@@ -55,7 +56,7 @@ impl PerformCrud for CreateComment {
     let content_slurs_removed =
       remove_slurs(&data.content.to_owned(), &context.settings().slur_regex());
 
-    // Check for a community ban
+    // // Check for a community ban
     let post_id = data.post_id;
     let post = get_post(post_id, context.pool()).await?;
     let community_id = post.community_id;
@@ -92,10 +93,10 @@ impl PerformCrud for CreateComment {
 
     // Create the comment
     let comment_form2 = comment_form.clone();
-    let inserted_comment = blocking(context.pool(), move |conn| {
+    let inserted_comment = apply_label_write(blocking(context.pool(), move |conn| {
       Comment::create(conn, &comment_form2)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_create_comment"))?;
 
     // Necessary to update the ap_id
@@ -205,4 +206,5 @@ impl PerformCrud for CreateComment {
     )
     .await
   }
+  
 }

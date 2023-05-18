@@ -40,6 +40,10 @@ use rosetta_i18n::{Language, LanguageId};
 use std::str::FromStr;
 use tracing::warn;
 
+pub fn apply_label_read<T>(t: T) -> T { t }
+pub fn apply_label_user_read<T>(t: T) -> T { t }
+pub fn apply_label_write<T>(t: T) -> T { t }
+
 pub async fn blocking<F, T>(pool: &DbPool, f: F) -> Result<T, LemmyError>
 where
   F: FnOnce(&diesel::PgConnection) -> T + Send + 'static,
@@ -130,7 +134,7 @@ pub async fn get_local_user_view_from_jwt(
     .claims;
   let local_user_id = LocalUserId(claims.sub);
   let local_user_view =
-    blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??;
+    apply_label_user_read(blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??);
   check_user_valid(
     local_user_view.person.banned,
     local_user_view.person.ban_expires,
