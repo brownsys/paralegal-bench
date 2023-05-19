@@ -38,14 +38,14 @@ on_return = true
 marker = "db_read"
 on_return = true
 
-#[["lemmy_api::lemmy_websocket::send::send_comment_ws_message"]]
-# marker = "db_read"
-# on_return = true
+[["lemmy_api::lemmy_websocket::send::send_comment_ws_message"]]
+marker = "db_read"
+on_return = true
 
-# [["lemmy_api::lemmy_websocket::send::send_local_notifs"]]
-# marker = "db_read"
-# on_return = true
+[["lemmy_api::lemmy_websocket::send::send_local_notifs"]]
+marker = "db_read"
+on_return = true
 
-#[["lemmy_api::lemmy_api_common::utils::get_post"]]
-#marker = "db_read"
-#on_return = true
+[["lemmy_api::lemmy_api_common::utils::get_post"]]
+marker = "db_read"
+on_return = true

@@ -44,25 +44,6 @@ pred properWrite[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSit
 
 test expect {
 
-    // vacuity: {
-    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow])
-    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_read, labels] | flows_to[c, fp, read_user_sink, flow])
-    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_write, labels] | flows_to[c, fp, read_user_sink, flow])
-    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_community_write, labels] | flows_to[c, fp, read_user_sink, flow])
-    // } for Flows is sat
-
-    vacuity: {
-        all c : Ctrl | {
-            // some read_sink : labeled_objects[CallSite, db_read, labels] | (read_sink->db_user_read not in labels)
-            some write_sink : labeled_objects[CallSite, db_write, labels] | (write_sink->db_community_write in labels)
-        }
-    } for Flows is sat
-
-
-    // oxymoron: {
-    //     some c : Ctrl | not (some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow]))
-    // } is sat
-
     dbRead: {
         properRead[flow, ctrl_flow, labels]
     } for Flows is theorem
