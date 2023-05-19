@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{PurgeComment, PurgeItemResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -19,6 +19,7 @@ impl Perform for PurgeComment {
   type Response = PurgeItemResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "purge-comment", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -34,16 +35,16 @@ impl Perform for PurgeComment {
     let comment_id = data.comment_id;
 
     // Read the comment to get the post_id
-    let comment = blocking(context.pool(), move |conn| Comment::read(conn, comment_id)).await??;
+    let comment = apply_label_read(blocking(context.pool(), move |conn| Comment::read(conn, comment_id)).await??);
 
     let post_id = comment.post_id;
 
     // TODO read comments for pictrs images and purge them
 
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       Comment::delete(conn, comment_id)
     })
-    .await??;
+    .await??);
 
     // Mod tables
     let reason = data.reason.to_owned();
@@ -53,10 +54,10 @@ impl Perform for PurgeComment {
       post_id,
     };
 
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       AdminPurgeComment::create(conn, &form)
     })
-    .await??;
+    .await??);
 
     Ok(PurgeItemResponse { success: true })
   }

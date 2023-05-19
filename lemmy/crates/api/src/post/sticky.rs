@@ -7,7 +7,9 @@ use crate::lemmy_api_common::{
     check_community_ban,
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
-    is_mod_or_admin
+    is_mod_or_admin,
+    apply_label_read,
+    apply_label_community_write
   },
 };
 use crate::lemmy_apub::{
@@ -41,7 +43,7 @@ impl Perform for StickyPost {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let post_id = data.post_id;
-    let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+    let orig_post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
 
     check_community_ban(
       local_user_view.person.id,
@@ -62,10 +64,10 @@ impl Perform for StickyPost {
     // Update the post
     let post_id = data.post_id;
     let stickied = data.stickied;
-    let updated_post: ApubPost = blocking(context.pool(), move |conn| {
+    let updated_post: ApubPost = apply_label_community_write(blocking(context.pool(), move |conn| {
       Post::update_stickied(conn, post_id, stickied)
     })
-    .await??
+    .await??)
     .into();
 
     // Mod tables
@@ -74,10 +76,10 @@ impl Perform for StickyPost {
       post_id: data.post_id,
       stickied: Some(stickied),
     };
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       ModStickyPost::create(conn, &form)
     })
-    .await??;
+    .await??);
 
     // Apub updates
     // TODO stickied should pry work like locked for ease of use

@@ -44,7 +44,7 @@ impl PerformCrud for CreateComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[cfg_attr(feature = "comment-create", dfpp::analyze)]
+  #[cfg_attr(feature = "comment-create-buggy", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -63,8 +63,6 @@ impl PerformCrud for CreateComment {
     let community_id = post.community_id;
 
     check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
-    check_community_deleted_or_removed(community_id, context.pool()).await?;
-    check_post_deleted_or_removed(&post)?;
 
     // Check if post is locked, no new comments
     if post.locked {

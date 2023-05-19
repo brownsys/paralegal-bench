@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{CommunityResponse, EditCommunity},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::protocol::activities::community::update::UpdateCommunity;
 use crate::lemmy_db_schema::{
@@ -48,10 +48,10 @@ impl PerformCrud for EditCommunity {
     }
 
     let community_id = data.community_id;
-    let read_community = blocking(context.pool(), move |conn| {
+    let read_community = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, community_id)
     })
-    .await??;
+    .await??);
 
     let community_form = CommunityForm {
       name: read_community.name,
@@ -66,10 +66,10 @@ impl PerformCrud for EditCommunity {
     };
 
     let community_id = data.community_id;
-    let updated_community = blocking(context.pool(), move |conn| {
+    let updated_community = apply_label_community_write(blocking(context.pool(), move |conn| {
       Community::update(conn, community_id, &community_form)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_community"))?;
 
     UpdateCommunity::send(

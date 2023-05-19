@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use diesel::NotFound;
 use crate::lemmy_api_common::{
   site::{ResolveObject, ResolveObjectResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_apub::fetcher::search::{search_by_apub_id, SearchableObjects};
 use crate::lemmy_db_schema::{newtypes::PersonId, utils::DbPool};
@@ -17,6 +17,7 @@ impl Perform for ResolveObject {
   type Response = ResolveObjectResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-resolve-object", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -27,8 +28,8 @@ impl Perform for ResolveObject {
         .await?;
     check_private_instance(&local_user_view, context.pool()).await?;
 
-    let res = search_by_apub_id(&self.q, context)
-      .await
+    let res = apply_label_read(search_by_apub_id(&self.q, context)
+      .await)
       .map_err(|e| e.with_message("couldnt_find_object"))?;
     convert_response(res, local_user_view.map(|l| l.person.id), context.pool())
       .await

@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{Search, SearchResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_apub::{fetcher::resolve_actor_identifier, objects::community::ApubCommunity};
 use crate::lemmy_db_schema::{source::community::Community, traits::DeleteableOrRemoveable, SearchType};
@@ -19,6 +19,7 @@ impl Perform for Search {
   type Response = SearchResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-search", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -67,7 +68,7 @@ impl Perform for Search {
     let creator_id = data.creator_id;
     match search_type {
       SearchType::Posts => {
-        posts = blocking(context.pool(), move |conn| {
+        posts = apply_label_read(blocking(context.pool(), move |conn| {
           PostQueryBuilder::create(conn)
             .sort(sort)
             .show_nsfw(show_nsfw)
@@ -83,10 +84,10 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
       }
       SearchType::Comments => {
-        comments = blocking(context.pool(), move |conn| {
+        comments = apply_label_read(blocking(context.pool(), move |conn| {
           CommentQueryBuilder::create(conn)
             .sort(sort)
             .listing_type(listing_type)
@@ -100,10 +101,10 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
       }
       SearchType::Communities => {
-        communities = blocking(context.pool(), move |conn| {
+        communities = apply_label_read(blocking(context.pool(), move |conn| {
           CommunityQueryBuilder::create(conn)
             .sort(sort)
             .listing_type(listing_type)
@@ -113,10 +114,10 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
       }
       SearchType::Users => {
-        users = blocking(context.pool(), move |conn| {
+        users = apply_label_read(blocking(context.pool(), move |conn| {
           PersonQueryBuilder::create(conn)
             .sort(sort)
             .search_term(q)
@@ -124,7 +125,7 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
       }
       SearchType::All => {
         // If the community or creator is included, dont search communities or users
@@ -132,7 +133,7 @@ impl Perform for Search {
           data.community_id.is_some() || data.community_name.is_some() || data.creator_id.is_some();
         let community_actor_id_2 = community_actor_id.to_owned();
 
-        posts = blocking(context.pool(), move |conn| {
+        posts = apply_label_read(blocking(context.pool(), move |conn| {
           PostQueryBuilder::create(conn)
             .sort(sort)
             .show_nsfw(show_nsfw)
@@ -148,12 +149,12 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
 
         let q = data.q.to_owned();
         let community_actor_id = community_actor_id.to_owned();
 
-        comments = blocking(context.pool(), move |conn| {
+        comments = apply_label_read(blocking(context.pool(), move |conn| {
           CommentQueryBuilder::create(conn)
             .sort(sort)
             .listing_type(listing_type)
@@ -167,14 +168,14 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
 
         let q = data.q.to_owned();
 
         communities = if community_or_creator_included {
           vec![]
         } else {
-          blocking(context.pool(), move |conn| {
+          apply_label_read(blocking(context.pool(), move |conn| {
             CommunityQueryBuilder::create(conn)
               .sort(sort)
               .listing_type(listing_type)
@@ -184,7 +185,7 @@ impl Perform for Search {
               .limit(limit)
               .list()
           })
-          .await??
+          .await??)
         };
 
         let q = data.q.to_owned();
@@ -192,7 +193,7 @@ impl Perform for Search {
         users = if community_or_creator_included {
           vec![]
         } else {
-          blocking(context.pool(), move |conn| {
+          apply_label_read(blocking(context.pool(), move |conn| {
             PersonQueryBuilder::create(conn)
               .sort(sort)
               .search_term(q)
@@ -200,11 +201,11 @@ impl Perform for Search {
               .limit(limit)
               .list()
           })
-          .await??
+          .await??)
         };
       }
       SearchType::Url => {
-        posts = blocking(context.pool(), move |conn| {
+        posts = apply_label_read(blocking(context.pool(), move |conn| {
           PostQueryBuilder::create(conn)
             .sort(sort)
             .show_nsfw(show_nsfw)
@@ -220,7 +221,7 @@ impl Perform for Search {
             .limit(limit)
             .list()
         })
-        .await??;
+        .await??);
       }
     };
 

@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentResponse, SaveComment},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_schema::{
   source::comment::{CommentSaved, CommentSavedForm},
@@ -34,22 +34,22 @@ impl Perform for SaveComment {
 
     if data.save {
       let save_comment = move |conn: &'_ _| CommentSaved::save(conn, &comment_saved_form);
-      blocking(context.pool(), save_comment)
+      apply_label_community_write(blocking(context.pool(), save_comment)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_comment"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_comment"))?);
     } else {
       let unsave_comment = move |conn: &'_ _| CommentSaved::unsave(conn, &comment_saved_form);
-      blocking(context.pool(), unsave_comment)
+      apply_label_community_write(blocking(context.pool(), unsave_comment)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_comment"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_comment"))?);
     }
 
     let comment_id = data.comment_id;
     let person_id = local_user_view.person.id;
-    let comment_view = blocking(context.pool(), move |conn| {
+    let comment_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     Ok(CommentResponse {
       comment_view,

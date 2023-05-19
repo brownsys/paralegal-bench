@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{GetModlog, GetModlogResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_db_views_moderator::structs::{
   AdminPurgeCommentView,
@@ -29,6 +29,7 @@ impl Perform for GetModlog {
   type Response = GetModlogResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-mod-log", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -40,51 +41,51 @@ impl Perform for GetModlog {
       get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
         .await?;
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+    apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let community_id = data.community_id;
     let mod_person_id = data.mod_person_id;
     let page = data.page;
     let limit = data.limit;
-    let removed_posts = blocking(context.pool(), move |conn| {
+    let removed_posts = apply_label_read(blocking(context.pool(), move |conn| {
       ModRemovePostView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let locked_posts = blocking(context.pool(), move |conn| {
+    let locked_posts = apply_label_read(blocking(context.pool(), move |conn| {
       ModLockPostView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let stickied_posts = blocking(context.pool(), move |conn| {
+    let stickied_posts = apply_label_read(blocking(context.pool(), move |conn| {
       ModStickyPostView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let removed_comments = blocking(context.pool(), move |conn| {
+    let removed_comments = apply_label_read(blocking(context.pool(), move |conn| {
       ModRemoveCommentView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let banned_from_community = blocking(context.pool(), move |conn| {
+    let banned_from_community = apply_label_read(blocking(context.pool(), move |conn| {
       ModBanFromCommunityView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let added_to_community = blocking(context.pool(), move |conn| {
+    let added_to_community = apply_label_read(blocking(context.pool(), move |conn| {
       ModAddCommunityView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let transferred_to_community = blocking(context.pool(), move |conn| {
+    let transferred_to_community = apply_label_read(blocking(context.pool(), move |conn| {
       ModTransferCommunityView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
-    let hidden_communities = blocking(context.pool(), move |conn| {
+    let hidden_communities = apply_label_read(blocking(context.pool(), move |conn| {
       ModHideCommunityView::list(conn, community_id, mod_person_id, page, limit)
     })
-    .await??;
+    .await??);
 
     // These arrays are only for the full modlog, when a community isn't given
     let (

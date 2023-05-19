@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{ListRegistrationApplications, ListRegistrationApplicationsResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read},
 };
 use crate::lemmy_db_schema::source::site::Site;
 use crate::lemmy_db_views::registration_application_view::RegistrationApplicationQueryBuilder;
@@ -14,6 +14,7 @@ use crate::lemmy_websocket::LemmyContext;
 impl Perform for ListRegistrationApplications {
   type Response = ListRegistrationApplicationsResponse;
 
+  #[cfg_attr(feature = "registration-list", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -27,13 +28,13 @@ impl Perform for ListRegistrationApplications {
     is_admin(&local_user_view)?;
 
     let unread_only = data.unread_only;
-    let verified_email_only = blocking(context.pool(), Site::read_local_site)
-      .await??
+    let verified_email_only = apply_label_read(blocking(context.pool(), Site::read_local_site)
+      .await??)
       .require_email_verification;
 
     let page = data.page;
     let limit = data.limit;
-    let registration_applications = blocking(context.pool(), move |conn| {
+    let registration_applications = apply_label_read(blocking(context.pool(), move |conn| {
       RegistrationApplicationQueryBuilder::create(conn)
         .unread_only(unread_only)
         .verified_email_only(verified_email_only)
@@ -41,7 +42,7 @@ impl Perform for ListRegistrationApplications {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     let res = Self::Response {
       registration_applications,

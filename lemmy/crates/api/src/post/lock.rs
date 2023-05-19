@@ -7,7 +7,9 @@ use crate::lemmy_api_common::{
     check_community_ban,
     check_community_deleted_or_removed,
     get_local_user_view_from_jwt,
-    is_mod_or_admin
+    is_mod_or_admin,
+    apply_label_read,
+    apply_label_community_write
   },
 };
 use crate::lemmy_apub::{
@@ -41,7 +43,7 @@ impl Perform for LockPost {
     get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let post_id = data.post_id;
-    let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+    let orig_post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
     
     check_community_ban(
       local_user_view.person.id,
@@ -62,10 +64,10 @@ impl Perform for LockPost {
     // Update the post
     let post_id = data.post_id;
     let locked = data.locked;
-    let updated_post: ApubPost = blocking(context.pool(), move |conn| {
+    let updated_post: ApubPost = apply_label_community_write(blocking(context.pool(), move |conn| {
       Post::update_locked(conn, post_id, locked)
     })
-    .await??
+    .await??)
     .into();
 
     // Mod tables
@@ -74,7 +76,7 @@ impl Perform for LockPost {
       post_id: data.post_id,
       locked: Some(locked),
     };
-    blocking(context.pool(), move |conn| ModLockPost::create(conn, &form)).await??;
+    apply_label_community_write(blocking(context.pool(), move |conn| ModLockPost::create(conn, &form)).await??);
 
     // apub updates
     CreateOrUpdatePost::send(

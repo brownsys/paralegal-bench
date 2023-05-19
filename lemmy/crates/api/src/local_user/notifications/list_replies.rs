@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{GetReplies, GetRepliesResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views::comment_view::CommentQueryBuilder;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -13,6 +13,7 @@ impl Perform for GetReplies {
   type Response = GetRepliesResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-list-replies", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -29,7 +30,7 @@ impl Perform for GetReplies {
     let person_id = local_user_view.person.id;
     let show_bot_accounts = local_user_view.local_user.show_bot_accounts;
 
-    let replies = blocking(context.pool(), move |conn| {
+    let replies = apply_label_read(blocking(context.pool(), move |conn| {
       CommentQueryBuilder::create(conn)
         .sort(sort)
         .unread_only(unread_only)
@@ -40,7 +41,7 @@ impl Perform for GetReplies {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     Ok(GetRepliesResponse { replies })
   }

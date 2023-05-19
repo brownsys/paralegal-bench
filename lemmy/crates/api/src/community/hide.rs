@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{CommunityResponse, HideCommunity},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::protocol::activities::community::update::UpdateCommunity;
 use crate::lemmy_db_schema::{
@@ -35,10 +35,10 @@ impl Perform for HideCommunity {
     is_admin(&local_user_view)?;
 
     let community_id = data.community_id;
-    let read_community = blocking(context.pool(), move |conn| {
+    let read_community = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, community_id)
     })
-    .await??;
+    .await??);
 
     let community_form = CommunityForm {
       name: read_community.name,
@@ -57,16 +57,16 @@ impl Perform for HideCommunity {
     };
 
     let community_id = data.community_id;
-    let updated_community = blocking(context.pool(), move |conn| {
+    let updated_community = apply_label_community_write(blocking(context.pool(), move |conn| {
       Community::update(conn, community_id, &community_form)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_community_hidden_status"))?;
 
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       ModHideCommunity::create(conn, &mod_hide_community_form)
     })
-    .await??;
+    .await??);
 
     UpdateCommunity::send(
       updated_community.into(),

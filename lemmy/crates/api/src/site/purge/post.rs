@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use crate::lemmy_api_common::{
   request::purge_image_from_pictrs,
   site::{PurgeItemResponse, PurgePost},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_write, apply_label_read},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -20,6 +20,7 @@ impl Perform for PurgePost {
   type Response = PurgeItemResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "purge-post", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -35,24 +36,24 @@ impl Perform for PurgePost {
     let post_id = data.post_id;
 
     // Read the post to get the community_id
-    let post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+    let post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
 
     // Purge image
     if let Some(url) = post.url {
-      purge_image_from_pictrs(context.client(), context.settings(), &url)
+      apply_label_write(purge_image_from_pictrs(context.client(), context.settings(), &url)
         .await
-        .ok();
+        .ok());
     }
     // Purge thumbnail
     if let Some(thumbnail_url) = post.thumbnail_url {
-      purge_image_from_pictrs(context.client(), context.settings(), &thumbnail_url)
+      apply_label_write(purge_image_from_pictrs(context.client(), context.settings(), &thumbnail_url)
         .await
-        .ok();
+        .ok());
     }
 
     let community_id = post.community_id;
 
-    blocking(context.pool(), move |conn| Post::delete(conn, post_id)).await??;
+    apply_label_write(blocking(context.pool(), move |conn| Post::delete(conn, post_id)).await??);
 
     // Mod tables
     let reason = data.reason.to_owned();
@@ -62,10 +63,10 @@ impl Perform for PurgePost {
       community_id,
     };
 
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       AdminPurgePost::create(conn, &form)
     })
-    .await??;
+    .await??);
 
     Ok(PurgeItemResponse { success: true })
   }

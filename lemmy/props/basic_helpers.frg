@@ -10,6 +10,11 @@ sig IncompleteLabel {
     missing_labels: set CallArgument->Label
 }
 
+fun labeled_callsites[ls: Label, labels_set: set Object->Label] : CallSite {
+    // (CallSite->labeled_objects[Function, ls, labels_set]) & function
+    function.(labeled_objects[Function, ls, labels_set])
+}
+
 fun to_source[c: one Ctrl, o: one Type + Src + CallSite] : Src {
     {src : Src |
         (o in Type and src->o in types)  or 

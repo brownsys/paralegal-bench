@@ -7,6 +7,7 @@ use crate::lemmy_api_common::{
     check_private_instance,
     get_local_user_view_from_jwt_opt,
     listing_type_with_site_default,
+    apply_label_read
   },
 };
 use crate::lemmy_apub::{fetcher::resolve_actor_identifier, objects::community::ApubCommunity};
@@ -31,7 +32,7 @@ impl PerformCrud for GetPosts {
       get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
         .await?;
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+    apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let person_id = local_user_view.to_owned().map(|l| l.person.id);
 
@@ -59,7 +60,7 @@ impl PerformCrud for GetPosts {
     };
     let saved_only = data.saved_only;
 
-    let mut posts = blocking(context.pool(), move |conn| {
+    let mut posts = apply_label_read(blocking(context.pool(), move |conn| {
       PostQueryBuilder::create(conn)
         .listing_type(listing_type)
         .sort(sort)
@@ -74,7 +75,7 @@ impl PerformCrud for GetPosts {
         .limit(limit)
         .list()
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_get_posts"))?;
 
     // Blank out deleted or removed info for non-logged in users

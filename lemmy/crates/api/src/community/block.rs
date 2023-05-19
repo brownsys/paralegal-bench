@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{BlockCommunity, BlockCommunityResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::protocol::activities::following::undo_follow::UndoFollowCommunity;
 use crate::lemmy_db_schema::{
@@ -40,9 +40,9 @@ impl Perform for BlockCommunity {
 
     if data.block {
       let block = move |conn: &'_ _| CommunityBlock::block(conn, &community_block_form);
-      blocking(context.pool(), block)
+      apply_label_community_write(blocking(context.pool(), block)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_block_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "community_block_already_exists"))?);
 
       // Also, unfollow the community, and send a federated unfollow
       let community_follower_form = CommunityFollowerForm {
@@ -50,27 +50,27 @@ impl Perform for BlockCommunity {
         person_id,
         pending: false,
       };
-      blocking(context.pool(), move |conn: &'_ _| {
+      apply_label_community_write(blocking(context.pool(), move |conn: &'_ _| {
         CommunityFollower::unfollow(conn, &community_follower_form)
       })
-      .await?
+      .await?)
       .ok();
-      let community = blocking(context.pool(), move |conn| {
+      let community = apply_label_read(blocking(context.pool(), move |conn| {
         Community::read(conn, community_id)
       })
-      .await??;
+      .await??);
       UndoFollowCommunity::send(&local_user_view.person.into(), &community.into(), context).await?;
     } else {
       let unblock = move |conn: &'_ _| CommunityBlock::unblock(conn, &community_block_form);
-      blocking(context.pool(), unblock)
+      apply_label_community_write(blocking(context.pool(), unblock)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_block_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "community_block_already_exists"))?);
     }
 
-    let community_view = blocking(context.pool(), move |conn| {
+    let community_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityView::read(conn, community_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     Ok(BlockCommunityResponse {
       blocked: data.block,

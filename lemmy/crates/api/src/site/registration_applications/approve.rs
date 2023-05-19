@@ -2,7 +2,8 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{ApproveRegistrationApplication, RegistrationApplicationResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, send_application_approved_email},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, send_application_approved_email,
+  apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -20,6 +21,7 @@ use crate::lemmy_websocket::LemmyContext;
 impl Perform for ApproveRegistrationApplication {
   type Response = RegistrationApplicationResponse;
 
+  #[cfg_attr(feature = "registration-approve", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -42,10 +44,10 @@ impl Perform for ApproveRegistrationApplication {
       ..RegistrationApplicationForm::default()
     };
 
-    let registration_application = blocking(context.pool(), move |conn| {
+    let registration_application = apply_label_write(blocking(context.pool(), move |conn| {
       RegistrationApplication::update(conn, app_id, &app_form)
     })
-    .await??;
+    .await??);
 
     // Update the local_user row
     let local_user_form = LocalUserForm {
@@ -54,16 +56,16 @@ impl Perform for ApproveRegistrationApplication {
     };
 
     let approved_user_id = registration_application.local_user_id;
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       LocalUser::update(conn, approved_user_id, &local_user_form)
     })
-    .await??;
+    .await??);
 
     if data.approve {
-      let approved_local_user_view = blocking(context.pool(), move |conn| {
+      let approved_local_user_view = apply_label_read(blocking(context.pool(), move |conn| {
         LocalUserView::read(conn, approved_user_id)
       })
-      .await??;
+      .await??);
 
       if approved_local_user_view.local_user.email.is_some() {
         send_application_approved_email(&approved_local_user_view, context.settings())?;
@@ -71,10 +73,10 @@ impl Perform for ApproveRegistrationApplication {
     }
 
     // Read the view
-    let registration_application = blocking(context.pool(), move |conn| {
+    let registration_application = apply_label_read(blocking(context.pool(), move |conn| {
       RegistrationApplicationView::read(conn, app_id)
     })
-    .await??;
+    .await??);
 
     Ok(Self::Response {
       registration_application,

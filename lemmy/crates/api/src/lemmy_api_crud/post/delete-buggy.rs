@@ -25,7 +25,7 @@ impl PerformCrud for DeletePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[cfg_attr(feature = "post-delete", dfpp::analyze)]
+  #[cfg_attr(feature = "post-delete-buggy", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -49,7 +49,6 @@ impl PerformCrud for DeletePost {
       context.pool(),
     )
     .await?;
-    check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the creator can delete
     if !Post::is_post_creator(local_user_view.person.id, orig_post.creator_id) {

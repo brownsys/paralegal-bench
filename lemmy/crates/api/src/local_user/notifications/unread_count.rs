@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{GetUnreadCount, GetUnreadCountResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views::structs::{CommentView, PrivateMessageView};
 use crate::lemmy_db_views_actor::structs::PersonMentionView;
@@ -14,6 +14,7 @@ impl Perform for GetUnreadCount {
   type Response = GetUnreadCountResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-unread-count", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -25,20 +26,20 @@ impl Perform for GetUnreadCount {
 
     let person_id = local_user_view.person.id;
 
-    let replies = blocking(context.pool(), move |conn| {
+    let replies = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::get_unread_replies(conn, person_id)
     })
-    .await??;
+    .await??);
 
-    let mentions = blocking(context.pool(), move |conn| {
+    let mentions = apply_label_read(blocking(context.pool(), move |conn| {
       PersonMentionView::get_unread_mentions(conn, person_id)
     })
-    .await??;
+    .await??);
 
-    let private_messages = blocking(context.pool(), move |conn| {
+    let private_messages = apply_label_read(blocking(context.pool(), move |conn| {
       PrivateMessageView::get_unread_messages(conn, person_id)
     })
-    .await??;
+    .await??);
 
     let res = Self::Response {
       replies,

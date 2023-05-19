@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentResponse, MarkCommentAsRead},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_schema::source::comment::Comment;
 use crate::lemmy_db_views::structs::CommentView;
@@ -25,10 +25,10 @@ impl Perform for MarkCommentAsRead {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let comment_id = data.comment_id;
-    let orig_comment = blocking(context.pool(), move |conn| {
+    let orig_comment = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, None)
     })
-    .await??;
+    .await??);
 
     // Verify that only the recipient can mark as read
     if local_user_view.person.id != orig_comment.get_recipient_id() {
@@ -37,19 +37,19 @@ impl Perform for MarkCommentAsRead {
 
     // Do the mark as read
     let read = data.read;
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       Comment::update_read(conn, comment_id, read)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_comment"))?;
 
     // Refetch it
     let comment_id = data.comment_id;
     let person_id = local_user_view.person.id;
-    let comment_view = blocking(context.pool(), move |conn| {
+    let comment_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     let res = CommentResponse {
       comment_view,

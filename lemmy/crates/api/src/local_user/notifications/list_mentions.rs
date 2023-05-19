@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{GetPersonMentions, GetPersonMentionsResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views_actor::person_mention_view::PersonMentionQueryBuilder;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -13,6 +13,7 @@ impl Perform for GetPersonMentions {
   type Response = GetPersonMentionsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-list-mentions", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -27,7 +28,7 @@ impl Perform for GetPersonMentions {
     let limit = data.limit;
     let unread_only = data.unread_only;
     let person_id = local_user_view.person.id;
-    let mentions = blocking(context.pool(), move |conn| {
+    let mentions = apply_label_read(blocking(context.pool(), move |conn| {
       PersonMentionQueryBuilder::create(conn)
         .recipient_id(person_id)
         .my_person_id(person_id)
@@ -37,7 +38,7 @@ impl Perform for GetPersonMentions {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     Ok(GetPersonMentionsResponse { mentions })
   }

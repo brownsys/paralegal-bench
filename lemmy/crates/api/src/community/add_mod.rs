@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{AddModToCommunity, AddModToCommunityResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::{
   objects::{community::ApubCommunity, person::ApubPerson},
@@ -39,10 +39,10 @@ impl Perform for AddModToCommunity {
 
     // Verify that only mods or admins can add mod
     is_mod_or_admin(context.pool(), local_user_view.person.id, community_id).await?;
-    let community = blocking(context.pool(), move |conn| {
+    let community = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, community_id)
     })
-    .await??;
+    .await??);
     if local_user_view.person.admin && !community.local {
       return Err(LemmyError::from_message("not_a_moderator"));
     }
@@ -54,14 +54,14 @@ impl Perform for AddModToCommunity {
     };
     if data.added {
       let join = move |conn: &'_ _| CommunityModerator::join(conn, &community_moderator_form);
-      blocking(context.pool(), join)
+      apply_label_community_write(blocking(context.pool(), join)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists")))?;
     } else {
       let leave = move |conn: &'_ _| CommunityModerator::leave(conn, &community_moderator_form);
-      blocking(context.pool(), leave)
+      apply_label_community_write(blocking(context.pool(), leave)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists")))?;
     }
 
     // Mod tables
@@ -71,17 +71,17 @@ impl Perform for AddModToCommunity {
       community_id: data.community_id,
       removed: Some(!data.added),
     };
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       ModAddCommunity::create(conn, &form)
     })
-    .await??;
+    .await??);
 
     // Send to federated instances
     let updated_mod_id = data.person_id;
-    let updated_mod: ApubPerson = blocking(context.pool(), move |conn| {
+    let updated_mod: ApubPerson = apply_label_read(blocking(context.pool(), move |conn| {
       Person::read(conn, updated_mod_id)
     })
-    .await??
+    .await??)
     .into();
     let community: ApubCommunity = community.into();
     if data.added {
@@ -105,10 +105,10 @@ impl Perform for AddModToCommunity {
     // Note: in case a remote mod is added, this returns the old moderators list, it will only get
     //       updated once we receive an activity from the community (like `Announce/Add/Moderator`)
     let community_id = data.community_id;
-    let moderators = blocking(context.pool(), move |conn| {
+    let moderators = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_community(conn, community_id)
     })
-    .await??;
+    .await??);
 
     let res = AddModToCommunityResponse { moderators };
     context.chat_server().do_send(SendCommunityRoomMessage {

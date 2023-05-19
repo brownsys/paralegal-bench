@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{GetPost, GetPostResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, mark_post_as_read},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, mark_post_as_read, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_schema::traits::DeleteableOrRemoveable;
 use crate::lemmy_db_views::{comment_view::CommentQueryBuilder, structs::PostView};
@@ -26,7 +26,7 @@ impl PerformCrud for GetPost {
       get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
         .await?;
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+    apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let show_bot_accounts = local_user_view
       .as_ref()
@@ -34,19 +34,19 @@ impl PerformCrud for GetPost {
     let person_id = local_user_view.map(|u| u.person.id);
 
     let id = data.id;
-    let mut post_view = blocking(context.pool(), move |conn| {
+    let mut post_view = apply_label_read(blocking(context.pool(), move |conn| {
       PostView::read(conn, id, person_id)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_post"))?;
 
     // Mark the post as read
     if let Some(person_id) = person_id {
-      mark_post_as_read(person_id, id, context.pool()).await?;
+      apply_label_community_write(mark_post_as_read(person_id, id, context.pool()).await?);
     }
 
     let id = data.id;
-    let mut comments = blocking(context.pool(), move |conn| {
+    let mut comments = apply_label_read(blocking(context.pool(), move |conn| {
       CommentQueryBuilder::create(conn)
         .my_person_id(person_id)
         .show_bot_accounts(show_bot_accounts)
@@ -54,14 +54,14 @@ impl PerformCrud for GetPost {
         .limit(std::i64::MAX)
         .list()
     })
-    .await??;
+    .await??);
 
     // Necessary for the sidebar
     let community_id = post_view.community.id;
-    let mut community_view = blocking(context.pool(), move |conn| {
+    let mut community_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityView::read(conn, community_id, person_id)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_community"))?;
 
     // Blank out deleted or removed info for non-logged in users

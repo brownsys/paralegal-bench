@@ -8,6 +8,8 @@ use crate::lemmy_api_common::{
     get_local_user_view_from_jwt,
     get_user_lang,
     send_email_to_user,
+    apply_label_read,
+    apply_label_write
   },
 };
 use crate::lemmy_apub::{
@@ -31,6 +33,7 @@ impl PerformCrud for CreatePrivateMessage {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(self, context, websocket_id))]
+  #[cfg_attr(feature = "private-message-create", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -43,7 +46,7 @@ impl PerformCrud for CreatePrivateMessage {
     let content_slurs_removed =
       remove_slurs(&data.content.to_owned(), &context.settings().slur_regex());
 
-    check_person_block(local_user_view.person.id, data.recipient_id, context.pool()).await?;
+    apply_label_read(check_person_block(local_user_view.person.id, data.recipient_id, context.pool()).await?);
 
     let private_message_form = PrivateMessageForm {
       content: content_slurs_removed.to_owned(),
@@ -52,10 +55,10 @@ impl PerformCrud for CreatePrivateMessage {
       ..PrivateMessageForm::default()
     };
 
-    let inserted_private_message = match blocking(context.pool(), move |conn| {
+    let inserted_private_message = match apply_label_write(blocking(context.pool(), move |conn| {
       PrivateMessage::create(conn, &private_message_form)
     })
-    .await?
+    .await?)
     {
       Ok(private_message) => private_message,
       Err(e) => {
@@ -68,7 +71,7 @@ impl PerformCrud for CreatePrivateMessage {
 
     let inserted_private_message_id = inserted_private_message.id;
     let protocol_and_hostname = context.settings().get_protocol_and_hostname();
-    let updated_private_message = blocking(
+    let updated_private_message = apply_label_write(blocking(
       context.pool(),
       move |conn| -> Result<PrivateMessage, LemmyError> {
         let apub_id = generate_local_apub_endpoint(
@@ -83,7 +86,7 @@ impl PerformCrud for CreatePrivateMessage {
         )?)
       },
     )
-    .await?
+    .await?)
     .map_err(|e| e.with_message("couldnt_create_private_message"))?;
 
     CreateOrUpdatePrivateMessage::send(
@@ -105,10 +108,10 @@ impl PerformCrud for CreatePrivateMessage {
     // Send email to the local recipient, if one exists
     if res.private_message_view.recipient.local {
       let recipient_id = data.recipient_id;
-      let local_recipient = blocking(context.pool(), move |conn| {
+      let local_recipient = apply_label_read(blocking(context.pool(), move |conn| {
         LocalUserView::read_person(conn, recipient_id)
       })
-      .await??;
+      .await??);
       let lang = get_user_lang(&local_recipient);
       let inbox_link = format!("{}/inbox", context.settings().get_protocol_and_hostname());
       send_email_to_user(

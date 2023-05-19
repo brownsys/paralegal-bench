@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{GetCommunity, GetCommunityResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_apub::{
   fetcher::resolve_actor_identifier,
@@ -36,7 +36,7 @@ impl PerformCrud for GetCommunity {
       return Err(LemmyError::from_message("no_id_given"));
     }
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+    apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let person_id = local_user_view.map(|u| u.person.id);
 
@@ -51,10 +51,10 @@ impl PerformCrud for GetCommunity {
       }
     };
 
-    let mut community_view = blocking(context.pool(), move |conn| {
+    let mut community_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityView::read(conn, community_id, person_id)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_community"))?;
 
     // Blank out deleted or removed info for non-logged in users
@@ -63,10 +63,10 @@ impl PerformCrud for GetCommunity {
       community_view.community = community_view.community.blank_out_deleted_or_removed_info();
     }
 
-    let moderators: Vec<CommunityModeratorView> = blocking(context.pool(), move |conn| {
+    let moderators: Vec<CommunityModeratorView> = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_community(conn, community_id)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_community"))?;
 
     let online = context

@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{LoginResponse, SaveUserSettings},
-  utils::{blocking, get_local_user_view_from_jwt, send_verification_email},
+  utils::{blocking, get_local_user_view_from_jwt, send_verification_email, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -26,6 +26,7 @@ impl Perform for SaveUserSettings {
   type Response = LoginResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "user-save-settings", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -112,10 +113,10 @@ impl Perform for SaveUserSettings {
       ban_expires: None,
     };
 
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       Person::update(conn, person_id, &person_form)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "user_already_exists"))?;
 
     let local_user_form = LocalUserForm {
@@ -137,10 +138,10 @@ impl Perform for SaveUserSettings {
       accepted_application: None,
     };
 
-    let local_user_res = blocking(context.pool(), move |conn| {
+    let local_user_res = apply_label_write(blocking(context.pool(), move |conn| {
       LocalUser::update(conn, local_user_id, &local_user_form)
     })
-    .await?;
+    .await?);
     let updated_local_user = match local_user_res {
       Ok(u) => u,
       Err(e) => {

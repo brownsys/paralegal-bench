@@ -36,7 +36,7 @@ impl PerformCrud for EditComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[cfg_attr(feature = "comment-update", dfpp::analyze)]
+  #[cfg_attr(feature = "comment-update-buggy", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -58,8 +58,6 @@ impl PerformCrud for EditComment {
       context.pool(),
     )
     .await?;
-    check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
-    check_post_deleted_or_removed(&orig_comment.post)?;
 
     // Verify that only the creator can edit
     if local_user_view.person.id != orig_comment.creator.id {

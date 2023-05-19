@@ -10,49 +10,91 @@ use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
 const CONFIGURATIONS: &'static [Property] = &[
-    Property::Delete,
-    Property::Banned,
+    Property::Read,
+    Property::Write,
 ];
 
 // TODO: Update these with the feature flags to turn on all of the controllers
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
-	"comment-like", 
-	"comment-mark-as-read",
+	"comment-like",
+    "comment-mark-as-read",
     "comment-save",
-    "comment-report-create",
-    "comment-report-list",
-    "comment-report-resolve",
-    "community-add-mod",
-    "community-ban",
-    "community-block",
-    "community-follow",
-    "community-hide",
-    "community-transfer",
-    "post-like",
-    "post-lock",
-    "post-mark-read",
-    "post-save",
-    "post-sticky",
-    "post-report-create",
-    "post-report-list",
-    "post-report-resolve",
-    "comment-create",
-    "comment-delete",
-    "comment-list",
-    "comment-update",
-    "community-create",
-    "community-delete",
-    "community-list",
-    "community-read",
-    "community-remove",
-    "community-update",
-    "post-create",
-    "post-delete",
-    "post-list",
-    "post-read",
-    "post-remove",
-    "post-update",
-    "login"
+    // "comment-report-create",
+    // "comment-report-list",
+    // "comment-report-resolve",
+    // "community-add-mod",
+    // "community-ban",
+    // "community-block",
+    // "community-follow",
+    // "community-hide",
+    // "community-transfer",
+    // "notification-list-mentions",
+    // "notification-list-replies",
+    // "notification-mark-all-read",
+    // "notification-mark-mention-read",
+    // "notification-unread-count",
+    // "user-add-admin",
+    // "user-ban-person",
+    // "user-block",
+    // "user-change-password",
+    // "user-list-banned",
+    // "user-login",
+    // "user-login-buggy",
+    // "user-report-count",
+    // "user-save-settings",
+    // "post-like",
+    // "post-lock",
+    // "post-mark-read",
+    // "post-save",
+    // "post-sticky",
+    // "post-report-create",
+    // "post-report-list",
+    // "post-report-resolve",
+    // "private-message-mark-read",
+    // "purge-comment",
+    // "purge-community",
+    // "purge-person",
+    // "purge-post",
+    // "registration-approve",
+    // "registration-list",
+    // "registration-unread-counts",
+    // "site-leave-admin",
+    // "site-mod-log",
+    // "site-resolve-object",
+    // "site-search",
+    // "comment-create",
+    // "comment-create-buggy",
+    // "comment-delete",
+    // "comment-list",
+    // "comment-read",
+    // "comment-remove",
+    // "comment-update",
+    // "comment-update-buggy",
+    // "comment-create",
+    // "community-delete",
+    // "community-list",
+    // "post-read",
+    // "community-remove",
+    // "community-update",
+    // "post-create",
+    // "post-create-buggy",
+    // "post-delete",
+    // "post-delete-buggy",
+    // "post-list",
+    // "post-read",
+    // "post-remove",
+    // "post-update",
+    // "post-update-buggy",
+    // "private-message-create",
+    // "private-message-delete",
+    // "private-message-read",
+    // "private-message-update",
+    // "site-create",
+    // "site-read",
+    // "site-update",
+    // "user-create",
+    // "user-delete",
+    // "user-read"
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -86,15 +128,15 @@ impl Args {
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 enum Property {
-    Delete,
-    Banned,
+    Read,
+    Write,
 }
 
 impl Display for Property {
     fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str(match self {
-            Property::Delete => "del",
-            Property::Banned => "ban",
+            Property::Read => "read",
+            Property::Write => "write",
         })
     }
 }
@@ -104,8 +146,8 @@ impl FromStr for Property {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "del" => Ok(Property::Delete),
-            "ban" => Ok(Property::Banned),
+            "read" => Ok(Property::Read),
+            "write" => Ok(Property::Write),
             _ => Err(format!("Unknown property type {s}")),
         }
     }
@@ -182,6 +224,8 @@ fn run_edit(
             dfpp_cmd.current_dir(cd).arg("dfpp").stdin(Stdio::null());
 
 			dfpp_cmd.args(&["--target", "lemmy_api"]);
+            dfpp_cmd.args(&["--model-version", "v2"]);
+            dfpp_cmd.args(&["--inline-elision"]);
 
             let external_ann_file_name = format!("external-annotations.toml");
             let mut external_ann_file: std::path::PathBuf = cd.into();

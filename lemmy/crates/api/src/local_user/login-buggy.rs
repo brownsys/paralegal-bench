@@ -15,7 +15,7 @@ use crate::lemmy_websocket::LemmyContext;
 impl Perform for Login {
   type Response = LoginResponse;
 
-  #[cfg_attr(feature = "user-login", dfpp::analyze)]
+  #[cfg_attr(feature = "user-login-buggy", dfpp::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -41,12 +41,6 @@ impl Perform for Login {
     if !valid {
       return Err(LemmyError::from_message("password_incorrect"));
     }
-
-    check_user_valid(
-      local_user_view.person.banned,
-      local_user_view.person.ban_expires,
-      local_user_view.person.deleted,
-    )?;
   
     let site = blocking(context.pool(), Site::read_local_site).await??;
     if site.require_email_verification && !local_user_view.local_user.email_verified {

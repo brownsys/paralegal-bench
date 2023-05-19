@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{BlockPerson, BlockPersonResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::person_block::{PersonBlock, PersonBlockForm},
@@ -17,6 +17,7 @@ impl Perform for BlockPerson {
   type Response = BlockPersonResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "user-block", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -39,10 +40,10 @@ impl Perform for BlockPerson {
       target_id,
     };
 
-    let target_person_view = blocking(context.pool(), move |conn| {
+    let target_person_view = apply_label_read(blocking(context.pool(), move |conn| {
       PersonViewSafe::read(conn, target_id)
     })
-    .await??;
+    .await??);
 
     if target_person_view.person.admin {
       return Err(LemmyError::from_message("cant_block_admin"));
@@ -50,14 +51,14 @@ impl Perform for BlockPerson {
 
     if data.block {
       let block = move |conn: &'_ _| PersonBlock::block(conn, &person_block_form);
-      blocking(context.pool(), block)
+      apply_label_write(blocking(context.pool(), block)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "person_block_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "person_block_already_exists"))?);
     } else {
       let unblock = move |conn: &'_ _| PersonBlock::unblock(conn, &person_block_form);
-      blocking(context.pool(), unblock)
+      apply_label_write(blocking(context.pool(), unblock)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "person_block_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "person_block_already_exists"))?);
     }
 
     let res = BlockPersonResponse {

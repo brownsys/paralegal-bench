@@ -8,7 +8,9 @@ use crate::lemmy_api_common::{
     check_community_deleted_or_removed,
     check_downvotes_enabled,
     get_local_user_view_from_jwt,
-    mark_post_as_read
+    mark_post_as_read,
+    apply_label_read,
+    apply_label_community_write
   },
 };
 use crate::lemmy_apub::{
@@ -63,10 +65,10 @@ impl Perform for CreatePostLike {
 
     // Remove any likes first
     let person_id = local_user_view.person.id;
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       PostLike::remove(conn, person_id, post_id)
     })
-    .await??;
+    .await??);
 
     let community_id = post.community_id;
     let object = PostOrComment::Post(Box::new(post));
@@ -76,9 +78,9 @@ impl Perform for CreatePostLike {
     if do_add {
       let like_form2 = like_form.clone();
       let like = move |conn: &'_ _| PostLike::like(conn, &like_form2);
-      blocking(context.pool(), like)
+      apply_label_community_write(blocking(context.pool(), like)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_post"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_post"))?);
 
       Vote::send(
         &object,
@@ -101,7 +103,7 @@ impl Perform for CreatePostLike {
     }
 
     // Mark the post as read
-    mark_post_as_read(person_id, post_id, context.pool()).await?;
+    apply_label_community_write(mark_post_as_read(person_id, post_id, context.pool()).await?);
 
     send_post_ws_message(
       data.post_id,

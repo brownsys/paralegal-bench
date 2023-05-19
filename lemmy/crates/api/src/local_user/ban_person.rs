@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{BanPerson, BanPersonResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, remove_user_data},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, remove_user_data, apply_label_read, apply_label_write},
 };
 use crate::lemmy_apub::{
   activities::block::SiteOrCommunity,
@@ -25,6 +25,7 @@ impl Perform for BanPerson {
   type Response = BanPersonResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "user-ban-person", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -42,20 +43,20 @@ impl Perform for BanPerson {
     let expires = data.expires.map(naive_from_unix);
 
     let ban_person = move |conn: &'_ _| Person::ban_person(conn, banned_person_id, ban, expires);
-    let person = blocking(context.pool(), ban_person)
+    let person = apply_label_write(blocking(context.pool(), ban_person)
       .await?
-      .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_user"))?;
+      .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_user"))?);
 
     // Remove their data if that's desired
     let remove_data = data.remove_data.unwrap_or(false);
     if remove_data {
-      remove_user_data(
+      apply_label_write(remove_user_data(
         person.id,
         context.pool(),
         context.settings(),
         context.client(),
       )
-      .await?;
+      .await?);
     }
 
     // Mod tables
@@ -67,13 +68,13 @@ impl Perform for BanPerson {
       expires,
     };
 
-    blocking(context.pool(), move |conn| ModBan::create(conn, &form)).await??;
+    apply_label_write(blocking(context.pool(), move |conn| ModBan::create(conn, &form)).await??);
 
     let person_id = data.person_id;
-    let person_view = blocking(context.pool(), move |conn| {
+    let person_view = apply_label_read(blocking(context.pool(), move |conn| {
       PersonViewSafe::read(conn, person_id)
     })
-    .await??;
+    .await??);
 
     let site = SiteOrCommunity::Site(
       blocking(context.pool(), Site::read_local_site)

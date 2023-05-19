@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use anyhow::Context;
 use crate::lemmy_api_common::{
   community::{GetCommunityResponse, TransferCommunity},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -34,14 +34,14 @@ impl Perform for TransferCommunity {
     let local_user_view =
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-    let admins = blocking(context.pool(), PersonViewSafe::admins).await??;
+    let admins = apply_label_read(blocking(context.pool(), PersonViewSafe::admins).await??);
 
     // Fetch the community mods
     let community_id = data.community_id;
-    let mut community_mods = blocking(context.pool(), move |conn| {
+    let mut community_mods = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_community(conn, community_id)
     })
-    .await??;
+    .await??);
 
     // Make sure transferrer is either the top community mod, or an admin
     if local_user_view.person.id != community_mods[0].moderator.id
@@ -64,10 +64,10 @@ impl Perform for TransferCommunity {
 
     // Delete all the mods
     let community_id = data.community_id;
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       CommunityModerator::delete_for_community(conn, community_id)
     })
-    .await??;
+    .await??);
 
     // TODO: this should probably be a bulk operation
     // Re-add the mods, in the new order
@@ -90,24 +90,24 @@ impl Perform for TransferCommunity {
       community_id: data.community_id,
       removed: Some(false),
     };
-    blocking(context.pool(), move |conn| {
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       ModTransferCommunity::create(conn, &form)
     })
-    .await??;
+    .await??);
 
     let community_id = data.community_id;
     let person_id = local_user_view.person.id;
-    let community_view = blocking(context.pool(), move |conn| {
+    let community_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityView::read(conn, community_id, Some(person_id))
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_community"))?;
 
     let community_id = data.community_id;
-    let moderators = blocking(context.pool(), move |conn| {
+    let moderators = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_community(conn, community_id)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_find_community"))?;
 
     // Return the jwt

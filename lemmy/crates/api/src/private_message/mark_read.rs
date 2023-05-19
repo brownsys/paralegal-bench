@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{MarkPrivateMessageAsRead, PrivateMessageResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{source::private_message::PrivateMessage, traits::Crud};
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -13,6 +13,7 @@ impl Perform for MarkPrivateMessageAsRead {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "private-message-mark-read", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -24,10 +25,10 @@ impl Perform for MarkPrivateMessageAsRead {
 
     // Checking permissions
     let private_message_id = data.private_message_id;
-    let orig_private_message = blocking(context.pool(), move |conn| {
+    let orig_private_message = apply_label_read(blocking(context.pool(), move |conn| {
       PrivateMessage::read(conn, private_message_id)
     })
-    .await??;
+    .await??);
     if local_user_view.person.id != orig_private_message.recipient_id {
       return Err(LemmyError::from_message("couldnt_update_private_message"));
     }
@@ -35,10 +36,10 @@ impl Perform for MarkPrivateMessageAsRead {
     // Doing the update
     let private_message_id = data.private_message_id;
     let read = data.read;
-    blocking(context.pool(), move |conn| {
+    apply_label_write(blocking(context.pool(), move |conn| {
       PrivateMessage::update_read(conn, private_message_id, read)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_private_message"))?;
 
     // No need to send an apub update

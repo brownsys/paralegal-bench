@@ -6,7 +6,9 @@ use crate::lemmy_api_common::{
     blocking,
     check_community_ban,
     check_community_deleted_or_removed,
-    get_local_user_view_from_jwt
+    get_local_user_view_from_jwt,
+    apply_label_read,
+    apply_label_community_write
   },
 };
 use crate::lemmy_apub::{
@@ -40,10 +42,10 @@ impl Perform for FollowCommunity {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let community_id = data.community_id;
-    let community: ApubCommunity = blocking(context.pool(), move |conn| {
+    let community: ApubCommunity = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, community_id)
     })
-    .await??
+    .await??)
     .into();
     let community_follower_form = CommunityFollowerForm {
       community_id: data.community_id,
@@ -57,15 +59,15 @@ impl Perform for FollowCommunity {
         check_community_deleted_or_removed(community_id, context.pool()).await?;
 
         let follow = move |conn: &'_ _| CommunityFollower::follow(conn, &community_follower_form);
-        blocking(context.pool(), follow)
+        apply_label_community_write(blocking(context.pool(), follow)
           .await?
-          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
+          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
       } else {
         let unfollow =
           move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
-        blocking(context.pool(), unfollow)
+          apply_label_community_write(blocking(context.pool(), unfollow)
           .await?
-          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
+          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
       }
     } else if data.follow {
       // Dont actually add to the community followers here, because you need
@@ -76,17 +78,17 @@ impl Perform for FollowCommunity {
       UndoFollowCommunity::send(&local_user_view.person.clone().into(), &community, context)
         .await?;
       let unfollow = move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
-      blocking(context.pool(), unfollow)
+      apply_label_community_write(blocking(context.pool(), unfollow)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
     }
 
     let community_id = data.community_id;
     let person_id = local_user_view.person.id;
-    let community_view = blocking(context.pool(), move |conn| {
+    let community_view = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityView::read(conn, community_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     Ok(Self::Response { community_view })
   }

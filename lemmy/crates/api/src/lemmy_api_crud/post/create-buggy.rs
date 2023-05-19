@@ -49,7 +49,7 @@ impl PerformCrud for CreatePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  #[cfg_attr(feature = "post-create", dfpp::analyze)]
+  #[cfg_attr(feature = "post-create-buggy", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -69,7 +69,6 @@ impl PerformCrud for CreatePost {
     }
     
     check_community_ban(local_user_view.person.id, data.community_id, context.pool()).await?;
-    check_community_deleted_or_removed(data.community_id, context.pool()).await?;
 
     let community_id = data.community_id;
     let community = apply_label_read(blocking(context.pool(), move |conn| {

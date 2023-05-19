@@ -3,7 +3,7 @@ use activitypub_federation::core::object_id::ObjectId;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{CreatePostReport, PostReportResponse},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt},
+  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::protocol::activities::community::report::Report;
 use crate::lemmy_db_schema::{
@@ -42,10 +42,10 @@ impl Perform for CreatePostReport {
 
     let person_id = local_user_view.person.id;
     let post_id = data.post_id;
-    let post_view = blocking(context.pool(), move |conn| {
+    let post_view = apply_label_read(blocking(context.pool(), move |conn| {
       PostView::read(conn, post_id, None)
     })
-    .await??;
+    .await??);
 
     check_community_ban(person_id, post_view.community.id, context.pool()).await?;
 
@@ -58,16 +58,16 @@ impl Perform for CreatePostReport {
       reason: data.reason.to_owned(),
     };
 
-    let report = blocking(context.pool(), move |conn| {
+    let report = apply_label_community_write(blocking(context.pool(), move |conn| {
       PostReport::report(conn, &report_form)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_create_report"))?;
 
-    let post_report_view = blocking(context.pool(), move |conn| {
+    let post_report_view = apply_label_read(blocking(context.pool(), move |conn| {
       PostReportView::read(conn, report.id, person_id)
     })
-    .await??;
+    .await??);
 
     let res = PostReportResponse { post_report_view };
 

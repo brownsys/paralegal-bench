@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{AddAdmin, AddAdminResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -20,6 +20,7 @@ impl Perform for AddAdmin {
   type Response = AddAdminResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "user-add-admin", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -34,10 +35,10 @@ impl Perform for AddAdmin {
 
     let added = data.added;
     let added_person_id = data.person_id;
-    let added_admin = blocking(context.pool(), move |conn| {
+    let added_admin = apply_label_write(blocking(context.pool(), move |conn| {
       Person::add_admin(conn, added_person_id, added)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_user"))?;
 
     // Mod tables
@@ -47,9 +48,9 @@ impl Perform for AddAdmin {
       removed: Some(!data.added),
     };
 
-    blocking(context.pool(), move |conn| ModAdd::create(conn, &form)).await??;
+    apply_label_write(blocking(context.pool(), move |conn| ModAdd::create(conn, &form)).await??);
 
-    let admins = blocking(context.pool(), PersonViewSafe::admins).await??;
+    let admins = apply_label_read(blocking(context.pool(), PersonViewSafe::admins).await??);
 
     let res = AddAdminResponse { admins };
 

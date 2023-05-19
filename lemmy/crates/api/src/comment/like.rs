@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentResponse, CreateCommentLike},
-  utils::{blocking, check_community_ban, check_downvotes_enabled, get_local_user_view_from_jwt},
+  utils::{blocking, check_community_ban, check_downvotes_enabled, get_local_user_view_from_jwt, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::{
   fetcher::post_or_comment::PostOrComment,
@@ -42,10 +42,10 @@ impl Perform for CreateCommentLike {
     check_downvotes_enabled(data.score, context.pool()).await?;
 
     let comment_id = data.comment_id;
-    let orig_comment = blocking(context.pool(), move |conn| {
+    let orig_comment = apply_label_read(blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, None)
     })
-    .await??;
+    .await??);
 
     check_community_ban(
       local_user_view.person.id,
@@ -56,10 +56,10 @@ impl Perform for CreateCommentLike {
 
     // Add parent user to recipients
     let recipient_id = orig_comment.get_recipient_id();
-    if let Ok(local_recipient) = blocking(context.pool(), move |conn| {
+    if let Ok(local_recipient) = apply_label_read(blocking(context.pool(), move |conn| {
       LocalUserView::read_person(conn, recipient_id)
     })
-    .await?
+    .await?)
     {
       recipient_ids.push(local_recipient.local_user.id);
     }
@@ -73,10 +73,11 @@ impl Perform for CreateCommentLike {
 
     // Remove any likes first
     let person_id = local_user_view.person.id;
-    blocking(context.pool(), move |conn| {
+    
+    apply_label_community_write(blocking(context.pool(), move |conn| {
       CommentLike::remove(conn, person_id, comment_id)
     })
-    .await??;
+    .await??);
 
     // Only add the like if the score isnt 0
     let comment = orig_comment.comment;
@@ -85,9 +86,9 @@ impl Perform for CreateCommentLike {
     if do_add {
       let like_form2 = like_form.clone();
       let like = move |conn: &'_ _| CommentLike::like(conn, &like_form2);
-      blocking(context.pool(), like)
+      apply_label_community_write(blocking(context.pool(), like)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_comment"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_comment"))?);
 
       Vote::send(
         &object,

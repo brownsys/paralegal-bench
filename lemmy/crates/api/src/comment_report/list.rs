@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{ListCommentReports, ListCommentReportsResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views::comment_report_view::CommentReportQueryBuilder;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -32,7 +32,7 @@ impl Perform for ListCommentReports {
 
     let page = data.page;
     let limit = data.limit;
-    let comment_reports = blocking(context.pool(), move |conn| {
+    let comment_reports = apply_label_read(blocking(context.pool(), move |conn| {
       CommentReportQueryBuilder::create(conn, person_id, admin)
         .community_id(community_id)
         .unresolved_only(unresolved_only)
@@ -40,7 +40,7 @@ impl Perform for ListCommentReports {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     let res = ListCommentReportsResponse { comment_reports };
 

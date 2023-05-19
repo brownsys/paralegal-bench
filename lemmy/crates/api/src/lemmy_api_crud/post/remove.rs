@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{PostResponse, RemovePost},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, is_mod_or_admin, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use crate::lemmy_db_schema::{
@@ -32,7 +32,7 @@ impl PerformCrud for RemovePost {
       get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
     let post_id = data.post_id;
-    let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+    let orig_post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
 
     check_community_ban(
       local_user_view.person.id,
@@ -52,10 +52,10 @@ impl PerformCrud for RemovePost {
     // Update the post
     let post_id = data.post_id;
     let removed = data.removed;
-    let updated_post = blocking(context.pool(), move |conn| {
+    let updated_post = apply_label_community_write(blocking(context.pool(), move |conn| {
       Post::update_removed(conn, post_id, removed)
     })
-    .await??;
+    .await??);
 
     // Mod tables
     let form = ModRemovePostForm {
@@ -79,10 +79,10 @@ impl PerformCrud for RemovePost {
     .await?;
 
     // apub updates
-    let community = blocking(context.pool(), move |conn| {
+    let community = apply_label_read(blocking(context.pool(), move |conn| {
       Community::read(conn, orig_post.community_id)
     })
-    .await??;
+    .await??);
     let deletable = DeletableObjects::Post(Box::new(updated_post.into()));
     send_apub_delete_in_community(
       local_user_view.person,

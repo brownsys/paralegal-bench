@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{ListPostReports, ListPostReportsResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views::post_report_view::PostReportQueryBuilder;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -32,7 +32,7 @@ impl Perform for ListPostReports {
 
     let page = data.page;
     let limit = data.limit;
-    let post_reports = blocking(context.pool(), move |conn| {
+    let post_reports = apply_label_read(blocking(context.pool(), move |conn| {
       PostReportQueryBuilder::create(conn, person_id, admin)
         .community_id(community_id)
         .unresolved_only(unresolved_only)
@@ -40,7 +40,7 @@ impl Perform for ListPostReports {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     let res = ListPostReportsResponse { post_reports };
 

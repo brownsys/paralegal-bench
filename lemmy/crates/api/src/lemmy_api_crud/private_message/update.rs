@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{EditPrivateMessage, PrivateMessageResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read, apply_label_write},
 };
 use crate::lemmy_apub::protocol::activities::{
   create_or_update::private_message::CreateOrUpdatePrivateMessage,
@@ -17,6 +17,7 @@ impl PerformCrud for EditPrivateMessage {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(self, context, websocket_id))]
+  #[cfg_attr(feature = "private-message-update", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -28,10 +29,10 @@ impl PerformCrud for EditPrivateMessage {
 
     // Checking permissions
     let private_message_id = data.private_message_id;
-    let orig_private_message = blocking(context.pool(), move |conn| {
+    let orig_private_message = apply_label_read(blocking(context.pool(), move |conn| {
       PrivateMessage::read(conn, private_message_id)
     })
-    .await??;
+    .await??);
     if local_user_view.person.id != orig_private_message.creator_id {
       return Err(LemmyError::from_message("no_private_message_edit_allowed"));
     }
@@ -39,10 +40,10 @@ impl PerformCrud for EditPrivateMessage {
     // Doing the update
     let content_slurs_removed = remove_slurs(&data.content, &context.settings().slur_regex());
     let private_message_id = data.private_message_id;
-    let updated_private_message = blocking(context.pool(), move |conn| {
+    let updated_private_message = apply_label_write(blocking(context.pool(), move |conn| {
       PrivateMessage::update_content(conn, private_message_id, &content_slurs_removed)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_private_message"))?;
 
     // Send the apub update

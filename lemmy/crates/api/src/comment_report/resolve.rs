@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   comment::{CommentReportResponse, ResolveCommentReport},
-  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin, apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
 use crate::lemmy_db_views::structs::CommentReportView;
@@ -28,10 +28,10 @@ impl Perform for ResolveCommentReport {
 
     let report_id = data.report_id;
     let person_id = local_user_view.person.id;
-    let report = blocking(context.pool(), move |conn| {
+    let report = apply_label_read(blocking(context.pool(), move |conn| {
       CommentReportView::read(conn, report_id, person_id)
     })
-    .await??;
+    .await??);
 
     let person_id = local_user_view.person.id;
     is_mod_or_admin(context.pool(), person_id, report.community.id).await?;
@@ -39,9 +39,9 @@ impl Perform for ResolveCommentReport {
     let resolved = data.resolved;
     let resolve_fun = move |conn: &'_ _| {
       if resolved {
-        CommentReport::resolve(conn, report_id, person_id)
+        apply_label_community_write(CommentReport::resolve(conn, report_id, person_id))
       } else {
-        CommentReport::unresolve(conn, report_id, person_id)
+        apply_label_community_write(CommentReport::unresolve(conn, report_id, person_id))
       }
     };
 
@@ -51,7 +51,7 @@ impl Perform for ResolveCommentReport {
 
     let report_id = data.report_id;
     let comment_report_view = blocking(context.pool(), move |conn| {
-      CommentReportView::read(conn, report_id, person_id)
+      apply_label_read(CommentReportView::read(conn, report_id, person_id))
     })
     .await??;
 

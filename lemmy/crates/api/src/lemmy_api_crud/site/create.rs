@@ -3,7 +3,7 @@ use activitypub_federation::core::signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{CreateSite, SiteResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, site_description_length_check},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, site_description_length_check, apply_label_read, apply_label_write},
 };
 use crate::lemmy_apub::generate_site_inbox_url;
 use crate::lemmy_db_schema::{
@@ -26,6 +26,7 @@ impl PerformCrud for CreateSite {
   type Response = SiteResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-create", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -34,7 +35,7 @@ impl PerformCrud for CreateSite {
     let data: &CreateSite = self;
 
     let read_site = Site::read_local_site;
-    if blocking(context.pool(), read_site).await?.is_ok() {
+    if apply_label_read(blocking(context.pool(), read_site).await?).is_ok() {
       return Err(LemmyError::from_message("site_already_exists"));
     };
 
@@ -80,11 +81,11 @@ impl PerformCrud for CreateSite {
     };
 
     let create_site = move |conn: &'_ _| Site::create(conn, &site_form);
-    blocking(context.pool(), create_site)
+    apply_label_write(blocking(context.pool(), create_site)
       .await?
-      .map_err(|e| LemmyError::from_error_message(e, "site_already_exists"))?;
+      .map_err(|e| LemmyError::from_error_message(e, "site_already_exists"))?);
 
-    let site_view = blocking(context.pool(), SiteView::read_local).await??;
+    let site_view = apply_label_read(blocking(context.pool(), SiteView::read_local).await??);
 
     Ok(SiteResponse { site_view })
   }

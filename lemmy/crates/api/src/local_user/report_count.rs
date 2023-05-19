@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{GetReportCount, GetReportCountResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
 };
 use crate::lemmy_db_views::structs::{CommentReportView, PostReportView};
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -13,6 +13,7 @@ impl Perform for GetReportCount {
   type Response = GetReportCountResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "user-report-count", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -26,15 +27,15 @@ impl Perform for GetReportCount {
     let admin = local_user_view.person.admin;
     let community_id = data.community_id;
 
-    let comment_reports = blocking(context.pool(), move |conn| {
+    let comment_reports = apply_label_read(blocking(context.pool(), move |conn| {
       CommentReportView::get_report_count(conn, person_id, admin, community_id)
     })
-    .await??;
+    .await??);
 
-    let post_reports = blocking(context.pool(), move |conn| {
+    let post_reports = apply_label_read(blocking(context.pool(), move |conn| {
       PostReportView::get_report_count(conn, person_id, admin, community_id)
     })
-    .await??;
+    .await??);
 
     let res = GetReportCountResponse {
       community_id,

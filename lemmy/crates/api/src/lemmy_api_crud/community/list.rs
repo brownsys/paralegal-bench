@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{ListCommunities, ListCommunitiesResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_db_schema::traits::DeleteableOrRemoveable;
 use crate::lemmy_db_views_actor::community_view::CommunityQueryBuilder;
@@ -25,7 +25,7 @@ impl PerformCrud for ListCommunities {
       get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
         .await?;
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+      apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let person_id = local_user_view.to_owned().map(|l| l.person.id);
 
@@ -39,7 +39,7 @@ impl PerformCrud for ListCommunities {
     let listing_type = data.type_;
     let page = data.page;
     let limit = data.limit;
-    let mut communities = blocking(context.pool(), move |conn| {
+    let mut communities = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityQueryBuilder::create(conn)
         .listing_type(listing_type)
         .sort(sort)
@@ -49,7 +49,7 @@ impl PerformCrud for ListCommunities {
         .limit(limit)
         .list()
     })
-    .await??;
+    .await??);
 
     // Blank out deleted or removed info for non-logged in users
     if person_id.is_none() {

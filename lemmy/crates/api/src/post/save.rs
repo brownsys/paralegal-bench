@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{PostResponse, SavePost},
-  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read},
+  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read, apply_label_community_write, apply_label_read},
 };
 use crate::lemmy_db_schema::{
   source::post::{PostSaved, PostSavedForm},
@@ -34,25 +34,25 @@ impl Perform for SavePost {
 
     if data.save {
       let save = move |conn: &'_ _| PostSaved::save(conn, &post_saved_form);
-      blocking(context.pool(), save)
+      apply_label_community_write(blocking(context.pool(), save)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_post"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_post"))?);
     } else {
       let unsave = move |conn: &'_ _| PostSaved::unsave(conn, &post_saved_form);
-      blocking(context.pool(), unsave)
+      apply_label_community_write(blocking(context.pool(), unsave)
         .await?
-        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_post"))?;
+        .map_err(|e| LemmyError::from_error_message(e, "couldnt_save_post"))?);
     }
 
     let post_id = data.post_id;
     let person_id = local_user_view.person.id;
-    let post_view = blocking(context.pool(), move |conn| {
+    let post_view = apply_label_read(blocking(context.pool(), move |conn| {
       PostView::read(conn, post_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     // Mark the post as read
-    mark_post_as_read(person_id, post_id, context.pool()).await?;
+    apply_label_community_write(mark_post_as_read(person_id, post_id, context.pool()).await?);
 
     Ok(PostResponse { post_view })
   }

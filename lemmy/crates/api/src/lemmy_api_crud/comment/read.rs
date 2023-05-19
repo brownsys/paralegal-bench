@@ -24,7 +24,7 @@ impl PerformCrud for GetComment {
       get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
         .await?;
 
-    check_private_instance(&local_user_view, context.pool()).await?;
+    apply_label_read(check_private_instance(&local_user_view, context.pool()).await?);
 
     let person_id = local_user_view.map(|u| u.person.id);
     let id = data.id;

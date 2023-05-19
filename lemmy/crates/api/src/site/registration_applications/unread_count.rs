@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{GetUnreadRegistrationApplicationCount, GetUnreadRegistrationApplicationCountResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read},
 };
 use crate::lemmy_db_schema::source::site::Site;
 use crate::lemmy_db_views::structs::RegistrationApplicationView;
@@ -13,6 +13,7 @@ use crate::lemmy_websocket::LemmyContext;
 impl Perform for GetUnreadRegistrationApplicationCount {
   type Response = GetUnreadRegistrationApplicationCountResponse;
 
+  #[cfg_attr(feature = "registration-unread-counts", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -25,14 +26,14 @@ impl Perform for GetUnreadRegistrationApplicationCount {
     // Only let admins do this
     is_admin(&local_user_view)?;
 
-    let verified_email_only = blocking(context.pool(), Site::read_local_site)
-      .await??
+    let verified_email_only = apply_label_read(blocking(context.pool(), Site::read_local_site)
+      .await??)
       .require_email_verification;
 
-    let registration_applications = blocking(context.pool(), move |conn| {
+    let registration_applications = apply_label_read(blocking(context.pool(), move |conn| {
       RegistrationApplicationView::get_unread_count(conn, verified_email_only)
     })
-    .await??;
+    .await??);
 
     Ok(Self::Response {
       registration_applications,

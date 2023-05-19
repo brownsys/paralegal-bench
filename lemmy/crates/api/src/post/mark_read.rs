@@ -2,7 +2,8 @@ use crate::Perform;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{MarkPostAsRead, PostResponse},
-  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read, mark_post_as_unread},
+  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read, mark_post_as_unread,
+  apply_label_read, apply_label_community_write},
 };
 use crate::lemmy_db_views::structs::PostView;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -28,16 +29,16 @@ impl Perform for MarkPostAsRead {
 
     // Mark the post as read / unread
     if data.read {
-      mark_post_as_read(person_id, post_id, context.pool()).await?;
+      apply_label_community_write(mark_post_as_read(person_id, post_id, context.pool()).await?);
     } else {
-      mark_post_as_unread(person_id, post_id, context.pool()).await?;
+      apply_label_community_write(mark_post_as_unread(person_id, post_id, context.pool()).await?);
     }
 
     // Fetch it
-    let post_view = blocking(context.pool(), move |conn| {
+    let post_view = apply_label_read(blocking(context.pool(), move |conn| {
       PostView::read(conn, post_id, Some(person_id))
     })
-    .await??;
+    .await??);
 
     let res = Self::Response { post_view };
 
