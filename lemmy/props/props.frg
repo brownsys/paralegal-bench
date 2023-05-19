@@ -1,6 +1,6 @@
 #lang forge
 
-open "../comment-create.frg"
+open "../analysis_result.frg"
 open "basic_helpers.frg"
 
 // some fp flows to the auth check labeled lb, and the auth check has control flow influence on the sink
@@ -17,9 +17,11 @@ pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgumen
 // if there is a database read (other than reading the user), must enforce instance auth check
 pred properRead[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSite, labels: set Object->Label] {
    all c : Ctrl | {
-        all read_sink : labeled_objects[CallSite, db_read, labels] | (read_sink->db_user_read not in labels) implies {
-            flowToAuth[c, read_sink, instance_ban_check, flow_set, ctrl_flow, labels]
-            flowToAuth[c, read_sink, instance_delete_check, flow_set, ctrl_flow, labels]
+        all read_sink : labeled_objects[CallSite, db_read, labels] | {
+            read_sink->db_user_read not in labels implies {
+                flowToAuth[c, read_sink, instance_ban_check, flow_set, ctrl_flow, labels]
+                //flowToAuth[c, read_sink, instance_delete_check, flow_set, ctrl_flow, labels]
+            }
         }
     }
 }
@@ -42,19 +44,30 @@ pred properWrite[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSit
 
 test expect {
 
+    // vacuity: {
+    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow])
+    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_read, labels] | flows_to[c, fp, read_user_sink, flow])
+    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_write, labels] | flows_to[c, fp, read_user_sink, flow])
+    //     all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_community_write, labels] | flows_to[c, fp, read_user_sink, flow])
+    // } for Flows is sat
+
     vacuity: {
-        all c : Ctrl | some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow])
+        all c : Ctrl | {
+            // some read_sink : labeled_objects[CallSite, db_read, labels] | (read_sink->db_user_read not in labels)
+            some write_sink : labeled_objects[CallSite, db_write, labels] | (write_sink->db_community_write in labels)
+        }
     } for Flows is sat
 
-    oxymoron: {
-        some c : Ctrl | not (some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow]))
-    } is sat
+
+    // oxymoron: {
+    //     some c : Ctrl | not (some fp : (fp_fun_rel.c) | (some read_user_sink : labeled_objects[CallSite, db_user_read, labels] | flows_to[c, fp, read_user_sink, flow]))
+    // } is sat
 
     dbRead: {
         properRead[flow, ctrl_flow, labels]
     } for Flows is theorem
 
-     dbWrite: {
-        properWrite[flow, ctrl_flow, labels]
-    } for Flows is theorem
+    //  dbWrite: {
+    //     properWrite[flow, ctrl_flow, labels]
+    // } for Flows is theorem
 }

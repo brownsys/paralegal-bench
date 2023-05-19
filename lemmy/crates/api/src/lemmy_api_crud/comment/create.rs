@@ -74,8 +74,8 @@ impl PerformCrud for CreateComment {
     // If there's a parent_id, check to make sure that comment is in that post
     if let Some(parent_id) = data.parent_id {
       // Make sure the parent comment exists
-      let parent = apply_label_read(blocking(context.pool(), move |conn| Comment::read(conn, parent_id))
-        .await?)
+      let parent = blocking(context.pool(), move |conn| Comment::read(conn, parent_id))
+        .await?
         .map_err(|e| LemmyError::from_error_message(e, "couldnt_create_comment"))?;
 
       // Strange issue where sometimes the post ID is incorrect
@@ -105,7 +105,7 @@ impl PerformCrud for CreateComment {
     let protocol_and_hostname = context.settings().get_protocol_and_hostname();
 
     let updated_comment: Comment =
-      apply_label_community_write(blocking(context.pool(), move |conn| -> Result<Comment, LemmyError> {
+      blocking(context.pool(), move |conn| -> Result<Comment, LemmyError> {
         let apub_id = generate_local_apub_endpoint(
           EndpointType::Comment,
           &inserted_comment_id.to_string(),
@@ -113,7 +113,7 @@ impl PerformCrud for CreateComment {
         )?;
         Ok(Comment::update_ap_id(conn, inserted_comment_id, apub_id)?)
       })
-      .await?)
+      .await?
       .map_err(|e| e.with_message("couldnt_create_comment"))?;
 
     // Scan the comment for user mentions, add those rows
@@ -137,7 +137,7 @@ impl PerformCrud for CreateComment {
       score: 1,
     };
 
-    let like = move |conn: &'_ _| apply_label_community_write(CommentLike::like(conn, &like_form));
+    let like = move |conn: &'_ _| CommentLike::like(conn, &like_form);
     blocking(context.pool(), like)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_like_comment"))?;
@@ -154,44 +154,44 @@ impl PerformCrud for CreateComment {
 
     let person_id = local_user_view.person.id;
     let comment_id = inserted_comment.id;
-    let comment_view = apply_label_read(blocking(context.pool(), move |conn| {
+    let comment_view = blocking(context.pool(), move |conn| {
       CommentView::read(conn, comment_id, Some(person_id))
     })
-    .await??);
+    .await??;
 
     // If its a comment to yourself, mark it as read
     if local_user_view.person.id == comment_view.get_recipient_id() {
       let comment_id = inserted_comment.id;
-      apply_label_read(blocking(context.pool(), move |conn| {
+      blocking(context.pool(), move |conn| {
         Comment::update_read(conn, comment_id, true)
       })
-      .await?)
+      .await?
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_comment"))?;
     }
     // If its a reply, mark the parent as read
     if let Some(parent_id) = data.parent_id {
-      let parent_comment = apply_label_read(blocking(context.pool(), move |conn| {
+      let parent_comment = blocking(context.pool(), move |conn| {
         CommentView::read(conn, parent_id, Some(person_id))
       })
-      .await??);
+      .await??;
       if local_user_view.person.id == parent_comment.get_recipient_id() {
-        apply_label_read(blocking(context.pool(), move |conn| {
+        blocking(context.pool(), move |conn| {
           Comment::update_read(conn, parent_id, true)
         })
-        .await?)
+        .await?
         .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_parent_comment"))?;
       }
       // If the parent has PersonMentions mark them as read too
       let person_id = local_user_view.person.id;
-      let person_mention = apply_label_read(blocking(context.pool(), move |conn| {
+      let person_mention = blocking(context.pool(), move |conn| {
         PersonMention::read_by_comment_and_person(conn, parent_id, person_id)
       })
-      .await?);
+      .await?;
       if let Ok(mention) = person_mention {
-        apply_label_read(blocking(context.pool(), move |conn| {
+        blocking(context.pool(), move |conn| {
           PersonMention::update_read(conn, mention.id, true)
         })
-        .await?)
+        .await?
         .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_person_mentions"))?;
       }
     }
