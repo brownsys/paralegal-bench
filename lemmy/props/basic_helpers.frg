@@ -33,14 +33,12 @@ fun ctrl_flow_for_ctrl[c: one Ctrl, ctrl_flow : set Src->CallSite] : set Src->Si
 }
 
 pred flows_to[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Src->Sink] {
-    some c: cs |
-    let a = to_source[c, o] | {
-        let b = flow_for_ctrl[c, flow_set] | {
-            some (a.b) // a exists in cs
-            and (a -> f in ^(b + arg_call_site))
-        }
+    let a = to_source[cs, o] | {
+    // let b = flow_for_ctrl[c, flow_set] | {
+        some (a.flow_set) // a exists in cs
+        and (a -> f in ^(flow_set + arg_call_site))
     }
-}
+ }
 
 fun labeled_objects[obs: Object, ls: Label, labels_set: set Object->Label] : set Object {
     labels_set.ls & obs

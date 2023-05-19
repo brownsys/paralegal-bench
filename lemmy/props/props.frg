@@ -9,7 +9,7 @@ pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgumen
         flows_to[c, fp, cs, flow_set]
         some intermediate : CallSite | {
             flows_to[c, cs, intermediate, flow_set]
-            intermediate->sink in ctrl_flow_for_ctrl[c, ctrl_flow]
+            intermediate->sink in ctrl_flow
         }
     }
 }
@@ -20,7 +20,7 @@ pred properRead[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSite
         all read_sink : labeled_objects[CallSite, db_read, labels] | {
             read_sink->db_user_read not in labels implies {
                 flowToAuth[c, read_sink, instance_ban_check, flow_set, ctrl_flow, labels]
-                //flowToAuth[c, read_sink, instance_delete_check, flow_set, ctrl_flow, labels]
+                flowToAuth[c, read_sink, instance_delete_check, flow_set, ctrl_flow, labels]
             }
         }
     }
@@ -28,7 +28,7 @@ pred properRead[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSite
 
 pred properWrite[flow_set: set Src->CallArgument, ctrl_flow : set Src -> CallSite, labels: set Object->Label] {
     all c : Ctrl | {
-        all write_sink : labeled_objects[CallSite, db_write, labels] {
+        all write_sink : labeled_objects[CallSite, db_write, labels] | {
             // if there is a database write, must enforce instance auth check
             flowToAuth[c, write_sink, instance_delete_check, flow_set, ctrl_flow, labels]
             flowToAuth[c, write_sink, instance_ban_check, flow_set, ctrl_flow, labels]
@@ -67,7 +67,7 @@ test expect {
         properRead[flow, ctrl_flow, labels]
     } for Flows is theorem
 
-    //  dbWrite: {
-    //     properWrite[flow, ctrl_flow, labels]
-    // } for Flows is theorem
+     dbWrite: {
+        properWrite[flow, ctrl_flow, labels]
+    } for Flows is theorem
 }
