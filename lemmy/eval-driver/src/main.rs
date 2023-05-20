@@ -19,6 +19,8 @@ const CONFIGURATIONS: &'static [Property] = &[
     Property::Community,
 ];
 
+const PROPS_PATH: &str = "../../dfpp-props/";
+
 const ERR_MSG_VERSIONS: &[&str] = &["original", "optimized", "minimal"];
 
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
@@ -355,6 +357,10 @@ impl RunConfiguration {
         s
     }
 
+    fn props_path(&self) -> &std::path::Path {
+        std::path::Path::new(PROPS_PATH)
+    }
+
     fn err_msg_timeout(&self) -> std::time::Duration {
         self.args.err_msg_timeout.into()
     }
@@ -444,7 +450,7 @@ impl RunConfiguration {
 				.write(true)
 				.create(true)
 				.open(&check_file_path)?;
-			self.write_headers_and_prop(&mut w, "../../dfpp-props/sigs")?;
+			self.write_headers_and_prop(&mut w, &self.props_path().join("sigs"))?;
 			writeln!(
 				w,
 				"test expect {{ {}: {{ property[flow, labels] }} for Flows is theorem }}",
@@ -484,14 +490,14 @@ impl RunConfiguration {
                 .create(true)
                 .open(&frg_file)?;
             let sig_file = if template == "optimized" {
-                "../../dfpp-props/err_msg_optimized_sigs"
+                self.props_path().join("err_msg_optimized_sigs")
             } else {
-                "../../dfpp-props/err_msg_sigs"
+                self.props_path().join("err_msg_sigs")
             };
-            self.write_headers_and_prop(&mut w, sig_file)?;
+            self.write_headers_and_prop(&mut w, &sig_file)?;
             let template_file = self
                 .forge_source_dir()
-                .join(&format!("../../dfpp-props/err_msg_template_{template}.frg"));
+                .join(self.props_path().join(format!("err_msg_template_{template}.frg")));
             copy(&mut std::fs::File::open(template_file)?, &mut w)?;
         }
         let mut racket_cmd = Command::new("racket");
@@ -540,20 +546,20 @@ impl RunConfiguration {
     }
 
 
-	fn write_headers_and_prop<W: std::io::Write>(
+	fn write_headers_and_prop<W: std::io::Write, P: AsRef<std::path::Path>>(
         &self,
         mut w: W,
-        sigs: &str,
+        sigs: &P,
     ) -> std::io::Result<()> {
         use std::io::{copy, Read, Write};
         let propfile = self.forge_in_file("props");
         writeln!(w, "#lang forge")?;
         let ana_path = self.analysis_result_path();
         use Either::*;
-		let helper_files = &["../../dfpp-props/basic-helpers"];
-        for include in [Right(sigs), Left(ana_path)]
+		let helper_files = [self.props_path().join("basic-helpers")];
+        for include in [Right(sigs.as_ref().into()), Left(ana_path)]
             .into_iter()
-			.chain(helper_files.iter().copied().map(Right))
+			.chain(helper_files.into_iter().map(Right))
         {
             writeln!(w)?;
             let path = match include {
