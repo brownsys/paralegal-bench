@@ -60,14 +60,14 @@ impl Perform for FollowCommunity {
 
         let follow = move |conn: &'_ _| CommunityFollower::follow(conn, &community_follower_form);
         apply_label_community_write(blocking(context.pool(), follow)
-          .await?
-          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
+          .await?)
+          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
       } else {
         let unfollow =
           move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
           apply_label_community_write(blocking(context.pool(), unfollow)
-          .await?
-          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
+          .await?)
+          .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
       }
     } else if data.follow {
       // Dont actually add to the community followers here, because you need
@@ -79,8 +79,8 @@ impl Perform for FollowCommunity {
         .await?;
       let unfollow = move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
       apply_label_community_write(blocking(context.pool(), unfollow)
-        .await?
-        .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?);
+        .await?)
+        .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
     }
 
     let community_id = data.community_id;
