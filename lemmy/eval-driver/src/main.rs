@@ -96,34 +96,34 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     // "user-read"
 ];
 
-const SHOULD_FAIL_READ &'static [&'static str] = &[
-    "user-create"
-];
+// const SHOULD_FAIL_READ &'static [&'static str] = &[
+//     "user-create"
+// ];
 
-const SHOULD_FAIL_WRITE &'static [&'static str] = &[
-    "comment-like",
-    "comment-mark-as-read",
-    "comment-save",
-    "comment-report-create",
-    "community-block",
-    "user-login-buggy",
-    "post-mark-read",
-    "post-save",
-    "post-report-create",
-    "post-report-resolve",
-    "comment-create-buggy",
-    "comment-delete",
-    "comment-remove",
-    "comment-update-buggy",
-    "community-delete",
-    "post-read",
-    "community-remove",
-    "community-update",
-    "post-create-buggy",
-    "post-delete-buggy",
-    "post-remove",
-    "post-update-buggy"
-];
+// const SHOULD_FAIL_WRITE &'static [&'static str] = &[
+//     "comment-like",
+//     "comment-mark-as-read",
+//     "comment-save",
+//     "comment-report-create",
+//     "community-block",
+//     "user-login-buggy",
+//     "post-mark-read",
+//     "post-save",
+//     "post-report-create",
+//     "post-report-resolve",
+//     "comment-create-buggy",
+//     "comment-delete",
+//     "comment-remove",
+//     "comment-update-buggy",
+//     "community-delete",
+//     "post-read",
+//     "community-remove",
+//     "community-update",
+//     "post-create-buggy",
+//     "post-delete-buggy",
+//     "post-remove",
+//     "post-update-buggy"
+// ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
 ///
