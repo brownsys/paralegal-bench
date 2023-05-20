@@ -60,3 +60,4 @@ msgstr "ᱱᱚᱶᱟ ᱫᱚ ᱰᱨᱟᱯᱷᱼᱴ ᱠᱟᱱᱟ"
 # plume-front/src/editor.rs:575
 msgid "Publish"
 msgstr "ᱯᱟᱨᱥᱟᱞ"
+

@@ -132,7 +132,7 @@ impl Blog {
             .map_err(Error::from)
     }
 
-    #[dfpp::label(noinline)]
+    #[dfpp::label(noinline, arguments = [0])]
     pub fn find_for_author(conn: &Connection, author: &User) -> Result<Vec<Blog>> {
         use crate::schema::blog_authors;
         let author_ids = blog_authors::table

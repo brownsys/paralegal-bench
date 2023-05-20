@@ -1,0 +1,61 @@
+@use plume_models::users::User;
+@use crate::templates::base;
+@use crate::template_utils::*;
+@use crate::routes::*;
+
+@(ctx: BaseContext, users: Vec<User>, user: Option<&str>, page: i32, n_pages: i32)
+
+@:base(ctx, i18n!(ctx.1, "Users"), {}, {}, {
+    <h1>@i18n!(ctx.1, "Users")</h1>
+
+    @tabs(&[
+        (&uri!(instance::admin).to_string(), i18n!(ctx.1, "Configuration"), false),
+        (&uri!(instance::admin_instances: page = _).to_string(), i18n!(ctx.1, "Instances"), false),
+        (&uri!(instance::admin_users: page = _).to_string(), i18n!(ctx.1, "Users"), true),
+        (&uri!(instance::admin_email_blocklist: page=_).to_string(), i18n!(ctx.1, "Email blocklist"), false)
+    ])
+
+    <form method="get" action="@uri!(instance::admin_search_users: page = _, user = user.unwrap_or_default())">
+        <header>
+            <input type="search" name="user" value="@user.unwrap_or_default()">
+            <input type="submit" value="@i18n!(ctx.1, "Search users")">
+        </header>
+    </form>
+
+    <form method="post" action="@uri!(instance::edit_users)">
+        <header>
+            <select name="action">
+                <option value="admin">@i18n!(ctx.1, "Grant admin rights")</option>
+                <option value="un-admin">@i18n!(ctx.1, "Revoke admin rights")</option>
+                <option value="moderator">@i18n!(ctx.1, "Grant moderator rights")</option>
+                <option value="un-moderator">@i18n!(ctx.1, "Revoke moderator rights")</option>
+                <option value="ban">@i18n!(ctx.1, "Ban")</option>
+            </select>
+            <input type="submit" value="@i18n!(ctx.1, "Run on selected users")">
+        </header>
+        <div class="list">
+            @for user in users {
+                <div class="card flex compact">
+                    <input type="checkbox" name="@user.id">
+                    @avatar(ctx.0, &user, Size::Small, false, ctx.1)
+                    <p class="grow">
+                        <a href="@uri!(user::details: name = &user.fqn)">@user.name()</a>
+                        <small>@format!("@{}", user.username)</small>
+                    </p>
+                    @if user.is_admin() {
+                        <p class="badge">@i18n!(ctx.1, "Admin")</p>
+                    } else {
+                        @if user.is_moderator() {
+                            <p class="badge">@i18n!(ctx.1, "Moderator")</p>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </form>
+    @if user.is_some() {
+      @paginate_param(ctx.1, page, n_pages, Some(format!("user={}", encode_query_param(user.unwrap_or_default()))))
+    } else {
+      @paginate(ctx.1, page, n_pages)
+    }
+})

@@ -60,3 +60,4 @@ msgstr "Este é un borrador"
 # plume-front/src/editor.rs:575
 msgid "Publish"
 msgstr "Publicar"
+

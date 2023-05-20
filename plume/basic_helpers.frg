@@ -4,7 +4,9 @@ open "analysis_result.frg"
 
 fun to_source[c: one Ctrl, o: one Type + Src + CallSite] : Src {
     {src : Src |
-        o in Type and src->o in c.types or o = src or src->o in arg_call_site
+        o in Type and src->o in c.types 
+        or o = src 
+        or o->src in arg_call_site
     }
 }
 
@@ -38,7 +40,7 @@ pred flows_to_without[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument 
 
 pred flows_to[cs: Ctrl, o: one Type + Src + CallSite, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
     some c: cs |
-    let a = to_source[c, o] | {
+    some a : to_source[c, o] | {
         some c.flow_set[a] // a exists in cs
         and (a -> f in ^(c.flow_set + arg_call_site))
     }

@@ -60,3 +60,4 @@ msgstr "Toto je koncept"
 # plume-front/src/editor.rs:575
 msgid "Publish"
 msgstr "Zverejniť"
+

@@ -1,0 +1,41 @@
+@use plume_models::instance::Instance;
+@use plume_models::posts::Post;
+@use plume_models::timeline::Timeline;
+@use crate::templates::{base, partials::*};
+@use crate::template_utils::*;
+@use crate::routes::*;
+@use rocket::uri;
+
+@(ctx: BaseContext, instance: Instance, n_users: i64, n_articles: i64, tl_id: i32, articles: Vec<Post>, all_tl: Vec<Timeline>, n_pages: i32)
+
+@:base(ctx, instance.name.clone(), {}, {}, {
+    <section class="flex wrap" dir="auto">
+        <h1 class="grow">@i18n!(ctx.1, "Welcome to {}"; instance.name.as_str())</h1>
+    </section>
+
+    @tabs(&all_tl
+            .into_iter()
+            .map(|t| {
+                let url = format!("{}", uri!(timelines::details: id = t.id, page = _));
+                (url, i18n_timeline_name(ctx.1, &t.name), t.id == tl_id)
+            })
+            .collect::<Vec<_>>()
+    )
+
+    @if !articles.is_empty() {
+        <div class="cards">
+            @for article in articles {
+                @:post_card(ctx, article)
+            }
+        </div>
+    } else {
+        <p class="center">@i18n!(ctx.1, "Nothing to see here yet.")</p>
+    }
+    @if n_pages > 1 {
+        <div class="pagination" dir="auto">
+            <a href="@uri!(timelines::details: id = tl_id, page = Some(2.into()))">@i18n!(ctx.1, "Next page")</a>
+        </div>
+    }
+
+    @:instance_description(ctx, instance, n_users, n_articles)
+})

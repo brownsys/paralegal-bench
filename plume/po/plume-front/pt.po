@@ -60,3 +60,4 @@ msgstr "Isso é um rascunho"
 # plume-front/src/editor.rs:575
 msgid "Publish"
 msgstr "Publicar"
+

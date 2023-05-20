@@ -1,170 +1,290 @@
+#![allow(clippy::too_many_arguments)]
+#![feature(decl_macro, proc_macro_hygiene)]
+
 #[macro_use]
-extern crate diesel_migrations;
+extern crate gettext_macros;
+#[macro_use]
+extern crate rocket;
+#[macro_use]
+extern crate serde_json;
 
-use actix::prelude::*;
-use actix_web::{web::Data, *};
-use diesel::{
-  r2d2::{ConnectionManager, Pool},
-  PgConnection,
+use clap::App;
+use diesel::r2d2::ConnectionManager;
+use plume_models::{
+    db_conn::{DbPool, PragmaForeignKey},
+    instance::Instance,
+    migrations::IMPORTED_MIGRATIONS,
+    remote_fetch_actor::RemoteFetchActor,
+    search::{actor::SearchActor, Searcher as UnmanagedSearcher},
+    Connection, CONFIG,
 };
-use doku::json::{AutoComments, Formatting};
-use lemmy_api::match_websocket_operation;
-use lemmy_api_common::{
-  request::build_user_agent,
-  utils::{blocking, check_private_instance_and_federation_enabled},
-};
-use lemmy_api_crud::match_websocket_operation_crud;
-use lemmy_db_schema::{source::secret::Secret, utils::get_database_url_from_env};
-use lemmy_routes::{feeds, images, nodeinfo, webfinger};
-use lemmy_server::{
-  api_routes,
-  code_migrations::run_advanced_migrations,
-  init_logging,
-  root_span_builder::QuieterRootSpanBuilder,
-  scheduled_tasks,
-};
-use lemmy_utils::{
-  error::LemmyError,
-  rate_limit::{rate_limiter::RateLimiter, RateLimit},
-  settings::{structs::Settings, SETTINGS},
-};
-use lemmy_websocket::{chat_server::ChatServer, LemmyContext};
-use reqwest::Client;
-use reqwest_middleware::ClientBuilder;
-use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
-use reqwest_tracing::TracingMiddleware;
-use std::{
-  env,
-  sync::{Arc, Mutex},
-  thread,
-  time::Duration,
-};
-use tracing_actix_web::TracingLogger;
+use rocket_csrf::CsrfFairingBuilder;
+use scheduled_thread_pool::ScheduledThreadPool;
+use std::process::exit;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tracing::warn;
 
-embed_migrations!();
+init_i18n!(
+    "plume", af, ar, bg, ca, cs, cy, da, de, el, en, eo, es, eu, fa, fi, fr, gl, he, hi, hr, hu,
+    it, ja, ko, nb, nl, no, pl, pt, ro, ru, sat, si, sk, sl, sr, sv, tr, uk, vi, zh
+);
 
-/// Max timeout for http requests
-pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
+mod api;
+mod inbox;
+mod mail;
+mod utils;
+#[macro_use]
+mod template_utils;
+mod routes;
+#[macro_use]
+extern crate shrinkwraprs;
+#[cfg(feature = "test")]
+mod test_routes;
 
-#[actix_web::main]
-async fn main() -> Result<(), LemmyError> {
-  let args: Vec<String> = env::args().collect();
-  if args.len() == 2 && args[1] == "--print-config-docs" {
-    let fmt = Formatting {
-      auto_comments: AutoComments::none(),
-      ..Default::default()
+include!(concat!(env!("OUT_DIR"), "/templates.rs"));
+
+compile_i18n!();
+
+/// Initializes a database pool.
+fn init_pool() -> Option<DbPool> {
+    let manager = ConnectionManager::<Connection>::new(CONFIG.database_url.as_str());
+    let mut builder = DbPool::builder()
+        .connection_customizer(Box::new(PragmaForeignKey))
+        .min_idle(CONFIG.db_min_idle);
+    if let Some(max_size) = CONFIG.db_max_size {
+        builder = builder.max_size(max_size);
     };
-    println!("{}", doku::to_json_fmt_val(&fmt, &Settings::default()));
-    return Ok(());
-  }
+    let pool = builder.build(manager).ok()?;
+    let conn = pool.get().unwrap();
+    Instance::cache_local(&conn);
+    let _ = Instance::create_local_instance_user(&conn);
+    Instance::cache_local_instance_user(&conn);
+    Some(pool)
+}
 
-  let settings = SETTINGS.to_owned();
+pub(crate) fn init_rocket() -> rocket::Rocket {
+    match dotenv::dotenv() {
+        Ok(path) => eprintln!("Configuration read from {}", path.display()),
+        Err(ref e) if e.not_found() => eprintln!("no .env was found"),
+        e => e.map(|_| ()).unwrap(),
+    }
+    tracing_subscriber::fmt::init();
 
-  init_logging(&settings.opentelemetry_url)?;
+    App::new("Plume")
+        .bin_name("plume")
+        .version(env!("CARGO_PKG_VERSION"))
+        .about("Plume backend server")
+        .after_help(
+            r#"
+The plume command should be run inside the directory
+containing the `.env` configuration file and `static` directory.
+See https://docs.joinplu.me/installation/config
+and https://docs.joinplu.me/installation/init for more info.
+        "#,
+        )
+        .get_matches();
+    let dbpool = init_pool().expect("main: database pool initialization error");
+    if IMPORTED_MIGRATIONS
+        .is_pending(&dbpool.get().unwrap())
+        .unwrap_or(true)
+    {
+        panic!(
+            r#"
+It appear your database migration does not run the migration required
+by this version of Plume. To fix this, you can run migrations via
+this command:
 
-  // Set up the r2d2 connection pool
-  let db_url = match get_database_url_from_env() {
-    Ok(url) => url,
-    Err(_) => settings.get_database_url(),
-  };
-  let manager = ConnectionManager::<PgConnection>::new(&db_url);
-  let pool = Pool::builder()
-    .max_size(settings.database.pool_size)
-    .build(manager)
-    .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
+    plm migration run
 
-  // Run the migrations from code
-  let protocol_and_hostname = settings.get_protocol_and_hostname();
-  blocking(&pool, move |conn| {
-    embedded_migrations::run(conn)?;
-    run_advanced_migrations(conn, &protocol_and_hostname)?;
-    Ok(()) as Result<(), LemmyError>
-  })
-  .await??;
-
-  // Schedules various cleanup tasks for the DB
-  let pool2 = pool.clone();
-  thread::spawn(move || {
-    scheduled_tasks::setup(pool2).expect("Couldn't set up scheduled_tasks");
-  });
-
-  // Set up the rate limiter
-  let rate_limiter = RateLimit {
-    rate_limiter: Arc::new(Mutex::new(RateLimiter::default())),
-    rate_limit_config: settings.rate_limit.to_owned().unwrap_or_default(),
-  };
-
-  // Initialize the secrets
-  let conn = pool.get()?;
-  let secret = Secret::init(&conn).expect("Couldn't initialize secrets.");
-
-  println!(
-    "Starting http server at {}:{}",
-    settings.bind, settings.port
-  );
-
-  let reqwest_client = Client::builder()
-    .user_agent(build_user_agent(&settings))
-    .timeout(REQWEST_TIMEOUT)
-    .build()?;
-
-  let retry_policy = ExponentialBackoff {
-    max_n_retries: 3,
-    max_retry_interval: REQWEST_TIMEOUT,
-    min_retry_interval: Duration::from_millis(100),
-    backoff_exponent: 2,
-  };
-
-  let client = ClientBuilder::new(reqwest_client.clone())
-    .with(TracingMiddleware)
-    .with(RetryTransientMiddleware::new_with_policy(retry_policy))
-    .build();
-
-  // Pictrs cannot use the retry middleware
-  let pictrs_client = ClientBuilder::new(reqwest_client.clone())
-    .with(TracingMiddleware)
-    .build();
-
-  check_private_instance_and_federation_enabled(&pool, &settings).await?;
-
-  let chat_server = ChatServer::startup(
-    pool.clone(),
-    rate_limiter.clone(),
-    |c, i, o, d| Box::pin(match_websocket_operation(c, i, o, d)),
-    |c, i, o, d| Box::pin(match_websocket_operation_crud(c, i, o, d)),
-    client.clone(),
-    settings.clone(),
-    secret.clone(),
-  )
-  .start();
-
-  // Create Http server with websocket support
-  let settings_bind = settings.clone();
-  HttpServer::new(move || {
-    let context = LemmyContext::create(
-      pool.clone(),
-      chat_server.to_owned(),
-      client.clone(),
-      settings.to_owned(),
-      secret.to_owned(),
+Then try to restart Plume.
+"#
+        )
+    }
+    let workpool = ScheduledThreadPool::with_name("worker {}", num_cpus::get());
+    // we want a fast exit here, so
+    let searcher = Arc::new(UnmanagedSearcher::open_or_recreate(
+        &CONFIG.search_index,
+        &CONFIG.search_tokenizers,
+    ));
+    RemoteFetchActor::init(dbpool.clone());
+    SearchActor::init(searcher.clone(), dbpool.clone());
+    let commiter = searcher.clone();
+    workpool.execute_with_fixed_delay(
+        Duration::from_secs(5),
+        Duration::from_secs(60 * 30),
+        move || commiter.commit(),
     );
-    let rate_limiter = rate_limiter.clone();
-    App::new()
-      .wrap(actix_web::middleware::Logger::default())
-      .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
-      .app_data(Data::new(context))
-      .app_data(Data::new(rate_limiter.clone()))
-      // The routes
-      .configure(|cfg| api_routes::config(cfg, &rate_limiter))
-      .configure(|cfg| lemmy_apub::http::routes::config(cfg, &settings))
-      .configure(feeds::config)
-      .configure(|cfg| images::config(cfg, pictrs_client.clone(), &rate_limiter))
-      .configure(nodeinfo::config)
-      .configure(|cfg| webfinger::config(cfg, &settings))
-  })
-  .bind((settings_bind.bind, settings_bind.port))?
-  .run()
-  .await?;
 
-  Ok(())
+    let search_unlocker = searcher.clone();
+    ctrlc::set_handler(move || {
+        search_unlocker.commit();
+        search_unlocker.drop_writer();
+        exit(0);
+    })
+    .expect("Error setting Ctrl-c handler");
+
+    let mail = mail::init();
+    if mail.is_none() && CONFIG.rocket.as_ref().unwrap().environment.is_prod() {
+        warn!("Warning: the email server is not configured (or not completely).");
+        warn!("Please refer to the documentation to see how to configure it.");
+    }
+
+    rocket::custom(CONFIG.rocket.clone().unwrap())
+        .mount(
+            "/",
+            routes![
+                routes::blogs::details,
+                routes::blogs::activity_details,
+                routes::blogs::outbox,
+                routes::blogs::outbox_page,
+                routes::blogs::new,
+                routes::blogs::new_auth,
+                routes::blogs::create,
+                routes::blogs::delete,
+                routes::blogs::edit,
+                routes::blogs::update,
+                routes::blogs::atom_feed,
+                routes::comments::create,
+                routes::comments::delete,
+                routes::comments::activity_pub,
+                routes::email_signups::create,
+                routes::email_signups::created,
+                routes::email_signups::show,
+                routes::email_signups::signup,
+                routes::instance::index,
+                routes::instance::admin,
+                routes::instance::admin_mod,
+                routes::instance::admin_instances,
+                routes::instance::admin_users,
+                routes::instance::admin_search_users,
+                routes::instance::admin_email_blocklist,
+                routes::instance::add_email_blocklist,
+                routes::instance::delete_email_blocklist,
+                routes::instance::edit_users,
+                routes::instance::toggle_block,
+                routes::instance::update_settings,
+                routes::instance::shared_inbox,
+                routes::instance::interact,
+                routes::instance::nodeinfo,
+                routes::instance::about,
+                routes::instance::privacy,
+                routes::instance::web_manifest,
+                routes::likes::create,
+                routes::likes::create_auth,
+                routes::medias::list,
+                routes::medias::new,
+                routes::medias::upload,
+                routes::medias::details,
+                routes::medias::delete,
+                routes::medias::set_avatar,
+                routes::notifications::notifications,
+                routes::notifications::notifications_auth,
+                routes::posts::details,
+                routes::posts::activity_details,
+                routes::posts::edit,
+                routes::posts::update,
+                routes::posts::new,
+                routes::posts::new_auth,
+                routes::posts::create,
+                routes::posts::delete,
+                routes::posts::remote_interact,
+                routes::posts::remote_interact_post,
+                routes::reshares::create,
+                routes::reshares::create_auth,
+                routes::search::search,
+                routes::session::new,
+                routes::session::create,
+                routes::session::delete,
+                routes::session::password_reset_request_form,
+                routes::session::password_reset_request,
+                routes::session::password_reset_form,
+                routes::session::password_reset,
+                routes::theme_files,
+                routes::plume_static_files,
+                routes::static_files,
+                routes::plume_media_files,
+                routes::tags::tag,
+                routes::timelines::details,
+                routes::timelines::new,
+                routes::timelines::create,
+                routes::timelines::edit,
+                routes::timelines::update,
+                routes::timelines::delete,
+                routes::user::me,
+                routes::user::details,
+                routes::user::dashboard,
+                routes::user::dashboard_auth,
+                routes::user::followers,
+                routes::user::followed,
+                routes::user::edit,
+                routes::user::edit_auth,
+                routes::user::update,
+                routes::user::delete,
+                routes::user::follow,
+                routes::user::follow_not_connected,
+                routes::user::follow_auth,
+                routes::user::activity_details,
+                routes::user::outbox,
+                routes::user::outbox_page,
+                routes::user::inbox,
+                routes::user::ap_followers,
+                routes::user::new,
+                routes::user::create,
+                routes::user::atom_feed,
+                routes::well_known::host_meta,
+                routes::well_known::nodeinfo,
+                routes::well_known::webfinger,
+                routes::errors::csrf_violation
+            ],
+        )
+        .mount(
+            "/api/v1",
+            routes![
+                api::oauth,
+                api::apps::create,
+                api::posts::get,
+                api::posts::list,
+                api::posts::create,
+                api::posts::delete,
+            ],
+        )
+        .register(catchers![
+            routes::errors::not_found,
+            routes::errors::unprocessable_entity,
+            routes::errors::server_error
+        ])
+        .manage(Arc::new(Mutex::new(mail)))
+        .manage::<Arc<Mutex<Vec<routes::session::ResetRequest>>>>(Arc::new(Mutex::new(vec![])))
+        .manage(dbpool)
+        .manage(Arc::new(workpool))
+        .manage(searcher)
+        .manage(include_i18n!())
+        .attach(
+            CsrfFairingBuilder::new()
+                .set_default_target(
+                    "/csrf-violation?target=<uri>".to_owned(),
+                    rocket::http::Method::Post,
+                )
+                .add_exceptions(vec![
+                    ("/inbox".to_owned(), "/inbox".to_owned(), None),
+                    (
+                        "/@/<name>/inbox".to_owned(),
+                        "/@/<name>/inbox".to_owned(),
+                        None,
+                    ),
+                    ("/api/<path..>".to_owned(), "/api/<path..>".to_owned(), None),
+                ])
+                .finalize()
+                .expect("main: csrf fairing creation error"),
+        )
+}
+
+fn main() {
+    let rocket = init_rocket();
+
+    #[cfg(feature = "test")]
+    let rocket = rocket.mount("/test", routes![test_routes::health,]);
+
+    rocket.launch();
 }

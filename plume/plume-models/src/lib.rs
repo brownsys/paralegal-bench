@@ -36,7 +36,6 @@ compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for th
 pub type Connection = diesel::SqliteConnection;
 
 #[cfg(all(not(feature = "sqlite"), feature = "postgres"))]
-
 pub type Connection = diesel::PgConnection;
 
 pub(crate) static ACTOR_SYS: Lazy<ActorSystem> = Lazy::new(|| {

@@ -28,7 +28,6 @@ tracing = "0.1.35"
 tracing-subscriber = "0.3.10"
 riker = "0.4.2"
 activitystreams = "=0.7.0-alpha.20"
-time = "=0.3.10"
 
 [[bin]]
 name = "plume"
@@ -77,4 +76,11 @@ test = []
 search-lindera = ["plume-models/search-lindera"]
 
 [workspace]
-members = ["plume-api", "plume-cli", "plume-models", "plume-common", "plume-macro"]
+members = [
+    "plume-api", 
+    "plume-cli", 
+    "plume-models", 
+    "plume-common", 
+    #"plume-front", 
+    "plume-macro"
+    ]
