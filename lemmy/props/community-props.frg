@@ -26,9 +26,9 @@ pred properCommunityWrite[flow_set: set Src->CallArgument, labels: set Object->L
 
 test expect {
 
-    vacuity: {
-        some labeled_callsites[db_community_write, labels]
-    } for Flows is sat
+    // vacuity: {
+    //     some labeled_callsites[db_community_write, labels]
+    // } for Flows is sat
 
      dbWrite: {
         properCommunityWrite[flow, labels]

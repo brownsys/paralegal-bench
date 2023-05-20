@@ -10,8 +10,8 @@ use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
 const CONFIGURATIONS: &'static [Property] = &[
-    Property::Read,
-    Property::Write,
+    Property::Instance,
+    Property::Community,
 ];
 
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
@@ -156,15 +156,15 @@ impl Args {
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 enum Property {
-    Read,
-    Write,
+    Instance,
+    Community,
 }
 
 impl Display for Property {
     fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str(match self {
-            Property::Read => "read",
-            Property::Write => "write",
+            Property::Instance => "instance",
+            Property::Community => "community",
         })
     }
 }
@@ -174,8 +174,8 @@ impl FromStr for Property {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "read" => Ok(Property::Read),
-            "write" => Ok(Property::Write),
+            "instance" => Ok(Property::Instance),
+            "community" => Ok(Property::Community),
             _ => Err(format!("Unknown property type {s}")),
         }
     }

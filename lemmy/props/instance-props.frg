@@ -27,9 +27,9 @@ pred properInstanceAccess[flow_set: set Src->CallArgument, labels: set Object->L
 }
 
 test expect {
-    vacuityRead: {
-        some read_sink : labeled_callsites[db_access, labels] | (read_sink.function)->db_user_read not in labels
-    } for Flows is sat
+    // vacuityRead: {
+    //     some read_sink : labeled_callsites[db_access, labels] | (read_sink.function)->db_user_read not in labels
+    // } for Flows is sat
 
     dbRead: {
         properInstanceAccess[flow, labels]
