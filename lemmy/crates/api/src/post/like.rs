@@ -1,6 +1,6 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   post::{CreatePostLike, PostResponse},
   utils::{
     blocking,
@@ -11,7 +11,7 @@ use lemmy_api_common::{
     mark_post_as_read
   },
 };
-use lemmy_apub::{
+use crate::lemmy_apub::{
   fetcher::post_or_comment::PostOrComment,
   objects::post::ApubPost,
   protocol::activities::voting::{
@@ -19,13 +19,13 @@ use lemmy_apub::{
     vote::{Vote, VoteType},
   },
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::post::{Post, PostLike, PostLikeForm},
   traits::{Crud, Likeable},
 };
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperation};
-use lemmy_db_views::structs::LocalUserView;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperation};
+use crate::lemmy_db_views::structs::LocalUserView;
 
 
 #[async_trait::async_trait(?Send)]
@@ -33,7 +33,7 @@ impl Perform for CreatePostLike {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-//   #[dfpp::analyze]
+  #[cfg_attr(feature = "post-like", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

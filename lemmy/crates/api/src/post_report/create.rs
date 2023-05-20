@@ -1,18 +1,18 @@
 use crate::Perform;
 use activitypub_federation::core::object_id::ObjectId;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   post::{CreatePostReport, PostReportResponse},
   utils::{blocking, check_community_ban, get_local_user_view_from_jwt},
 };
-use lemmy_apub::protocol::activities::community::report::Report;
-use lemmy_db_schema::{
+use crate::lemmy_apub::protocol::activities::community::report::Report;
+use crate::lemmy_db_schema::{
   source::post_report::{PostReport, PostReportForm},
   traits::Reportable,
 };
-use lemmy_db_views::structs::{PostReportView, PostView};
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
+use crate::lemmy_db_views::structs::{PostReportView, PostView};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
 
 /// Creates a post report and notifies the moderators of the community
 #[async_trait::async_trait(?Send)]
@@ -21,6 +21,7 @@ impl Perform for CreatePostReport {
 
   
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-report-create", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

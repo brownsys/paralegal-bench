@@ -1,16 +1,16 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{BlockPerson, BlockPersonResponse},
   utils::{blocking, get_local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::person_block::{PersonBlock, PersonBlockForm},
   traits::Blockable,
 };
-use lemmy_db_views_actor::structs::PersonViewSafe;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views_actor::structs::PersonViewSafe;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for BlockPerson {

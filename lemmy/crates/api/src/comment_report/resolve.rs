@@ -1,13 +1,13 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   comment::{CommentReportResponse, ResolveCommentReport},
   utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
 };
-use lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
-use lemmy_db_views::structs::CommentReportView;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
+use crate::lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
+use crate::lemmy_db_views::structs::CommentReportView;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
 
 /// Resolves or unresolves a comment report and notifies the moderators of the community
 #[async_trait::async_trait(?Send)]
@@ -16,7 +16,7 @@ impl Perform for ResolveCommentReport {
   type Response = CommentReportResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "comment-report-resolve", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

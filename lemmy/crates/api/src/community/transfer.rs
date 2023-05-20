@@ -1,20 +1,21 @@
 use crate::Perform;
 use actix_web::web::Data;
 use anyhow::Context;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   community::{GetCommunityResponse, TransferCommunity},
   utils::{blocking, get_local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     community::{CommunityModerator, CommunityModeratorForm},
     moderator::{ModTransferCommunity, ModTransferCommunityForm},
   },
   traits::{Crud, Joinable},
 };
-use lemmy_db_views_actor::structs::{CommunityModeratorView, CommunityView, PersonViewSafe};
-use lemmy_utils::{error::LemmyError, location_info, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views_actor::structs::{CommunityModeratorView, CommunityView, PersonViewSafe};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
+use crate::location_info;
 
 // TODO: we dont do anything for federation here, it should be updated the next time the community
 //       gets fetched. i hope we can get rid of the community creator role soon.
@@ -22,6 +23,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for TransferCommunity {
   type Response = GetCommunityResponse;
 
+  #[cfg_attr(feature = "community-transfer", dfpp::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,

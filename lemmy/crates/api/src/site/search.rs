@@ -1,18 +1,18 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   site::{Search, SearchResponse},
   utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
 };
-use lemmy_apub::{fetcher::resolve_actor_identifier, objects::community::ApubCommunity};
-use lemmy_db_schema::{source::community::Community, traits::DeleteableOrRemoveable, SearchType};
-use lemmy_db_views::{comment_view::CommentQueryBuilder, post_view::PostQueryBuilder};
-use lemmy_db_views_actor::{
+use crate::lemmy_apub::{fetcher::resolve_actor_identifier, objects::community::ApubCommunity};
+use crate::lemmy_db_schema::{source::community::Community, traits::DeleteableOrRemoveable, SearchType};
+use crate::lemmy_db_views::{comment_view::CommentQueryBuilder, post_view::PostQueryBuilder};
+use crate::lemmy_db_views_actor::{
   community_view::CommunityQueryBuilder,
   person_view::PersonQueryBuilder,
 };
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for Search {

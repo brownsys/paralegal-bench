@@ -1,10 +1,10 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   site::{ApproveRegistrationApplication, RegistrationApplicationResponse},
   utils::{blocking, get_local_user_view_from_jwt, is_admin, send_application_approved_email},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     local_user::{LocalUser, LocalUserForm},
     registration_application::{RegistrationApplication, RegistrationApplicationForm},
@@ -12,9 +12,9 @@ use lemmy_db_schema::{
   traits::Crud,
   utils::diesel_option_overwrite,
 };
-use lemmy_db_views::structs::{LocalUserView, RegistrationApplicationView};
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views::structs::{LocalUserView, RegistrationApplicationView};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for ApproveRegistrationApplication {

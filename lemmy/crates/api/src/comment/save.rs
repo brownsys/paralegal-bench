@@ -1,23 +1,23 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   comment::{CommentResponse, SaveComment},
   utils::{blocking, get_local_user_view_from_jwt},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::comment::{CommentSaved, CommentSavedForm},
   traits::Saveable,
 };
-use lemmy_db_views::structs::CommentView;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views::structs::CommentView;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for SaveComment {
   type Response = CommentResponse;
 
-  // #[dfpp::analyze]
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "comment-save", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -1,12 +1,12 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   post::{ListPostReports, ListPostReportsResponse},
   utils::{blocking, get_local_user_view_from_jwt},
 };
-use lemmy_db_views::post_report_view::PostReportQueryBuilder;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_views::post_report_view::PostReportQueryBuilder;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 /// Lists post reports for a community if an id is supplied
 /// or returns all post reports for communities a user moderates
@@ -15,6 +15,7 @@ impl Perform for ListPostReports {
   type Response = ListPostReportsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-report-list", dfpp::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

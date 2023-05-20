@@ -1,19 +1,19 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{AddAdmin, AddAdminResponse},
   utils::{blocking, get_local_user_view_from_jwt, is_admin},
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   source::{
     moderator::{ModAdd, ModAddForm},
     person::Person,
   },
   traits::Crud,
 };
-use lemmy_db_views_actor::structs::PersonViewSafe;
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{messages::SendAllMessage, LemmyContext, UserOperation};
+use crate::lemmy_db_views_actor::structs::PersonViewSafe;
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{messages::SendAllMessage, LemmyContext, UserOperation};
 
 #[async_trait::async_trait(?Send)]
 impl Perform for AddAdmin {

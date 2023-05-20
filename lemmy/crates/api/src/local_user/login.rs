@@ -2,20 +2,20 @@ use crate::Perform;
 use actix_web::web::Data;
 use chrono::NaiveDateTime;
 use bcrypt::verify;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   person::{Login, LoginResponse},
   utils::{blocking, check_registration_application, check_user_valid},
 };
-use lemmy_db_schema::source::site::Site;
-use lemmy_db_views::structs::LocalUserView;
-use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
-use lemmy_websocket::LemmyContext;
+use crate::lemmy_db_schema::source::site::Site;
+use crate::lemmy_db_views::structs::LocalUserView;
+use crate::lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for Login {
   type Response = LoginResponse;
 
-  // #[dfpp::analyze]
+  #[cfg_attr(feature = "login", dfpp::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -26,8 +26,6 @@ impl Perform for Login {
 
     // Fetch that username / email
     let username_or_email = data.username_or_email.clone();
-    // TODO: open a bug report for this.
-    // problem with async blocking function (we use a type walk, need to go handle impl Future structure to infer the type here)
     let local_user_view = blocking(context.pool(), move |conn| {
       LocalUserView::find_by_email_or_name(conn, &username_or_email)
     })

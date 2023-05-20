@@ -1,24 +1,24 @@
 use crate::Perform;
 use actix_web::web::Data;
-use lemmy_api_common::{
+use crate::lemmy_api_common::{
   comment::{CommentResponse, CreateCommentLike},
   utils::{blocking, check_community_ban, check_downvotes_enabled, get_local_user_view_from_jwt},
 };
-use lemmy_apub::{
+use crate::lemmy_apub::{
   fetcher::post_or_comment::PostOrComment,
   protocol::activities::voting::{
     undo_vote::UndoVote,
     vote::{Vote, VoteType},
   },
 };
-use lemmy_db_schema::{
+use crate::lemmy_db_schema::{
   newtypes::LocalUserId,
   source::comment::{CommentLike, CommentLikeForm},
   traits::Likeable,
 };
-use lemmy_db_views::structs::{CommentView, LocalUserView};
-use lemmy_utils::{error::LemmyError, ConnectionId};
-use lemmy_websocket::{send::send_comment_ws_message, LemmyContext, UserOperation};
+use crate::lemmy_db_views::structs::{CommentView, LocalUserView};
+use crate::lemmy_utils::{error::LemmyError, ConnectionId};
+use crate::lemmy_websocket::{send::send_comment_ws_message, LemmyContext, UserOperation};
 use std::convert::TryInto;
 
 #[async_trait::async_trait(?Send)]
