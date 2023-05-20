@@ -39,21 +39,21 @@ impl Perform for ResolveCommentReport {
     let resolved = data.resolved;
     let resolve_fun = move |conn: &'_ _| {
       if resolved {
-        CommentReport::resolve(conn, report_id, person_id))
+        CommentReport::resolve(conn, report_id, person_id)
       } else {
-        CommentReport::unresolve(conn, report_id, person_id))
+        CommentReport::unresolve(conn, report_id, person_id)
       }
     };
 
     apply_label_community_write(blocking(context.pool(), resolve_fun)
-      .await?
-      .map_err(|e| LemmyError::from_error_message(e, "couldnt_resolve_report"))?);
+      .await?)
+      .map_err(|e| LemmyError::from_error_message(e, "couldnt_resolve_report"))?;
 
     let report_id = data.report_id;
-    let comment_report_view = blocking(context.pool(), move |conn| {
-      apply_label_read(CommentReportView::read(conn, report_id, person_id))
+    let comment_report_view = apply_label_read(blocking(context.pool(), move |conn| {
+      CommentReportView::read(conn, report_id, person_id)
     })
-    .await??;
+    .await??);
 
     let res = CommentReportResponse {
       comment_report_view,
