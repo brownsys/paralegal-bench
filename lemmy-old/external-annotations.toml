@@ -1,0 +1,51 @@
+[["lemmy_api::lemmy_api_common::utils::check_community_deleted_or_removed"]]
+marker = "community_delete_check"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::check_community_ban"]]
+marker = "community_ban_check"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_banned"]]
+marker = "instance_ban_check"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_deleted"]]
+marker = "instance_delete_check"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_write"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_community_write"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_community_write"]]
+marker = "db_community_write"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_read"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_user_read"]]
+marker = "db_user_read"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::apply_label_user_read"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_websocket::send::send_comment_ws_message"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_websocket::send::send_local_notifs"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_api::lemmy_api_common::utils::get_post"]]
+marker = "db_access"
+on_return = true
