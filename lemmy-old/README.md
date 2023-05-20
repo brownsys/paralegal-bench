@@ -1,0 +1,2 @@
+cargo dfpp --target {crate name} --external-annotations external-annotations.toml --result-path props/(name).frg
+Example: cargo dfpp --target lemmy_api --external-annotations external-annotations.toml --result-path props/likepost.frg

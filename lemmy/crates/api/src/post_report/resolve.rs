@@ -38,14 +38,14 @@ impl Perform for ResolvePostReport {
     let resolved = data.resolved;
     let resolve_fun = move |conn: &'_ _| {
       if resolved {
-        apply_label_community_write(PostReport::resolve(conn, report_id, person_id))
+        PostReport::resolve(conn, report_id, person_id)
       } else {
-        apply_label_community_write(PostReport::unresolve(conn, report_id, person_id))
+        PostReport::unresolve(conn, report_id, person_id)
       }
     };
 
-    blocking(context.pool(), resolve_fun)
-      .await?
+    apply_label_community_write(blocking(context.pool(), resolve_fun)
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_resolve_report"))?;
 
     let post_report_view = apply_label_read(blocking(context.pool(), move |conn| {
