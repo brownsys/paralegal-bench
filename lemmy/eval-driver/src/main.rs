@@ -15,7 +15,7 @@ const CONFIGURATIONS: &'static [Property] = &[
 ];
 
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
-	"comment-like",
+	// "comment-like",
     // "comment-mark-as-read",
     // "comment-save",
     // "comment-report-create",
@@ -38,7 +38,7 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     // "user-change-password",
     // "user-list-banned",
     // "user-login",
-    // "user-login-buggy",
+    // "user-login-correct",
     // "user-report-count",
     // "user-save-settings",
     // "post-like",
@@ -62,36 +62,35 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     // "site-resolve-object",
     // "site-search",
     // "comment-create",
-    // "comment-create-buggy",
+    "comment-create comment-create-correct",
     // "comment-delete",
     // "comment-list",
     // "comment-read",
     // "comment-remove",
     // "comment-update",
-    // "comment-update-buggy",
-    // "comment-create",
+    "comment-update comment-update-correct",
+    "community-create",
     // "community-delete",
     // "community-list",
     // "post-read",
     // "community-remove",
     // "community-update",
     // "post-create",
-    // "post-create-buggy",
+    "post-create post-create-correct",
     // "post-delete",
-    // "post-delete-buggy",
+    "post-delete post-delete-correct",
     // "post-list",
-    // "post-read",
+    "post-read",
     // "post-remove",
     // "post-update",
-    // "post-update-buggy",
-    // "private-message-create",
+    "post-update post-update-correct",
+    "private-message-create",
     // "private-message-delete",
     // "private-message-read",
     // "private-message-update",
-    // "site-create",
-    // "site-read",
+    "site-create",
+    "site-read",
     // "site-update",
-    // "user-create",
     // "user-delete",
     // "user-read"
 ];
@@ -106,23 +105,23 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
 //     "comment-save",
 //     "comment-report-create",
 //     "community-block",
-//     "user-login-buggy",
+//     "user-login-correct",
 //     "post-mark-read",
 //     "post-save",
 //     "post-report-create",
 //     "post-report-resolve",
-//     "comment-create-buggy",
+//     "comment-create-correct",
 //     "comment-delete",
 //     "comment-remove",
-//     "comment-update-buggy",
+//     "comment-update-correct",
 //     "community-delete",
 //     "post-read",
 //     "community-remove",
 //     "community-update",
-//     "post-create-buggy",
-//     "post-delete-buggy",
+//     "post-create-correct",
+//     "post-delete-correct",
 //     "post-remove",
-//     "post-update-buggy"
+//     "post-update-correct"
 // ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -317,8 +316,8 @@ fn print_results_for_property<W: std::io::Write>(
     args: &Args,
     result: (&Property, Vec<RunResult>),
 ) -> std::io::Result<()> {
-    let head_cell_width = 5;
-    let body_cell_width = 20;
+    let head_cell_width = 10;
+    let body_cell_width = 30;
 
     write!(w, " {:head_cell_width$} ", typ.to_string())?;
     for version in args.ctrlers.iter() {

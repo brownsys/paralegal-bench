@@ -42,7 +42,7 @@ impl PerformCrud for GetPost {
 
     // Mark the post as read
     if let Some(person_id) = person_id {
-      apply_label_community_write(mark_post_as_read(person_id, id, context.pool()).await?);
+      apply_label_read(mark_post_as_read(person_id, id, context.pool()).await?);
     }
 
     let id = data.id;

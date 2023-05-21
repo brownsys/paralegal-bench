@@ -63,6 +63,7 @@ impl PerformCrud for CreateComment {
     let community_id = post.community_id;
 
     check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+    #[cfg(feature = "comment-create-correct")]
     check_community_deleted_or_removed(community_id, context.pool()).await?;
     check_post_deleted_or_removed(&post)?;
 

@@ -46,7 +46,7 @@ impl Perform for MarkAllAsRead {
     for comment_view in &replies {
       let reply_id = comment_view.comment.id;
       let mark_as_read = move |conn: &'_ _| Comment::update_read(conn, reply_id, true);
-      apply_label_write(blocking(context.pool(), mark_as_read)
+      apply_label_read(blocking(context.pool(), mark_as_read)
         .await?
         .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_comment"))?);
     }
@@ -54,13 +54,13 @@ impl Perform for MarkAllAsRead {
     // Mark all user mentions as read
     let update_person_mentions =
       move |conn: &'_ _| PersonMention::mark_all_as_read(conn, person_id);
-      apply_label_write(blocking(context.pool(), update_person_mentions)
+      apply_label_read(blocking(context.pool(), update_person_mentions)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_comment")))?;
 
     // Mark all private_messages as read
     let update_pm = move |conn: &'_ _| PrivateMessage::mark_all_as_read(conn, person_id);
-    apply_label_write(blocking(context.pool(), update_pm)
+    apply_label_read(blocking(context.pool(), update_pm)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_private_message"))?);
 

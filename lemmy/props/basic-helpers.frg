@@ -3,7 +3,6 @@
 open "../analysis_result.frg"
 
 fun labeled_callsites[ls: Label, labels_set: set Object->Label] : CallSite {
-    // (CallSite->labeled_objects[Function, ls, labels_set]) & function
     function.(labeled_objects[Function, ls, labels_set])
 }
 
@@ -16,7 +15,10 @@ fun to_source[c: Ctrl, o: one Type + Src + CallSite] : Src {
 }
 
 fun to_sink[c: Ctrl, o: one Type + Src] : Sink {
-    arg_call_site.(to_source[c, o])
+    { sink : sinks_of[c] |
+        o in Type and sink->o in types or 
+        (o = sink or o->sink in arg_call_site )
+    }
 }
 
 fun sources_of[c: Ctrl]: set Src {
@@ -71,10 +73,10 @@ pred always_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite)
 }
 
 // verifies that for an object o
-pred never_happens_before[cs: Ctrl, o: Object, first: (CallArgument + CallSite), next: (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
+pred never_happens_before[cs: Ctrl, in_obj: Object, first: (CallArgument + CallSite), next: (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
 	not (
-		some c: cs, o: to_source[c, o], f: to_source[c, first], n: to_sink[c, next] | {
-			flows_to[o, to_sink[f], flow_set]
+		some c: cs | some o: to_source[c, in_obj], f: to_source[c, first], n: to_sink[c, next] | some fsnk: to_sink[c, f] | {
+			flows_to[o, fsnk, flow_set]
 			flows_to[f, n, flow_set]
 		}
 	)
@@ -91,7 +93,6 @@ pred flows_to_ctrl[src: one Src, f : one Sink, flow_set: set Src->CallArgument] 
     (some f.arg_call_site and (src -> f.arg_call_site in total_flow)))
 }
 
-// FIXME: adjust for arity 2 relations
 pred flows_to_unmodified[o: one Src + CallSite, f : (CallArgument + CallSite), flow_set: set Ctrl->Src->CallArgument] {
     o -> f in flow_set
 }
