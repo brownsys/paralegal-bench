@@ -9,7 +9,7 @@ pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgumen
     some fp : (fp_fun_rel.c), cs : labeled_callsites[lb, labels] | {
         flows_to[fp, cs, flow_set]
         some intermediate : CallSite | {
-            flows_to[cs, intermediate, flow_set]
+            (some arg : arg_call_site.intermediate | flows_to_ctrl[cs, arg, flow_set])
             intermediate->sink in ctrl_flow
         }
     }
