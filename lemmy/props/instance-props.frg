@@ -1,3 +1,8 @@
+#lang forge
+
+open "../analysis_result.frg"
+open "basic-helpers.frg"
+
 // some fp flows to the auth check labeled lb, and the auth check has control flow influence on the sink
 pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgument, labels: set Object->Label] {
     some fp : (fp_fun_rel.c), cs : labeled_callsites[lb, labels] | {
@@ -19,4 +24,10 @@ pred property[flow_set: set Src->CallArgument, labels: set Object->Label] {
             }
         }
     }
+}
+
+test expect {
+    prop : {
+        property[flow, labels]
+    } for Flows is theorem
 }
