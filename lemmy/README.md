@@ -1,2 +1,2 @@
-cargo dfpp --target {crate name} --external-annotations external-annotations.toml --result-path props/(name).frg --model-version v2 --inline-elision
-Example: cargo dfpp --target lemmy_api --external-annotations external-annotations.toml --result-path props/likepost.frg --model-version v2 --inline-elision
+cargo dfpp --target {crate name} --external-annotations external-annotations.toml --result-path props/(name).frg --model-version v2 --inline-elision --skip-sigs
+Example: cargo dfpp --target lemmy_api --external-annotations external-annotations.toml --result-path props/likepost.frg --model-version v2 --inline-elision --skip-sigs
