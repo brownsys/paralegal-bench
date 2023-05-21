@@ -1,35 +1,33 @@
-#lang forge
 
-open "basic_helpers.frg"
-open "analysis_result.frg"
-
-pred deleteUserData[flow_set: set Ctrl->Src->CallArgument, labels: set Object->Label] {
+pred property[flow: set Src->CallArgument, labels: set Object->Label] {
     // for all users that are deleted
     all c : Ctrl | 
-    all u : labeled_objects_with_types[c, Object, user, labels] | {
-        (some deleter: labeled_objects[CallArgument, to_delete, labels] | 
-            (flows_to_unmodified[c, u, deleter, flow_set])) implies {
-            all user_type : labeled_objects[Type, user_data, labels] | {
-                some arg : labeled_objects[CallArgument, to_delete, labels] | {
-                    flows_to[c, user_type, arg, flow_set]
+    all usr : labeled_objects_with_types[Object, user, labels] | {
+        (some deleter: labeled_objects[sinks_of[c], to_delete, labels], u: to_source[c, usr] | 
+            (flows_to_unmodified[u, deleter, flow])) implies {
+            all user_type : labeled_objects[Type, user_data, labels] | 
+            some src : to_source[c, user_type] | {
+                some arg : labeled_objects[sinks_of[c], to_delete, labels] | {
+                    flows_to[src, arg, flow]
                 }
             }
         }
     }
 }
 
+
 //run {} for Flows
 
 test expect {
     vacuity: {
         all c : Ctrl | 
-        some u : labeled_objects_with_types[c, Object, user, labels] | 
+        some u : labeled_objects_with_types[Object, user, labels] | 
         some deleter: labeled_objects[CallArgument, to_delete, labels] | 
-        (flows_to_unmodified[c, u, deleter, flow])
+        (flows_to_unmodified[u, deleter, flow])
     } for Flows is sat
 
     properDelete : {
-        deleteUserData[flow, labels]
+        property[flow, labels]
     } for Flows is theorem
 }
 
