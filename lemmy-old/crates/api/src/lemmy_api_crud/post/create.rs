@@ -69,6 +69,7 @@ impl PerformCrud for CreatePost {
     }
     
     check_community_ban(local_user_view.person.id, data.community_id, context.pool()).await?;
+    #[cfg(feature = "post-create-correct")]
     check_community_deleted_or_removed(data.community_id, context.pool()).await?;
 
     let community_id = data.community_id;

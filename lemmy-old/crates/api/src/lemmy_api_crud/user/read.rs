@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::{GetPersonDetails, GetPersonDetailsResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_apub::{fetcher::resolve_actor_identifier, objects::person::ApubPerson};
 use crate::lemmy_db_schema::source::person::Person;
@@ -63,10 +63,10 @@ impl PerformCrud for GetPersonDetails {
 
     // You don't need to return settings for the user, since this comes back with GetSite
     // `my_user`
-    let person_view = blocking(context.pool(), move |conn| {
+    let person_view = apply_label_read(blocking(context.pool(), move |conn| {
       PersonViewSafe::read(conn, person_details_id)
     })
-    .await??;
+    .await??);
 
     let sort = data.sort;
     let page = data.page;
@@ -74,7 +74,7 @@ impl PerformCrud for GetPersonDetails {
     let saved_only = data.saved_only;
     let community_id = data.community_id;
 
-    let (posts, comments) = blocking(context.pool(), move |conn| {
+    let (posts, comments) = apply_label_read(blocking(context.pool(), move |conn| {
       let mut posts_query = PostQueryBuilder::create(conn)
         .sort(sort)
         .show_nsfw(show_nsfw)
@@ -107,12 +107,12 @@ impl PerformCrud for GetPersonDetails {
 
       Ok((posts, comments)) as Result<_, LemmyError>
     })
-    .await??;
+    .await??);
 
-    let moderates = blocking(context.pool(), move |conn| {
+    let moderates = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_person(conn, person_details_id)
     })
-    .await??;
+    .await??);
 
     // Return the jwt
     Ok(GetPersonDetailsResponse {

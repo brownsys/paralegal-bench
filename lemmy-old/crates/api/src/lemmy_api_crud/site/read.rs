@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use crate::lemmy_api_common::{
   person::Register,
   site::{CreateSite, GetSite, GetSiteResponse, MyUserInfo},
-  utils::{blocking, build_federated_instances, get_local_user_settings_view_from_jwt_opt},
+  utils::{blocking, build_federated_instances, get_local_user_settings_view_from_jwt_opt, apply_label_read},
 };
 use crate::lemmy_db_views::structs::SiteView;
 use crate::lemmy_db_views_actor::structs::{
@@ -30,7 +30,7 @@ impl PerformCrud for GetSite {
   ) -> Result<GetSiteResponse, LemmyError> {
     let data: &GetSite = self;
 
-    let site_view = match blocking(context.pool(), SiteView::read_local).await? {
+    let site_view = match apply_label_read(blocking(context.pool(), SiteView::read_local).await?) {
       Ok(site_view) => Some(site_view),
       // If the site isn't created yet, check the setup
       Err(_) => {
@@ -67,7 +67,7 @@ impl PerformCrud for GetSite {
       }
     };
 
-    let admins = blocking(context.pool(), PersonViewSafe::admins).await??;
+    let admins = apply_label_read(blocking(context.pool(), PersonViewSafe::admins).await??);
 
     let online = context
       .chat_server()
@@ -84,30 +84,30 @@ impl PerformCrud for GetSite {
     .await?
     {
       let person_id = local_user_view.person.id;
-      let follows = blocking(context.pool(), move |conn| {
+      let follows = apply_label_read(blocking(context.pool(), move |conn| {
         CommunityFollowerView::for_person(conn, person_id)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "system_err_login"))?;
 
       let person_id = local_user_view.person.id;
-      let community_blocks = blocking(context.pool(), move |conn| {
+      let community_blocks = apply_label_read(blocking(context.pool(), move |conn| {
         CommunityBlockView::for_person(conn, person_id)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "system_err_login"))?;
 
       let person_id = local_user_view.person.id;
-      let person_blocks = blocking(context.pool(), move |conn| {
+      let person_blocks = apply_label_read(blocking(context.pool(), move |conn| {
         PersonBlockView::for_person(conn, person_id)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "system_err_login"))?;
 
-      let moderates = blocking(context.pool(), move |conn| {
+      let moderates = apply_label_read(blocking(context.pool(), move |conn| {
         CommunityModeratorView::for_person(conn, person_id)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "system_err_login"))?;
 
       Some(MyUserInfo {

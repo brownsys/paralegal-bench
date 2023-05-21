@@ -42,18 +42,19 @@ impl Perform for Login {
       return Err(LemmyError::from_message("password_incorrect"));
     }
 
+    #[cfg(feature = "user-login-correct")]
     check_user_valid(
       local_user_view.person.banned,
       local_user_view.person.ban_expires,
       local_user_view.person.deleted,
     )?;
   
-    let site = blocking(context.pool(), Site::read_local_site).await??;
+    let site = apply_label_read(blocking(context.pool(), Site::read_local_site).await??);
     if site.require_email_verification && !local_user_view.local_user.email_verified {
       return Err(LemmyError::from_message("email_not_verified"));
     }
 
-    apply_label_read(check_registration_application(&site, &local_user_view, context.pool()).await?);
+    check_registration_application(&site, &local_user_view, context.pool()).await?;
 
     // Return the jwt
     Ok(LoginResponse {

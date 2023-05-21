@@ -11,119 +11,94 @@ use std::time::{Duration, SystemTime};
 
 const CONFIGURATIONS: &'static [Property] = &[
     Property::Instance,
-    Property::Community,
 ];
 
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
 	"comment-like",
-    "comment-mark-as-read",
-    "comment-save",
-    "comment-report-create",
-    "comment-report-list",
-    "comment-report-resolve",
-    "community-add-mod",
-    "community-ban",
-    "community-block",
-    "community-follow",
-    "community-hide",
-    "community-transfer",
-    "notification-list-mentions",
-    "notification-list-replies",
-    "notification-mark-all-read",
-    "notification-mark-mention-read",
-    "notification-unread-count",
-    "user-add-admin",
-    "user-ban-person",
-    "user-block",
-    "user-change-password",
-    // "user-list-banned",
-    // "user-login",
-    // "user-login-buggy",
-    // "user-report-count",
-    // "user-save-settings",
-    // "post-like",
-    // "post-lock",
-    // "post-mark-read",
-    // "post-save",
-    // "post-sticky",
-    // "post-report-create",
-    // "post-report-list",
-    // "post-report-resolve",
-    // "private-message-mark-read",
-    // "purge-comment",
-    // "purge-community",
-    // "purge-person",
-    // "purge-post",
-    // "registration-approve",
-    // "registration-list",
-    // "registration-unread-counts",
-    // "site-leave-admin",
-    // "site-mod-log",
-    // "site-resolve-object",
-    // "site-search",
-    // "comment-create",
-    // "comment-create-buggy",
-    // "comment-delete",
-    // "comment-list",
-    // "comment-read",
-    // "comment-remove",
-    // "comment-update",
-    // "comment-update-buggy",
-    // "comment-create",
-    // "community-delete",
-    // "community-list",
-    // "post-read",
-    // "community-remove",
-    // "community-update",
-    // "post-create",
-    // "post-create-buggy",
-    // "post-delete",
-    // "post-delete-buggy",
-    // "post-list",
-    // "post-read",
-    // "post-remove",
-    // "post-update",
-    // "post-update-buggy",
-    // "private-message-create",
-    // "private-message-delete",
-    // "private-message-read",
-    // "private-message-update",
-    // "site-create",
-    // "site-read",
-    // "site-update",
-    // "user-create",
-    // "user-delete",
-    // "user-read"
+    // "comment-mark-as-read",
+    // "comment-save",
+    // "comment-report-create",
+    // "comment-report-list",
+    // "comment-report-resolve",
+    // "community-add-mod",
+    // "community-ban",
+    // "community-block",
+    // "community-follow",
+    // "community-hide",
+    // "community-transfer",
+    // "notification-list-mentions",
+    // "notification-list-replies",
+    // "notification-mark-all-read",
+    // "notification-mark-mention-read",
+    // "notification-unread-count",
+    // "user-add-admin",
+    // "user-ban-person",
+    // "user-block",
+    // "user-change-password",
+    /*
+    "user-list-banned",
+    "user-login",
+    "user-login user-login-correct",
+    "user-report-count",
+    "user-save-settings",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    */
+    /*
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
+    "comment-create",
+    "comment-create comment-create-correct",
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
+    "comment-update comment-update-correct",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "post-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    */
+    /*
+    "post-create post-create-correct",
+    "post-delete",
+    "post-delete post-delete-correct",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "post-update post-update-correct",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    "site-read",
+    "site-update",
+    "user-delete",
+    "user-read"
+    */
 ];
-
-// const SHOULD_FAIL_READ &'static [&'static str] = &[
-//     "user-create"
-// ];
-
-// const SHOULD_FAIL_WRITE &'static [&'static str] = &[
-//     "comment-like",
-//     "comment-mark-as-read",
-//     "comment-save",
-//     "comment-report-create",
-//     "community-block",
-//     "user-login-buggy",
-//     "post-mark-read",
-//     "post-save",
-//     "post-report-create",
-//     "post-report-resolve",
-//     "comment-create-buggy",
-//     "comment-delete",
-//     "comment-remove",
-//     "comment-update-buggy",
-//     "community-delete",
-//     "post-read",
-//     "community-remove",
-//     "community-update",
-//     "post-create-buggy",
-//     "post-delete-buggy",
-//     "post-remove",
-//     "post-update-buggy"
-// ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
 ///
@@ -157,14 +132,12 @@ impl Args {
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 enum Property {
     Instance,
-    Community,
 }
 
 impl Display for Property {
     fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str(match self {
             Property::Instance => "instance",
-            Property::Community => "community",
         })
     }
 }
@@ -175,7 +148,6 @@ impl FromStr for Property {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "instance" => Ok(Property::Instance),
-            "community" => Ok(Property::Community),
             _ => Err(format!("Unknown property type {s}")),
         }
     }
@@ -242,6 +214,7 @@ fn run_edit(
     verbose: bool,
     verbose_commands: bool,
     progress: &ProgressBar,
+    check_delete: bool,
 ) -> Vec<RunResult> {
     use std::process::*;
 
@@ -254,14 +227,19 @@ fn run_edit(
 			dfpp_cmd.args(&["--target", "lemmy_api"]);
             dfpp_cmd.args(&["--model-version", "v2"]);
             dfpp_cmd.args(&["--inline-elision"]);
-
+            
             let external_ann_file_name = format!("external-annotations.toml");
             let mut external_ann_file: std::path::PathBuf = cd.into();
             external_ann_file.push(&external_ann_file_name);
             if external_ann_file.exists() {
                 dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
             }
-            dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
+            if check_delete {
+                dfpp_cmd.args(&["--", "--features", &format!("{}{}", ctrler, " check-delete")]);
+            } else {
+                dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
+            }
+            
             if !verbose {
                 dfpp_cmd.stderr(Stdio::null()).stdout(Stdio::null());
             }
@@ -317,8 +295,8 @@ fn print_results_for_property<W: std::io::Write>(
     args: &Args,
     result: (&Property, Vec<RunResult>),
 ) -> std::io::Result<()> {
-    let head_cell_width = 5;
-    let body_cell_width = 20;
+    let head_cell_width = 10;
+    let body_cell_width = 30;
 
     write!(w, " {:head_cell_width$} ", typ.to_string())?;
     for version in args.ctrlers.iter() {
@@ -374,6 +352,8 @@ fn main() {
         .len()
         * (2 // compile 
             * num_versions);
+    
+    // I should really write a helper function to do this twice, but I am lazy
 
     let progress = ProgressBar::new(num_configurations as u64).with_style(
         indicatif::ProgressStyle::default_bar()
@@ -392,6 +372,7 @@ fn main() {
                         args.verbose,
                         args.verbose_commands(),
                         &progress,
+                        true
                     ),
                 );
         progress.suspend(|| {
@@ -400,4 +381,32 @@ fn main() {
         })
     }
     progress.finish_and_clear();
+
+    let progress = ProgressBar::new(num_configurations as u64).with_style(
+        indicatif::ProgressStyle::default_bar()
+            .template("{msg:11} {bar:40} {pos:>3}/{len:3}")
+            .unwrap(),
+    );
+
+    let mut w = std::io::stdout();
+    for &typ in CONFIGURATIONS {
+        let results = (
+                    &typ,
+                    run_edit(
+                        typ,
+                        args.ctrlers.as_slice(),
+                        &args.directory,
+                        args.verbose,
+                        args.verbose_commands(),
+                        &progress,
+                        false
+                    ),
+                );
+        progress.suspend(|| {
+            print_results_for_property(&mut w, num_versions, typ, &args, results)
+                .unwrap()
+        })
+    }
+    progress.finish_and_clear();
+    
 }

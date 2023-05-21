@@ -59,6 +59,7 @@ impl PerformCrud for EditComment {
     )
     .await?;
     check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+    #[cfg(feature = "comment-update-correct")]
     check_post_deleted_or_removed(&orig_comment.post)?;
 
     // Verify that only the creator can edit

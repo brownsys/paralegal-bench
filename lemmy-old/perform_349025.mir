@@ -1,0 +1,68 @@
+fn comment::like::<impl at crates/api/src/comment/like.rs:25:1: 124:2>::perform(_1: &lemmy_api_common::comment::CreateCommentLike, _2: &actix_web::web::Data<lemmy_websocket::LemmyContext>, _3: std::option::Option<usize>) -> std::pin::Pin<std::boxed::Box<dyn futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>> {
+    debug self => _1;                    // in scope 0 at crates/api/src/comment/like.rs:31:5: 31:10
+    debug context => _2;                 // in scope 0 at crates/api/src/comment/like.rs:32:5: 32:12
+    debug websocket_id => _3;            // in scope 0 at crates/api/src/comment/like.rs:33:5: 33:17
+    let mut _0: std::pin::Pin<std::boxed::Box<dyn futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>>; // return place in scope 0 at crates/api/src/comment/like.rs:30:12: 30:19
+    let mut _4: std::pin::Pin<std::boxed::Box<dyn futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>>; // in scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+    let mut _5: std::pin::Pin<std::boxed::Box<impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>>; // in scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+    let mut _6: impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>; // in scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+    let mut _7: [static generator@crates/api/src/comment/like.rs:28:3: 28:54]; // in scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+
+    bb0: {
+        FakeRead(ForLet(Some(DefId(0:16811 ~ lemmy_api[fd07]::comment::like::{impl#0}::perform::{closure#0}::{closure#0}))), _1); // scope 0 at crates/api/src/comment/like.rs:31:6: 31:10
+        FakeRead(ForLet(Some(DefId(0:16811 ~ lemmy_api[fd07]::comment::like::{impl#0}::perform::{closure#0}::{closure#0}))), _2); // scope 0 at crates/api/src/comment/like.rs:32:5: 32:12
+        FakeRead(ForLet(Some(DefId(0:16811 ~ lemmy_api[fd07]::comment::like::{impl#0}::perform::{closure#0}::{closure#0}))), _3); // scope 0 at crates/api/src/comment/like.rs:33:5: 33:17
+        _7 = [generator@crates/api/src/comment/like.rs:28:3: 28:54 (#934)] { self: _1, context: _2, websocket_id: _3 }; // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+                                         // generator
+                                         // + def_id: DefId(0:16810 ~ lemmy_api[fd07]::comment::like::{impl#0}::perform::{closure#0})
+                                         // + substs: [
+                                         //     '_#6r,
+                                         //     '_#7r,
+                                         //     '_#8r,
+                                         //     std::future::ResumeTy,
+                                         //     (),
+                                         //     std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>,
+                                         //     for<'r, 's, 't0, 't1, 't2, 't3, 't4, 't5, 't6, 't7> {std::future::ResumeTy, tracing::Span, impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>, bool, tracing::instrument::Instrumented<impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>, ()},
+                                         //     (&lemmy_api_common::comment::CreateCommentLike, &actix_web::web::Data<lemmy_websocket::LemmyContext>, std::option::Option<usize>),
+                                         // ]
+                                         // + movability: Static
+        _6 = std::future::from_generator::<[static generator@crates/api/src/comment/like.rs:28:3: 28:54]>(move _7) -> [return: bb1, unwind: bb6]; // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+                                         // mir::Constant
+                                         // + span: crates/api/src/comment/like.rs:28:3: 28:54
+                                         // + literal: Const { ty: fn([static generator@crates/api/src/comment/like.rs:28:3: 28:54]) -> impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>> {std::future::from_generator::<[static generator@crates/api/src/comment/like.rs:28:3: 28:54]>}, val: Value(Scalar(<ZST>)) }
+    }
+
+    bb1: {
+        _5 = std::boxed::Box::<impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>::pin(move _6) -> [return: bb2, unwind: bb5]; // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+                                         // mir::Constant
+                                         // + span: crates/api/src/comment/like.rs:28:3: 28:54
+                                         // + user_ty: UserType(0)
+                                         // + literal: Const { ty: fn(impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>) -> std::pin::Pin<std::boxed::Box<impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>> {std::boxed::Box::<impl futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>::pin}, val: Value(Scalar(<ZST>)) }
+    }
+
+    bb2: {
+        _4 = move _5 as std::pin::Pin<std::boxed::Box<dyn futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>> (Pointer(Unsize)); // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+        drop(_5) -> [return: bb3, unwind: bb5]; // scope 0 at crates/api/src/comment/like.rs:28:53: 28:54
+    }
+
+    bb3: {
+        _0 = move _4 as std::pin::Pin<std::boxed::Box<dyn futures::Future<Output = std::result::Result<lemmy_api_common::comment::CommentResponse, lemmy_utils::error::LemmyError>>>> (Pointer(Unsize)); // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+        drop(_4) -> [return: bb4, unwind: bb7]; // scope 0 at crates/api/src/comment/like.rs:28:53: 28:54
+    }
+
+    bb4: {
+        return;                          // scope 0 at crates/api/src/comment/like.rs:28:54: 28:54
+    }
+
+    bb5 (cleanup): {
+        drop(_6) -> bb7;                 // scope 0 at crates/api/src/comment/like.rs:28:53: 28:54
+    }
+
+    bb6 (cleanup): {
+        drop(_7) -> bb7;                 // scope 0 at crates/api/src/comment/like.rs:28:53: 28:54
+    }
+
+    bb7 (cleanup): {
+        resume;                          // scope 0 at crates/api/src/comment/like.rs:28:3: 28:54
+    }
+}
