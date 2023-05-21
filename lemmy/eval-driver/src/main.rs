@@ -37,8 +37,8 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     // "user-block",
     // "user-change-password",
     // "user-list-banned",
-    // "user-login",
-    // "user-login-correct",
+    "user-login",
+    "user-login user-login-correct",
     // "user-report-count",
     // "user-save-settings",
     // "post-like",
@@ -90,39 +90,10 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     // "private-message-update",
     "site-create",
     "site-read",
-    // "site-update",
-    // "user-delete",
-    // "user-read"
+    "site-update",
+    "user-delete",
+    "user-read"
 ];
-
-// const SHOULD_FAIL_READ &'static [&'static str] = &[
-//     "user-create"
-// ];
-
-// const SHOULD_FAIL_WRITE &'static [&'static str] = &[
-//     "comment-like",
-//     "comment-mark-as-read",
-//     "comment-save",
-//     "comment-report-create",
-//     "community-block",
-//     "user-login-correct",
-//     "post-mark-read",
-//     "post-save",
-//     "post-report-create",
-//     "post-report-resolve",
-//     "comment-create-correct",
-//     "comment-delete",
-//     "comment-remove",
-//     "comment-update-correct",
-//     "community-delete",
-//     "post-read",
-//     "community-remove",
-//     "community-update",
-//     "post-create-correct",
-//     "post-delete-correct",
-//     "post-remove",
-//     "post-update-correct"
-// ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
 ///

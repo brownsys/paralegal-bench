@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use bcrypt::verify;
 use crate::lemmy_api_common::{
   person::{DeleteAccount, DeleteAccountResponse},
-  utils::{delete_user_account, get_local_user_view_from_jwt},
+  utils::{delete_user_account, get_local_user_view_from_jwt, apply_label_write},
 };
 use crate::lemmy_apub::protocol::activities::deletion::delete_user::DeleteUser;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -34,13 +34,13 @@ impl PerformCrud for DeleteAccount {
       return Err(LemmyError::from_message("password_incorrect"));
     }
 
-    delete_user_account(
+    apply_label_write(delete_user_account(
       local_user_view.person.id,
       context.pool(),
       context.settings(),
       context.client(),
     )
-    .await?;
+    .await?);
     DeleteUser::send(&local_user_view.person.into(), context).await?;
 
     Ok(DeleteAccountResponse {})

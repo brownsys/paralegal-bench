@@ -21,7 +21,3 @@ community | post-create-correct    | post-delete          | post-delete-correct 
  pass?    |          ✅          |          ✅          |          ✅          |          ✅          |          ❌          |          ❌          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          |          ✅          
  atime    |     8.582000544s     |    34.918583153s     |     8.597379056s     |    19.128012905s     |    44.861853905s     |    39.642636776s     |    34.303816098s     |     8.552037303s     |    30.791263783s     |    17.168608032s     |    11.826345777s     |    17.343634104s     |    24.150916665s     |    271.041721035s    |    36.972119687s     |    40.248977632s     |    13.535801791s     |    23.530849296s     
  vtime    |     2.687279442s     |    13.598113126s     |     2.681333161s     |     13.77447689s     |    17.634438853s     |    14.389769074s     |    15.149327503s     |     2.743481541s     |    11.811047881s     |     8.126579771s     |     6.590209304s     |     8.310580753s     |    12.573793975s     |    13.126961276s     |    15.950743663s     |    15.198938559s     |     6.694144675s     |    13.232572237s     
-
-comment-create-correct, comment-update-correct, post-create-correct, post-delete-correct pass erroneously
-post-read fails erroneously
-comment-create shows up twice, should be commmunity-create

@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   post::{GetPost, GetPostResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, mark_post_as_read, apply_label_read, apply_label_community_write},
+  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, mark_post_as_read, apply_label_read},
 };
 use crate::lemmy_db_schema::traits::DeleteableOrRemoveable;
 use crate::lemmy_db_views::{comment_view::CommentQueryBuilder, structs::PostView};
@@ -81,10 +81,10 @@ impl PerformCrud for GetPost {
       }
     }
 
-    let moderators = blocking(context.pool(), move |conn| {
+    let moderators = apply_label_read(blocking(context.pool(), move |conn| {
       CommunityModeratorView::for_community(conn, community_id)
     })
-    .await??;
+    .await??);
 
     let online = context
       .chat_server()

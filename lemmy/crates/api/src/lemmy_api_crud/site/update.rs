@@ -2,7 +2,7 @@ use crate::lemmy_api_crud::PerformCrud;
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   site::{EditSite, SiteResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, site_description_length_check},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, site_description_length_check, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::{
   source::{
@@ -36,7 +36,7 @@ impl PerformCrud for EditSite {
     // Make sure user is an admin
     is_admin(&local_user_view)?;
 
-    let local_site = blocking(context.pool(), Site::read_local_site).await??;
+    let local_site = apply_label_read(blocking(context.pool(), Site::read_local_site).await??);
 
     let sidebar = diesel_option_overwrite(&data.sidebar);
     let description = diesel_option_overwrite(&data.description);
@@ -89,10 +89,10 @@ impl PerformCrud for EditSite {
       ..SiteForm::default()
     };
 
-    let update_site = blocking(context.pool(), move |conn| {
+    let update_site = apply_label_write(blocking(context.pool(), move |conn| {
       Site::update(conn, local_site.id, &site_form)
     })
-    .await?
+    .await?)
     .map_err(|e| LemmyError::from_error_message(e, "couldnt_update_site"))?;
 
     // TODO can't think of a better way to do this.
@@ -101,22 +101,22 @@ impl PerformCrud for EditSite {
     // So if it was set from false, to true, you need to update all current users columns to be verified.
 
     if !local_site.require_application && update_site.require_application {
-      blocking(context.pool(), move |conn| {
+      apply_label_write(blocking(context.pool(), move |conn| {
         LocalUser::set_all_users_registration_applications_accepted(conn)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_set_all_registrations_accepted"))?;
     }
 
     if !local_site.require_email_verification && update_site.require_email_verification {
-      blocking(context.pool(), move |conn| {
+      apply_label_write(blocking(context.pool(), move |conn| {
         LocalUser::set_all_users_email_verified(conn)
       })
-      .await?
+      .await?)
       .map_err(|e| LemmyError::from_error_message(e, "couldnt_set_all_email_verified"))?;
     }
 
-    let site_view = blocking(context.pool(), SiteView::read_local).await??;
+    let site_view = apply_label_read(blocking(context.pool(), SiteView::read_local).await??);
 
     let res = SiteResponse { site_view };
 

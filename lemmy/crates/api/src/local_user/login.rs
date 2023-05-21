@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use bcrypt::verify;
 use crate::lemmy_api_common::{
   person::{Login, LoginResponse},
-  utils::{blocking, check_registration_application, check_user_valid, apply_label_read, apply_label_user_read, apply_label_write},
+  utils::{blocking, check_registration_application, check_user_valid, apply_label_read, apply_label_write},
 };
 use crate::lemmy_db_schema::source::site::Site;
 use crate::lemmy_db_views::structs::LocalUserView;
@@ -49,12 +49,12 @@ impl Perform for Login {
       local_user_view.person.deleted,
     )?;
   
-    let site = blocking(context.pool(), Site::read_local_site).await??;
+    let site = apply_label_read(blocking(context.pool(), Site::read_local_site).await??);
     if site.require_email_verification && !local_user_view.local_user.email_verified {
       return Err(LemmyError::from_message("email_not_verified"));
     }
 
-    apply_label_read(check_registration_application(&site, &local_user_view, context.pool()).await?);
+    check_registration_application(&site, &local_user_view, context.pool()).await?;
 
     // Return the jwt
     Ok(LoginResponse {
