@@ -3,7 +3,7 @@ use activitypub_federation::core::{object_id::ObjectId, signatures::generate_act
 use actix_web::web::Data;
 use crate::lemmy_api_common::{
   community::{CommunityResponse, CreateCommunity},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read, apply_label_community_write},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_read, apply_label_write},
 };
 use crate::lemmy_apub::{
   generate_followers_url,
@@ -102,7 +102,7 @@ impl PerformCrud for CreateCommunity {
       ..CommunityForm::default()
     };
 
-    let inserted_community = apply_label_community_write(blocking(context.pool(), move |conn| {
+    let inserted_community = apply_label_write(blocking(context.pool(), move |conn| {
       Community::create(conn, &community_form)
     })
     .await?)
@@ -115,7 +115,7 @@ impl PerformCrud for CreateCommunity {
     };
 
     let join = move |conn: &'_ _| CommunityModerator::join(conn, &community_moderator_form);
-    apply_label_community_write(blocking(context.pool(), join)
+    apply_label_write(blocking(context.pool(), join)
       .await?)
       .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists"))?;
 
@@ -127,7 +127,7 @@ impl PerformCrud for CreateCommunity {
     };
 
     let follow = move |conn: &'_ _| CommunityFollower::follow(conn, &community_follower_form);
-    apply_label_community_write(blocking(context.pool(), follow)
+    apply_label_write(blocking(context.pool(), follow)
       .await?)
       .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
 

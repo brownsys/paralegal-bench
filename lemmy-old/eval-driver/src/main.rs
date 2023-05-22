@@ -14,7 +14,8 @@ const CONFIGURATIONS: &'static [Property] = &[
 ];
 
 const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
-	"comment-like",
+	/*
+    "comment-like",
     "comment-mark-as-read",
     "comment-save",
     "comment-report-create",
@@ -35,7 +36,6 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     "user-ban-person",
     "user-block",
     "user-change-password",
-    /*
     "user-list-banned",
     "user-login",
     "user-login user-login-correct",
@@ -57,7 +57,6 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     "registration-approve",
     "registration-list",
     */
-    /*
     "registration-unread-counts",
     "site-leave-admin",
     "site-mod-log",
@@ -74,12 +73,10 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     "community-create",
     "community-delete",
     "community-list",
-    "post-read",
+    "community-read",
     "community-remove",
     "community-update",
     "post-create",
-    */
-    /*
     "post-create post-create-correct",
     "post-delete",
     "post-delete post-delete-correct",
@@ -97,7 +94,6 @@ const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
     "site-update",
     "user-delete",
     "user-read"
-    */
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
