@@ -9,39 +9,58 @@ cd ..
 
 PROPS_DIR=../dfpp-props
 
-echo "#lang forge\n" > check-broken.frg
-cat $PROPS_DIR/sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg >> check-broken.frg
+FILE=check-broken.frg
+echo "#lang forge\n" > $FILE
+cat $PROPS_DIR/sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg >> $FILE
 echo "
 test expect {
     properDelete : {
         property[flow, labels]
     } for Flows is theorem
 }
-" >> check-broken.frg
-echo "#lang forge\n" > err-msg-original.frg
-cat $PROPS_DIR/err_msg_sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg $PROPS_DIR/err_msg_template_original.frg >> err-msg-original.frg
+" >> $FILE
+
+FILE=err-msg-original.frg
+echo "#lang forge\n" > $FILE
+cat $PROPS_DIR/err_msg_sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg $PROPS_DIR/err_msg_template_original.frg >> $FILE
 echo "
 test expect {
     find_err: {
         find_erroneous_my_pred
     } for Flows is unsat
 }
-" >> err-msg-original.frg
-echo "#lang forge\n" > err-msg-optimized.frg
-cat $PROPS_DIR/err_msg_optimized_sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg $PROPS_DIR/err_msg_template_optimized.frg >> err-msg-optimized.frg
+" >> $FILE
+
+FILE=err-msg-optimized.frg
+echo "#lang forge\n" > $FILE
+cat $PROPS_DIR/err_msg_optimized_sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg $PROPS_DIR/err_msg_template_optimized.frg >> $FILE
 echo "
 test expect {
     find_err: {
         find_erroneous_my_pred
     } for Flows is unsat
 }
-" >> err-msg-optimized.frg
-echo "#lang forge\n" > check-fixed.frg
-cat $PROPS_DIR/sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_fixed.frg props.frg >> check-fixed.frg
+" >> $FILE
+
+FILE=err-msg-labels.frg
+echo "#lang forge\n" > $FILE 
+cat $PROPS_DIR/err_msg_labels_sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_broken.frg props.frg $PROPS_DIR/err_msg_template_labels.frg >> $FILE
+echo "
+test expect {
+    find_label: {
+        find_incomplete_labels[additional_labels]
+    } for Flows is unsat
+}" >> $FILE
+
+
+
+FILE=check-fixed.frg
+echo "#lang forge\n" > $FILE
+cat $PROPS_DIR/sigs.frg $PROPS_DIR/basic-helpers.frg analysis_result_fixed.frg props.frg >> $FILE
 echo "
 test expect {
     properDelete : {
         property[flow, labels]
     } for Flows is theorem
 }
-" >> check-fixed.frg
+" >> $FILE
