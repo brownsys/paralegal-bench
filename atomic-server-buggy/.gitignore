@@ -1,0 +1,9 @@
+/target
+.env
+trace-*.json
+**/.temp
+.DS_Store
+.cargo
+
+tmp.txt
+analysis_result.*

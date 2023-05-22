@@ -1,0 +1,33 @@
+[package]
+name = "atomic-server"
+description = "Create, share and standardize linked atomic data!"
+version = "0.24.1"
+authors = ["Joep Meindertsma <joep@ontola.io>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/joepio/atomic-cli"
+
+[dependencies]
+atomic_lib = { version = "0.24.1", path = "../lib", features = ["config", "db", "rdf"] }
+acme-lib = "0.8.1"
+actix-files = "0.5.0"
+actix-web = { version = "3.3.2", features = ["rustls"] }
+chrono = "0.4.19"
+dirs = "3.0.1"
+dotenv = "0.15.0"
+env_logger = "0.8.2"
+log = "0.4.11"
+promptly = "0.3.0"
+regex = "1.4.2"
+rustls = "0.18.1"
+serde = { version = "1.0.118", features = ["derive"] }
+serde_json = "1.0.60"
+tokio = "1.4.0"
+tray-item = { version = "0.4.0-alpha", optional = true }
+open = {version = "1.6.0", optional = true }
+actix-cors = "0.5.4"
+futures = "0.3.12"
+clap = "2.33.3"
+
+[features]
+desktop = ["tray-item", "open"]
