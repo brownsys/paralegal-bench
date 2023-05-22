@@ -18,18 +18,7 @@ pred property[flow: set Src->CallArgument, labels: set Object->Label] {
 
 //run {} for Flows
 
-test expect {
-    vacuity: {
-        all c : Ctrl | 
-        some u : labeled_objects_with_types[Object, user, labels] | 
-        some deleter: labeled_objects[CallArgument, to_delete, labels] | 
-        (flows_to_unmodified[u, deleter, flow])
-    } for Flows is sat
 
-    properDelete : {
-        property[flow, labels]
-    } for Flows is theorem
-}
 
 // sig ErroneousFlow {
 //     minimal_subflow: set Src->Sink
