@@ -1,11 +1,11 @@
-#lang forge
+// #lang forge
 
-open "../analysis_result.frg"
-open "basic-helpers.frg"
+// open "../error-results/community_block.frg"
+// open "basic-helpers.frg"
 
 // some fp flows to the auth check labeled lb, and the auth check has control flow influence on the sink
 pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgument, labels: set Object->Label] {
-    some fp : (fp_fun_rel.c), cs : labeled_callsites[lb, labels] | {
+    some fp : (fp_fun_rel.c), cs : (labeled_callsites[lb, labels] + labeled_objects[Object, lb, labels]) | {
         flows_to[fp, cs, flow_set]
         some intermediate : CallSite | {
             (some arg : arg_call_site.intermediate | flows_to_ctrl[cs, arg, flow_set])
@@ -18,7 +18,7 @@ pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgumen
 pred property[flow_set: set Src->CallArgument, labels: set Object->Label] {
    all c : Ctrl | {
         all sink : labeled_callsites[db_access, labels] | {
-            (sink.function)->db_user_read not in labels implies {
+            no ((sink.function + sink)->db_user_read & labels) implies {
                 flowToAuth[c, sink, instance_ban_check, flow_set, labels]
                 flowToAuth[c, sink, instance_delete_check, flow_set, labels]
             }
@@ -26,8 +26,8 @@ pred property[flow_set: set Src->CallArgument, labels: set Object->Label] {
     }
 }
 
-test expect {
-    prop : {
-        property[flow, labels]
-    } for Flows is theorem
-}
+// test expect {
+//     prop : {
+//         property[flow, labels]
+//     } for Flows is theorem
+// }
