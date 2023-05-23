@@ -1,0 +1,4 @@
+Forge version: 1.5.0
+To report issues with Forge, please visit https://report.forge-fm.org
+#vars: (size-variables 0); #primary: (size-primary 0); #clauses: (size-clauses 0)
+Transl (ms): (time-translation 47466); Solving (ms): (time-solving 0) Core min (ms): (time-core 0)
