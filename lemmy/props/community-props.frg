@@ -1,8 +1,3 @@
-#lang forge
-
-open "../analysis_result.frg"
-open "basic-helpers.frg"
-
 
 // some fp flows to the auth check labeled lb, and the auth check has control flow influence on the sink
 pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgument, labels: set Object->Label] {
@@ -16,17 +11,12 @@ pred flowToAuth[c: Ctrl, sink: Object, lb: Label, flow_set: set Src->CallArgumen
 }
 
 // if there is a database write to a community, must enforce community auth check
-pred property[flow_set: set Src->CallArgument, labels: set Object->Label] {
+pred property[flow: set Src->CallArgument, labels: set Object->Label] {
     all c : Ctrl | {
         all write_sink : labeled_callsites[db_community_write, labels] | {
-            flowToAuth[c, write_sink, community_delete_check, flow_set, labels]
-            flowToAuth[c, write_sink, community_ban_check, flow_set, labels]
+            flowToAuth[c, write_sink, community_delete_check, flow, labels]
+            flowToAuth[c, write_sink, community_ban_check, flow, labels]
         }
     }
 }
 
-test expect {
-    prop : {
-        property[flow, labels]
-    } for Flows is theorem
-}
