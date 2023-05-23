@@ -20,3 +20,9 @@ pred property[flow: set Src->CallArgument, labels: set Object->Label] {
     }
 }
 
+test expect {
+    prop : {
+        property[flow, labels]
+    } for Flows is theorem
+}
+

@@ -1222,12 +1222,10 @@ Unexpected result found, with statistics and metadata:
            (fp4_send_comment_ws_message_e39c7a community_delete_check)
            (fp1_check_community_deleted_or_removed_40a7cb db_access)
            (fp1_check_community_deleted_or_removed_40a7cb instance_ban_check)
-           (fp1_check_community_deleted_or_removed_40a7cb
-            instance_delete_check)
+           (fp1_check_community_deleted_or_removed_40a7cb instance_delete_check)
            (fp1_check_community_deleted_or_removed_40a7cb db_user_read)
            (fp1_check_community_deleted_or_removed_40a7cb db_community_write)
-           (fp1_check_community_deleted_or_removed_40a7cb
-            community_delete_check)
+           (fp1_check_community_deleted_or_removed_40a7cb community_delete_check)
            (fp1_check_community_deleted_or_removed_40a7cb community_ban_check)
            (fp3_send_comment_ws_message_e39c7a db_user_read)
            (fp3_send_comment_ws_message_e39c7a community_ban_check)
