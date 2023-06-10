@@ -72,6 +72,15 @@ webmention = "0.4.0"
 rosetta-build = "0.1.2"
 
 [features]
+
+# for bug 1, get_local_user_view_from_jwt versions
+bug-1-code = []
+bug-1-fix = []
+post-bug-1 = []
+
+# for bugs 2/3, where they found/fixed (some of) the bug themselves
+correct = []
+
 # api
 comment-like = []
 comment-mark-as-read = []
@@ -96,7 +105,6 @@ user-block = []
 user-change-password = []
 user-list-banned = []
 user-login = []
-user-login-correct = []
 user-report-count = []
 user-save-settings = []
 post-like = []
@@ -123,13 +131,11 @@ site-search = []
 
 # api crud
 comment-create = []
-comment-create-correct = []
 comment-delete = []
 comment-list = []
 comment-read = []
 comment-remove = []
 comment-update = []
-comment-update-correct = []
 community-create = []
 community-delete = []
 community-list = []
@@ -137,14 +143,11 @@ community-read = []
 community-remove = []
 community-update = []
 post-create = []
-post-create-correct = []
 post-delete = []
-post-delete-correct = []
 post-list = []
 post-read = []
 post-remove = []
 post-update = []
-post-update-correct = []
 private-message-create = []
 private-message-delete = []
 private-message-read = []

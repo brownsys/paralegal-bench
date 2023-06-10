@@ -4,7 +4,6 @@ use clap::Parser;
 
 use indicatif::ProgressBar;
 
-use std::collections::HashSet;
 use std::fmt::{Display, Write};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
@@ -14,85 +13,318 @@ const CONFIGURATIONS: &'static [Property] = &[
     Property::Community,
 ];
 
-const ALL_KNOWN_CTRLERS: &'static [&'static str] = &[
-    // "comment-like",
-    // "comment-mark-as-read",
-    // "comment-save",
-    // "comment-report-create",
-    // "comment-report-list",
-    // "comment-report-resolve",
-    // "community-add-mod",
-    // "community-ban",
-    // "community-block",
-    // "community-follow",
-    // "community-hide",
-    // "community-transfer",
-    // "notification-list-mentions",
-    // "notification-list-replies",
-    // "notification-mark-all-read",
-    // "notification-mark-mention-read",
-    // "notification-unread-count",
-    // "user-add-admin",
-    // "user-ban-person",
-    // "user-block",
-    // "user-change-password",
-    // "user-list-banned",
-    // "user-login",
-    // "user-login user-login-correct",
-    // "user-report-count",
-    // "user-save-settings",
-    // "post-like",
-    // "post-lock",
-    // "post-mark-read",
-    // "post-save",
-    // "post-sticky",
-    // "post-report-create",
-    // "post-report-list",
-    // "post-report-resolve",
-    // "private-message-mark-read",
-    // "purge-comment",
-    // "purge-community",
-    // "purge-person",
-    // "purge-post",
-    // "registration-approve",
-    // "registration-list",
-    // "registration-unread-counts",
-    // "site-leave-admin",
-    // "site-mod-log",
-    // "site-resolve-object",
-    // "site-search",
-    // "comment-create",
-    "comment-create comment-create-correct",
-    "comment-delete",
-    // "comment-list",
-    "comment-read",
-    // "comment-remove",
-    // "comment-update",
-    // "comment-update comment-update-correct",
-    // "community-create",
-    // "community-delete",
-    // "community-list",
-    // "community-read",
-    // "community-remove",
-    // "community-update",
-    // "post-create",
-    // "post-create post-create-correct",
-    // "post-delete",
-    // "post-delete post-delete-correct",
-    // "post-list",
-    // "post-read",
-    // "post-remove",
-    // "post-update",
-    // "post-update post-update-correct",
-    // "private-message-create",
-    // "private-message-delete",
-    // "private-message-read",
-    // "private-message-update",
-    // "site-create",
-    // "site-read",
-    // "site-update",
-    // "user-delete",
-    // "user-read"
+// Controllers are broken into batches.
+// Batches are arbitrary, except all of a subfolder's controllers are kept together.
+// The "correct" feature flag is for a controller that the Lemmy developers found and fixed themselves.
+// e.g. user-login is the version before the bug fix, and user-login correct is the version after.
+
+const BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
+    "bug-1-code comment-like",
+    "bug-1-code comment-mark-as-read",
+    "bug-1-code comment-save",
+    "bug-1-code comment-report-create",
+    "bug-1-code comment-report-list",
+    "bug-1-code comment-report-resolve",
+    "bug-1-code community-add-mod",
+    "bug-1-code community-ban",
+    "bug-1-code community-block",
+    "bug-1-code community-follow",
+    "bug-1-code community-hide",
+    "bug-1-code community-transfer",
+    "bug-1-code notification-list-mentions",
+    "bug-1-code notification-list-replies",
+    "bug-1-code notification-mark-all-read",
+    "bug-1-code notification-mark-mention-read",
+    "bug-1-code notification-unread-count",
+    "bug-1-code user-add-admin",
+    "bug-1-code user-ban-person",
+    "bug-1-code user-block",
+    "bug-1-code user-change-password",
+    "bug-1-code user-list-banned",
+    "bug-1-code user-login",
+    "bug-1-code user-login correct",
+    "bug-1-code user-report-count",
+    "bug-1-code user-save-settings",
+];
+
+const BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
+    "bug-1-code post-like",
+    "bug-1-code post-lock",
+    "bug-1-code post-mark-read",
+    "bug-1-code post-save",
+    "bug-1-code post-sticky",
+    "bug-1-code post-report-create",
+    "bug-1-code post-report-list",
+    "bug-1-code post-report-resolve",
+    "bug-1-code private-message-mark-read",
+    "bug-1-code purge-comment",
+    "bug-1-code purge-community",
+    "bug-1-code purge-person",
+    "bug-1-code purge-post",
+    "bug-1-code registration-approve",
+    "bug-1-code registration-list",
+    "bug-1-code registration-unread-counts",
+    "bug-1-code site-leave-admin",
+    "bug-1-code site-mod-log",
+    "bug-1-code site-resolve-object",
+    "bug-1-code site-search",
+    "bug-1-code comment-create",
+    "bug-1-code comment-create correct",
+    "bug-1-code comment-delete",
+    "bug-1-code comment-list",
+    "bug-1-code comment-read",
+    "bug-1-code comment-remove",
+    "bug-1-code comment-update",
+    "bug-1-code comment-update correct",
+];
+
+const BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
+    "bug-1-code community-create",
+    "bug-1-code community-delete",
+    "bug-1-code community-list",
+    "bug-1-code community-read",
+    "bug-1-code community-remove",
+    "bug-1-code community-update",
+    "bug-1-code post-create",
+    "bug-1-code post-create correct",
+    "bug-1-code post-delete",
+    "bug-1-code post-delete correct",
+    "bug-1-code post-list",
+    "bug-1-code post-read",
+    "bug-1-code post-remove",
+    "bug-1-code post-update",
+    "bug-1-code post-update correct",
+    "bug-1-code private-message-create",
+    "bug-1-code private-message-delete",
+    "bug-1-code private-message-read",
+    "bug-1-code private-message-update",
+    "bug-1-code site-create",
+    "bug-1-code site-read",
+    "bug-1-code site-update",
+    "bug-1-code user-delete",
+    "bug-1-code user-read"
+];
+
+const BUG_1_FIX_CTRL_BATCH_1: &'static [&'static str] = &[
+    "bug-1-code bug-1-fix comment-like",
+    "bug-1-code bug-1-fix comment-mark-as-read",
+    "bug-1-code bug-1-fix comment-save",
+    "bug-1-code bug-1-fix comment-report-create",
+    "bug-1-code bug-1-fix comment-report-list",
+    "bug-1-code bug-1-fix comment-report-resolve",
+    "bug-1-code bug-1-fix community-add-mod",
+    "bug-1-code bug-1-fix community-ban",
+    "bug-1-code bug-1-fix community-block",
+    "bug-1-code bug-1-fix community-follow",
+    "bug-1-code bug-1-fix community-hide",
+    "bug-1-code bug-1-fix community-transfer",
+    "bug-1-code bug-1-fix notification-list-mentions",
+    "bug-1-code bug-1-fix notification-list-replies",
+    "bug-1-code bug-1-fix notification-mark-all-read",
+    "bug-1-code bug-1-fix notification-mark-mention-read",
+    "bug-1-code bug-1-fix notification-unread-count",
+    "bug-1-code bug-1-fix user-add-admin",
+    "bug-1-code bug-1-fix user-ban-person",
+    "bug-1-code bug-1-fix user-block",
+    "bug-1-code bug-1-fix user-change-password",
+    "bug-1-code bug-1-fix user-list-banned",
+    "bug-1-code bug-1-fix user-login",
+    "bug-1-code bug-1-fix user-login correct",
+    "bug-1-code bug-1-fix user-report-count",
+    "bug-1-code bug-1-fix user-save-settings",
+];
+
+const BUG_1_FIX_CTRL_BATCH_2 : &'static [&'static str] = &[
+    "bug-1-code bug-1-fix post-like",
+    "bug-1-code bug-1-fix post-lock",
+    "bug-1-code bug-1-fix post-mark-read",
+    "bug-1-code bug-1-fix post-save",
+    "bug-1-code bug-1-fix post-sticky",
+    "bug-1-code bug-1-fix post-report-create",
+    "bug-1-code bug-1-fix post-report-list",
+    "bug-1-code bug-1-fix post-report-resolve",
+    "bug-1-code bug-1-fix private-message-mark-read",
+    "bug-1-code bug-1-fix purge-comment",
+    "bug-1-code bug-1-fix purge-community",
+    "bug-1-code bug-1-fix purge-person",
+    "bug-1-code bug-1-fix purge-post",
+    "bug-1-code bug-1-fix registration-approve",
+    "bug-1-code bug-1-fix registration-list",
+    "bug-1-code bug-1-fix registration-unread-counts",
+    "bug-1-code bug-1-fix site-leave-admin",
+    "bug-1-code bug-1-fix site-mod-log",
+    "bug-1-code bug-1-fix site-resolve-object",
+    "bug-1-code bug-1-fix site-search",
+    "bug-1-code bug-1-fix comment-create",
+    "bug-1-code bug-1-fix comment-create correct",
+    "bug-1-code bug-1-fix comment-delete",
+    "bug-1-code bug-1-fix comment-list",
+    "bug-1-code bug-1-fix comment-read",
+    "bug-1-code bug-1-fix comment-remove",
+    "bug-1-code bug-1-fix comment-update",
+    "bug-1-code bug-1-fix comment-update correct",
+];
+
+const BUG_1_FIX_CTRL_BATCH_3 : &'static [&'static str] = &[
+    "bug-1-code bug-1-fix community-create",
+    "bug-1-code bug-1-fix community-delete",
+    "bug-1-code bug-1-fix community-list",
+    "bug-1-code bug-1-fix community-read",
+    "bug-1-code bug-1-fix community-remove",
+    "bug-1-code bug-1-fix community-update",
+    "bug-1-code bug-1-fix post-create",
+    "bug-1-code bug-1-fix post-create correct",
+    "bug-1-code bug-1-fix post-delete",
+    "bug-1-code bug-1-fix post-delete correct",
+    "bug-1-code bug-1-fix post-list",
+    "bug-1-code bug-1-fix post-read",
+    "bug-1-code bug-1-fix post-remove",
+    "bug-1-code bug-1-fix post-update",
+    "bug-1-code bug-1-fix post-update correct",
+    "bug-1-code bug-1-fix private-message-create",
+    "bug-1-code bug-1-fix private-message-delete",
+    "bug-1-code bug-1-fix private-message-read",
+    "bug-1-code bug-1-fix private-message-update",
+    "bug-1-code bug-1-fix site-create",
+    "bug-1-code bug-1-fix site-read",
+    "bug-1-code bug-1-fix site-update",
+    "bug-1-code bug-1-fix user-delete",
+    "bug-1-code bug-1-fix user-read"
+];
+
+const POST_BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
+    "post-bug-1 comment-like",
+    "post-bug-1 comment-mark-as-read",
+    "post-bug-1 comment-save",
+    "post-bug-1 comment-report-create",
+    "post-bug-1 comment-report-list",
+    "post-bug-1 comment-report-resolve",
+    "post-bug-1 community-add-mod",
+    "post-bug-1 community-ban",
+    "post-bug-1 community-block",
+    "post-bug-1 community-follow",
+    "post-bug-1 community-hide",
+    "post-bug-1 community-transfer",
+    "post-bug-1 notification-list-mentions",
+    "post-bug-1 notification-list-replies",
+    "post-bug-1 notification-mark-all-read",
+    "post-bug-1 notification-mark-mention-read",
+    "post-bug-1 notification-unread-count",
+    "post-bug-1 user-add-admin",
+    "post-bug-1 user-ban-person",
+    "post-bug-1 user-block",
+    "post-bug-1 user-change-password",
+    "post-bug-1 user-list-banned",
+    "post-bug-1 user-login",
+    "post-bug-1 user-login correct",
+    "post-bug-1 user-report-count",
+    "post-bug-1 user-save-settings",
+];
+
+const POST_BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
+    "post-bug-1 post-like",
+    "post-bug-1 post-lock",
+    "post-bug-1 post-mark-read",
+    "post-bug-1 post-save",
+    "post-bug-1 post-sticky",
+    "post-bug-1 post-report-create",
+    "post-bug-1 post-report-list",
+    "post-bug-1 post-report-resolve",
+    "post-bug-1 private-message-mark-read",
+    "post-bug-1 purge-comment",
+    "post-bug-1 purge-community",
+    "post-bug-1 purge-person",
+    "post-bug-1 purge-post",
+    "post-bug-1 registration-approve",
+    "post-bug-1 registration-list",
+    "post-bug-1 registration-unread-counts",
+    "post-bug-1 site-leave-admin",
+    "post-bug-1 site-mod-log",
+    "post-bug-1 site-resolve-object",
+    "post-bug-1 site-search",
+    "post-bug-1 comment-create",
+    "post-bug-1 comment-create correct",
+    "post-bug-1 comment-delete",
+    "post-bug-1 comment-list",
+    "post-bug-1 comment-read",
+    "post-bug-1 comment-remove",
+    "post-bug-1 comment-update",
+    "post-bug-1 comment-update correct",
+];
+
+const POST_BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
+    "post-bug-1 community-create",
+    "post-bug-1 community-delete",
+    "post-bug-1 community-list",
+    "post-bug-1 community-read",
+    "post-bug-1 community-remove",
+    "post-bug-1 community-update",
+    "post-bug-1 post-create",
+    "post-bug-1 post-create correct",
+    "post-bug-1 post-delete",
+    "post-bug-1 post-delete correct",
+    "post-bug-1 post-list",
+    "post-bug-1 post-read",
+    "post-bug-1 post-remove",
+    "post-bug-1 post-update",
+    "post-bug-1 post-update correct",
+    "post-bug-1 private-message-create",
+    "post-bug-1 private-message-delete",
+    "post-bug-1 private-message-read",
+    "post-bug-1 private-message-update",
+    "post-bug-1 site-create",
+    "post-bug-1 site-read",
+    "post-bug-1 site-update",
+    "post-bug-1 user-delete",
+    "post-bug-1 user-read"
+];
+
+// no bug 1 batch because bug 1 involves all of the controllers
+
+const BUG_2_BATCH : &'static [&'static str] = &[
+    "post-bug-1 user-login",
+    "post-bug-1 user-login correct",
+];
+
+// these are the buggy controllers that the Lemmy developers found and fixed themselves
+const BUG_3_BUGGY_BATCH : &'static [&'static str] = &[
+    "post-bug-1 comment-create",
+    "post-bug-1 comment-create correct",
+    "post-bug-1 comment-update",
+    "post-bug-1 comment-update correct",
+    "post-bug-1 post-create",
+    "post-bug-1 post-create correct",
+    "post-bug-1 post-delete",
+    "post-bug-1 post-delete correct",
+    "post-bug-1 post-update",
+    "post-bug-1 post-update correct",
+];
+
+// these are the buggy controllers that Paralegal found
+const BUG_3_BATCH : &'static [&'static str] = &[
+    "post-bug-1 comment-like",
+    "post-bug-1 comment-mark-as-read",
+    "post-bug-1 comment-save",
+    "post-bug-1 comment-report-create",
+    "post-bug-1 community-block",
+    "post-bug-1 community-follow",
+    "post-bug-1 post-mark-read",
+    "post-bug-1 post-save",
+    "post-bug-1 post-report-create",
+    "post-bug-1 post-report-resolve",
+    "post-bug-1 comment-delete",
+    "post-bug-1 comment-remove",
+    "post-bug-1 community-delete",
+    "post-bug-1 community-remove",
+    "post-bug-1 community-update",
+    "post-bug-1 post-remove"
+];
+
+const BUG_4_BATCH : &'static [&'static str] = &[
+    "post-bug-1 community-add-mod",
+    "post-bug-1 community-ban",
+    "post-bug-1 community-hide",
+    "post-bug-1 community-transfer"
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -105,17 +337,18 @@ struct Args {
     /// `--verbose-commands`)
     #[clap(long)]
     verbose: bool,
+    
+    /// Whether to run all the controllers at once; default is to only run ones relevant to each bug
+    #[clap(long)]
+    all: bool,
 
     /// Print the shell commands we are running
     #[clap(long)]
     verbose_commands: bool,
 
+    #[clap(long)]
     /// Controllers to run in api
     ctrlers: Vec<String>,
-
-    /// Location of the Lemmy repo
-    #[clap(long, default_value = "..")]
-    directory: std::path::PathBuf,
 }
 
 impl Args {
@@ -128,6 +361,13 @@ impl Args {
 enum Property {
     Instance,
     Community,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+enum GetUserVersion {
+    PreBug1Fix,
+    PostBug1Fix,
+    Bug2Onward,
 }
 
 impl Display for Property {
@@ -208,7 +448,6 @@ impl std::fmt::Display for RunError {
 fn run_edit(
     typ: Property,
     ctrlers: &[String],
-    cd: &std::path::Path,
     verbose: bool,
     verbose_commands: bool,
     progress: &ProgressBar,
@@ -219,14 +458,15 @@ fn run_edit(
         .iter()
         .map(|ctrler| {
             let mut dfpp_cmd = Command::new("cargo");
-            dfpp_cmd.current_dir(cd).arg("dfpp").stdin(Stdio::null());
+            dfpp_cmd.current_dir("../").arg("dfpp").stdin(Stdio::null());
 
 			dfpp_cmd.args(&["--target", "lemmy_api"]);
             dfpp_cmd.args(&["--model-version", "v2"]);
             dfpp_cmd.args(&["--inline-elision"]);
+            dfpp_cmd.args(&["--abort-after-analysis"]);
 
             let external_ann_file_name = format!("external-annotations.toml");
-            let mut external_ann_file: std::path::PathBuf = cd.into();
+            let mut external_ann_file: std::path::PathBuf = "../".into();
             external_ann_file.push(&external_ann_file_name);
             if external_ann_file.exists() {
                 dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
@@ -250,7 +490,7 @@ fn run_edit(
             let propfile = format!("props/{typ}-props.frg");
             let mut racket_cmd = Command::new("racket");
             racket_cmd
-                .current_dir(cd)
+                .current_dir("../")
                 .arg(propfile)
                 .stdin(Stdio::null());
             if !verbose {
@@ -284,20 +524,24 @@ fn print_results_for_property<W: std::io::Write>(
     mut w: W,
     num_versions: usize,
     typ: Property,
-    args: &Args,
+    batch : &Vec<String>,
     result: (&Property, Vec<RunResult>),
+    desc: &'static str,
 ) -> std::io::Result<()> {
     let head_cell_width = 10;
-    let body_cell_width = 30;
+    let body_cell_width = 40;
+
+    write!(w, "{}", desc)?;
+    writeln!(w, "")?;
 
     write!(w, " {:head_cell_width$} ", typ.to_string())?;
-    for version in args.ctrlers.iter() {
+    for version in batch.iter() {
         write!(w, "| {:body_cell_width$} ", version)?
     }
     writeln!(w, "")?;
 
     write!(w, "-{:-<head_cell_width$}-", "")?;
-    for _ in 0..args.ctrlers.len() + 1 {
+    for _ in 0..batch.len() + 1 {
         write!(w, "+-{:-<body_cell_width$}-", "")?
     }
     writeln!(w, "")?;
@@ -323,22 +567,9 @@ fn print_results_for_property<W: std::io::Write>(
 	writeln!(w, "")
 }
 
-fn main() {
-    use std::io::Write;
-    let args = {
-        let mut args = Args::parse();
-        if args.ctrlers.is_empty() {
-            println!("INFO: No specification variants to run given, running all known ones");
-            args.ctrlers = ALL_KNOWN_CTRLERS
-                .iter()
-                .cloned()
-                .map(str::to_string)
-                .collect();
-        }
-        args
-    };
-
-    let num_versions = args.ctrlers.len();
+// helper function; runs one batch of controllers
+fn run_batch(args : &Args, batch : &Vec<String>, desc: &'static str) {
+    let num_versions = batch.len();
 
     let num_configurations = CONFIGURATIONS
         .len()
@@ -357,17 +588,64 @@ fn main() {
                     &typ,
                     run_edit(
                         typ,
-                        args.ctrlers.as_slice(),
-                        &args.directory,
+                        batch.as_slice(),
                         args.verbose,
                         args.verbose_commands(),
                         &progress,
                     ),
                 );
         progress.suspend(|| {
-            print_results_for_property(&mut w, num_versions, typ, &args, results)
+            print_results_for_property(&mut w, num_versions, typ, batch, results, desc)
                 .unwrap()
         })
     }
     progress.finish_and_clear();
+}
+
+// runs all controllers
+fn run_all(args: &Args, version: GetUserVersion) {
+    if version == GetUserVersion::PreBug1Fix {
+        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 3 Results");
+    } else if version == GetUserVersion::PostBug1Fix {
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 3 Results");
+    } else {
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Batch 1 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Batch 2 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Batch 3 Results:");
+    }
+}
+
+// Runs controllers relevant for each bug (1-4)
+// For Bug 1, this is all of the controllers twice: once before the bug fix, once after
+// For Bug 2, this is login twice: once before the bug fix, once after
+// For Bug 3, this is two batches: the controllers the Lemmy developers found, and the ones Paralegal found.
+// For the controllers that the Lemmy developers found, each controller runs once before the bug fix, once after
+// For Bug 4, this is once batch: the controllers Paralegal found
+fn run_bugs(args: &Args) {
+    run_all(args, GetUserVersion::PreBug1Fix);
+    run_all(args, GetUserVersion::PostBug1Fix);
+    run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 2 Batch");
+    run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 3 Batch -- Lemmy developers found and fixed");
+    run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 3 Batch -- Paralegal found");
+    run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 4 Batch");
+}
+
+fn main() {
+    // use std::io::Write;
+    let args = Args::parse();
+    
+    if args.all {
+        println!("INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4.");
+        run_all(&args, GetUserVersion::Bug2Onward);
+    } else if args.ctrlers.is_empty() {
+        println!("INFO: No controllers specified; running relevant controllers for each bug");
+        run_bugs(&args)
+    } else {
+        println!("INFO: Running specified controllers -- note that this is the Lemmy version for bugs 2-4.");
+        run_batch(&args, &args.ctrlers, "test");
+    }
 }

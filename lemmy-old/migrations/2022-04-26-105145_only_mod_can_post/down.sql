@@ -1,1 +1,0 @@
-alter table community drop column posting_restricted_to_mods;

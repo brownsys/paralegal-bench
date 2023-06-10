@@ -1,1 +1,0 @@
-alter table site drop column default_theme;
