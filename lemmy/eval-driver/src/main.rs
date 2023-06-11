@@ -525,43 +525,53 @@ fn print_results_for_property<W: std::io::Write>(
     result: (&Property, Vec<RunResult>),
     desc: &'static str,
 ) -> std::io::Result<()> {
-    let head_cell_width = 10;
-    let body_cell_width = 40;
+    let leftmost_column_width = 40;
+    let rest_column_width = 12;
 
     write!(w, "{}", desc)?;
     writeln!(w, "")?;
 
-    write!(w, " {:head_cell_width$} ", typ.to_string())?;
-    for version in batch.iter() {
-        write!(w, "| {:body_cell_width$} ", version)?
-    }
+    // headers
+    write!(w, " {:leftmost_column_width$} ", typ.to_string())?;
+    write!(w, "| {:rest_column_width$} ", "pass?")?;
+    write!(w, "| {:rest_column_width$} ", "atime")?;
+    write!(w, "| {:rest_column_width$} ", "vtime")?;
     writeln!(w, "")?;
-
-    write!(w, "-{:-<head_cell_width$}-", "")?;
-    for _ in 0..batch.len() + 1 {
-        write!(w, "+-{:-<body_cell_width$}-", "")?
+    
+    // dividing line
+    write!(w, "-{:-<leftmost_column_width$}-", "")?;
+    for _ in 0..3 {
+        write!(w, "+-{:-<rest_column_width$}-", "")?
     }
     writeln!(w, "")?;
 
     let (_, versions) = result;
-	write!(w, " {:head_cell_width$} ", "pass?")?;
-	for result in versions.clone().into_iter() {
-		write!(w, "| {:^body_cell_width$} ", result.error)?;
-	}
+
+    // each row : controller, result, analyze time, verification time
+    for version in batch.iter() {
+        write!(w, " {:leftmost_column_width$} ", version)?;
+        
+        for result in versions.clone().into_iter() {
+            write!(w, "| {:^rest_column_width$} ", result.error)?;
+        }
+        
+        for result in versions.clone().into_iter() {
+            write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
+        }
+
+        for result in versions.clone().into_iter() {
+            write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
+        }
+
+        // dividing line
+        writeln!(w, "")?;
+        write!(w, "-{:-<leftmost_column_width$}-", "")?;
+        for _ in 0..3 {
+            write!(w, "+-{:-<rest_column_width$}-", "")?;
+        }
+    }
     writeln!(w, "")?;
-
-	write!(w, " {:head_cell_width$} ", "atime")?;
-	for result in versions.clone().into_iter() {
-		write!(w, "| {:^body_cell_width$} ", format!("{:?}", result.analyze_time))?;
-	}
-	writeln!(w, "")?;
-
-	write!(w, " {:head_cell_width$} ", "vtime")?;
-	for result in versions.clone().into_iter() {
-		write!(w, "| {:^body_cell_width$} ", format!("{:?}", result.verify_time))?;
-	}
-	writeln!(w, "")?;
-	writeln!(w, "")
+    Ok(())
 }
 
 // helper function; runs one batch of controllers
@@ -642,7 +652,7 @@ fn main() {
         println!("INFO: No controllers specified; running relevant controllers for each bug");
         run_bugs(&args)
     } else {
-        println!("INFO: Running specified controllers -- note that this is the Lemmy version for bugs 2-4.");
-        run_batch(&args, &args.ctrlers, "test");
+        println!("INFO: Running specified controllers.");
+        run_batch(&args, &args.ctrlers, "");
     }
 }
