@@ -547,21 +547,14 @@ fn print_results_for_property<W: std::io::Write>(
 
     let (_, versions) = result;
 
-    // each row : controller, result, analyze time, verification time
-    for version in batch.iter() {
-        write!(w, " {:leftmost_column_width$} ", version)?;
-        
-        for result in versions.clone().into_iter() {
-            write!(w, "| {:^rest_column_width$} ", result.error)?;
-        }
-        
-        for result in versions.clone().into_iter() {
-            write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
-        }
+    let mut i : usize = 0;
 
-        for result in versions.clone().into_iter() {
-            write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
-        }
+    // each row : controller, result, analyze time, verification time
+    for result in versions.clone().into_iter() {
+        write!(w, " {:leftmost_column_width$} ", batch[i])?;
+        write!(w, "| {:^rest_column_width$} ", result.error)?;
+        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
+        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
 
         // dividing line
         writeln!(w, "")?;
@@ -569,6 +562,8 @@ fn print_results_for_property<W: std::io::Write>(
         for _ in 0..3 {
             write!(w, "+-{:-<rest_column_width$}-", "")?;
         }
+        writeln!(w, "")?;
+        i += 1;
     }
     writeln!(w, "")?;
     Ok(())
