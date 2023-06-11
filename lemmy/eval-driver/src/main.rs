@@ -42,7 +42,6 @@ const BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
     "bug-1-code user-change-password",
     "bug-1-code user-list-banned",
     "bug-1-code user-login",
-    "bug-1-code user-login correct",
     "bug-1-code user-report-count",
     "bug-1-code user-save-settings",
 ];
@@ -129,7 +128,6 @@ const BUG_1_FIX_CTRL_BATCH_1: &'static [&'static str] = &[
     "bug-1-code bug-1-fix user-change-password",
     "bug-1-code bug-1-fix user-list-banned",
     "bug-1-code bug-1-fix user-login",
-    "bug-1-code bug-1-fix user-login correct",
     "bug-1-code bug-1-fix user-report-count",
     "bug-1-code bug-1-fix user-save-settings",
 ];
@@ -215,7 +213,6 @@ const POST_BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
     "post-bug-1 user-block",
     "post-bug-1 user-change-password",
     "post-bug-1 user-list-banned",
-    "post-bug-1 user-login",
     "post-bug-1 user-login correct",
     "post-bug-1 user-report-count",
     "post-bug-1 user-save-settings",
