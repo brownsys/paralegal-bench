@@ -432,87 +432,9 @@ impl std::fmt::Display for RunError {
     }
 }
 
-fn run_edit(
-    typ: Property,
-    ctrlers: &[String],
-    verbose: bool,
-    verbose_commands: bool,
-    progress: &ProgressBar,
-) -> Vec<RunResult> {
-    use std::process::*;
-
-    ctrlers
-        .iter()
-        .map(|ctrler| {
-            let mut dfpp_cmd = Command::new("cargo");
-            dfpp_cmd.current_dir("../").arg("dfpp").stdin(Stdio::null());
-
-			dfpp_cmd.args(&["--target", "lemmy_api"]);
-            dfpp_cmd.args(&["--model-version", "v2"]);
-            dfpp_cmd.args(&["--inline-elision"]);
-            dfpp_cmd.args(&["--abort-after-analysis"]);
-
-            let external_ann_file_name = format!("external-annotations.toml");
-            let mut external_ann_file: std::path::PathBuf = "../".into();
-            external_ann_file.push(&external_ann_file_name);
-            if external_ann_file.exists() {
-                dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
-            }
-            dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
-            if !verbose {
-                dfpp_cmd.stderr(Stdio::null()).stdout(Stdio::null());
-            }
-            if verbose_commands {
-                progress.suspend(|| println!("Executing compile command: {:?}", dfpp_cmd));
-            }
-			let mut now = SystemTime::now();
-            let status = dfpp_cmd.status().unwrap();
-			let analyze_time = now.elapsed().unwrap();
-            progress.inc(1);
-            // if !status.success() {
-            //     progress.inc(1);
-            //     return RunResult::CompilationError;
-            // } // NOTE: This is commented out because `cargo dfpp` always returns error for some reason, but it works (usually).
-
-            let propfile = format!("props/{typ}-props.frg");
-            let mut racket_cmd = Command::new("racket");
-            racket_cmd
-                .current_dir("../")
-                .arg(propfile)
-                .stdin(Stdio::null());
-            if !verbose {
-                racket_cmd.stderr(Stdio::null()).stdout(Stdio::null());
-            }
-            if verbose_commands {
-                progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
-            }
-			now = SystemTime::now();
-            let status = racket_cmd.status().unwrap();
-			let verify_time = now.elapsed().unwrap();
-            progress.inc(1);
-            if status.success() {
-                RunResult{
-					analyze_time,
-					verify_time,
-					error: RunError::Success
-				}
-            } else {
-                RunResult{
-					analyze_time,
-					verify_time,
-					error: RunError::CheckError
-				}
-            }
-        })
-        .collect()
-}
-
-fn print_results_for_property<W: std::io::Write>(
+fn print_table_header<W: std::io::Write>(
     mut w: W,
-    num_versions: usize,
-    typ: Property,
-    batch : &Vec<String>,
-    result: (&Property, Vec<RunResult>),
+    props : &'static [Property],
     desc: &'static str,
 ) -> std::io::Result<()> {
     let leftmost_column_width = 60;
@@ -521,46 +443,107 @@ fn print_results_for_property<W: std::io::Write>(
     write!(w, "{}", desc)?;
     writeln!(w, "")?;
 
-    // headers
-    write!(w, " {:leftmost_column_width$} ", typ.to_string())?;
-    write!(w, "| {:rest_column_width$} ", "pass?")?;
-    write!(w, "| {:rest_column_width$} ", "atime")?;
-    write!(w, "| {:rest_column_width$} ", "vtime")?;
+    write!(w, " {:leftmost_column_width$} ", "controller")?;
+
+    for prop in props {
+        write!(w, "| {:rest_column_width$} ", prop.to_string())?;
+        write!(w, "| {:rest_column_width$} ", "atime")?;
+        write!(w, "| {:rest_column_width$} ", "vtime")?;
+    }
     writeln!(w, "")?;
     
     // dividing line
     write!(w, "-{:-<leftmost_column_width$}-", "")?;
-    for _ in 0..3 {
+    for _ in 0..(props.len() * 3) {
         write!(w, "+-{:-<rest_column_width$}-", "")?
-    }
-    writeln!(w, "")?;
-
-    let (_, versions) = result;
-
-    let mut i : usize = 0;
-
-    // each row : controller, result, analyze time, verification time
-    for result in versions.clone().into_iter() {
-        write!(w, " {:leftmost_column_width$} ", batch[i])?;
-        write!(w, "| {:^rest_column_width$} ", result.error)?;
-        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
-        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
-
-        // dividing line
-        writeln!(w, "")?;
-        write!(w, "-{:-<leftmost_column_width$}-", "")?;
-        for _ in 0..3 {
-            write!(w, "+-{:-<rest_column_width$}-", "")?;
-        }
-        writeln!(w, "")?;
-        i += 1;
     }
     writeln!(w, "")?;
     Ok(())
 }
 
-// helper function; runs one batch of controllers
-fn run_batch(args : &Args, batch : &Vec<String>, props : &'static [Property], desc: &'static str) {
+fn print_ctrler_results<W: std::io::Write>(
+    mut w: W,
+    ctrler: &String,
+    results: Vec<RunResult>,
+) -> std::io::Result<()> {
+    let leftmost_column_width = 60;
+    let rest_column_width = 15;
+
+    write!(w, " {:leftmost_column_width$} ", ctrler)?;
+
+    for result in results.clone().into_iter() {
+        write!(w, "| {:^rest_column_width$} ", result.error)?;
+        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
+        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
+    }
+
+    // dividing line
+    writeln!(w, "")?;
+    write!(w, "-{:-<leftmost_column_width$}-", "")?;
+    for _ in 0..(results.len() * 3) {
+        write!(w, "+-{:-<rest_column_width$}-", "")?;
+    }
+    writeln!(w, "")?;
+    Ok(())
+}
+
+// helper function: runs a single controller on given props
+fn run_props_for_ctrler(
+    props : &'static [Property],
+    verbose: bool,
+    verbose_commands: bool,
+    progress: &ProgressBar,
+    analyze_time: Duration
+) -> Vec<RunResult> {
+    use std::process::*;
+
+    props
+    .iter()
+    .map(|typ| {
+        let propfile = format!("props/{typ}-props.frg");
+        let mut racket_cmd = Command::new("racket");
+        racket_cmd
+            .current_dir("../")
+            .arg(propfile)
+            .stdin(Stdio::null());
+        if !verbose {
+            racket_cmd.stderr(Stdio::null()).stdout(Stdio::null());
+        }
+        if verbose_commands {
+            progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
+        }
+        let mut now = SystemTime::now();
+        let status = racket_cmd.status().unwrap();
+        let verify_time = now.elapsed().unwrap();
+        progress.inc(1);
+        if status.success() {
+            RunResult{
+                analyze_time,
+                verify_time,
+                error: RunError::Success
+            }
+        } else {
+            RunResult{
+                analyze_time,
+                verify_time,
+                error: RunError::CheckError
+            }
+        }
+    })
+    .collect()
+}
+
+// runs given batch of controllers on given props
+fn run_batch(args : &Args, 
+    batch : &Vec<String>, 
+    props : &'static [Property], 
+    desc: &'static str) {
+    
+    use std::process::*;
+
+    let verbose = args.verbose;
+    let verbose_commands = args.verbose_commands();
+    
     let num_versions = batch.len();
 
     let num_configurations = CONFIGURATIONS
@@ -575,22 +558,45 @@ fn run_batch(args : &Args, batch : &Vec<String>, props : &'static [Property], de
     );
 
     let mut w = std::io::stdout();
-    for &typ in props {
-        let results = (
-                    &typ,
-                    run_edit(
-                        typ,
-                        batch.as_slice(),
-                        args.verbose,
-                        args.verbose_commands(),
-                        &progress,
-                    ),
-                );
+
+    print_table_header(&mut w, props, desc).unwrap();
+    
+    for ctrler in batch {
+        let mut dfpp_cmd = Command::new("cargo");
+        dfpp_cmd.current_dir("../").arg("dfpp").stdin(Stdio::null());
+
+        dfpp_cmd.args(&["--target", "lemmy_api"]);
+        dfpp_cmd.args(&["--model-version", "v2"]);
+        dfpp_cmd.args(&["--inline-elision"]);
+        dfpp_cmd.args(&["--abort-after-analysis"]);
+
+        let external_ann_file_name = format!("external-annotations.toml");
+        let mut external_ann_file: std::path::PathBuf = "../".into();
+        external_ann_file.push(&external_ann_file_name);
+        if external_ann_file.exists() {
+            dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
+        }
+        
+        dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
+        if !args.verbose {
+            dfpp_cmd.stderr(Stdio::null()).stdout(Stdio::null());
+        }
+        if verbose_commands {
+            progress.suspend(|| println!("Executing compile command: {:?}", dfpp_cmd));
+        }
+        let now = SystemTime::now();
+        let status = dfpp_cmd.status().unwrap();
+        let analyze_time = now.elapsed().unwrap();
+        progress.inc(1);
+
+        let results = run_props_for_ctrler(props, verbose, verbose_commands, &progress, analyze_time);
+            
         progress.suspend(|| {
-            print_results_for_property(&mut w, num_versions, typ, batch, results, desc)
+            print_ctrler_results(&mut w, &ctrler, results)
                 .unwrap()
-        })
+        });
     }
+
     progress.finish_and_clear();
 }
 
@@ -618,7 +624,7 @@ fn run_all(args: &Args, version: GetUserVersion, props : &'static [Property]) {
 // For the controllers that the Lemmy developers found, each controller runs once before the bug fix, once after
 // For Bug 4, this is once batch: the controllers Paralegal found
 fn run_bugs(args: &Args) {
-    run_all(args, GetUserVersion::PreBug1Fix, &[Property::Instance]);
+    // run_all(args, GetUserVersion::PreBug1Fix, &[Property::Instance]);
     run_all(args, GetUserVersion::PostBug1Fix, &[Property::Instance]);
     run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
     run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
