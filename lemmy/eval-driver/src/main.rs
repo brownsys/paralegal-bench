@@ -68,13 +68,11 @@ const BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
     "bug-1-code site-resolve-object",
     "bug-1-code site-search",
     "bug-1-code comment-create",
-    "bug-1-code comment-create correct",
     "bug-1-code comment-delete",
     "bug-1-code comment-list",
     "bug-1-code comment-read",
     "bug-1-code comment-remove",
     "bug-1-code comment-update",
-    "bug-1-code comment-update correct",
 ];
 
 const BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
@@ -85,14 +83,11 @@ const BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
     "bug-1-code community-remove",
     "bug-1-code community-update",
     "bug-1-code post-create",
-    "bug-1-code post-create correct",
     "bug-1-code post-delete",
-    "bug-1-code post-delete correct",
     "bug-1-code post-list",
     "bug-1-code post-read",
     "bug-1-code post-remove",
     "bug-1-code post-update",
-    "bug-1-code post-update correct",
     "bug-1-code private-message-create",
     "bug-1-code private-message-delete",
     "bug-1-code private-message-read",
@@ -154,13 +149,11 @@ const BUG_1_FIX_CTRL_BATCH_2 : &'static [&'static str] = &[
     "bug-1-code bug-1-fix site-resolve-object",
     "bug-1-code bug-1-fix site-search",
     "bug-1-code bug-1-fix comment-create",
-    "bug-1-code bug-1-fix comment-create correct",
     "bug-1-code bug-1-fix comment-delete",
     "bug-1-code bug-1-fix comment-list",
     "bug-1-code bug-1-fix comment-read",
     "bug-1-code bug-1-fix comment-remove",
     "bug-1-code bug-1-fix comment-update",
-    "bug-1-code bug-1-fix comment-update correct",
 ];
 
 const BUG_1_FIX_CTRL_BATCH_3 : &'static [&'static str] = &[
@@ -171,14 +164,11 @@ const BUG_1_FIX_CTRL_BATCH_3 : &'static [&'static str] = &[
     "bug-1-code bug-1-fix community-remove",
     "bug-1-code bug-1-fix community-update",
     "bug-1-code bug-1-fix post-create",
-    "bug-1-code bug-1-fix post-create correct",
     "bug-1-code bug-1-fix post-delete",
-    "bug-1-code bug-1-fix post-delete correct",
     "bug-1-code bug-1-fix post-list",
     "bug-1-code bug-1-fix post-read",
     "bug-1-code bug-1-fix post-remove",
     "bug-1-code bug-1-fix post-update",
-    "bug-1-code bug-1-fix post-update correct",
     "bug-1-code bug-1-fix private-message-create",
     "bug-1-code bug-1-fix private-message-delete",
     "bug-1-code bug-1-fix private-message-read",
@@ -525,8 +515,8 @@ fn print_results_for_property<W: std::io::Write>(
     result: (&Property, Vec<RunResult>),
     desc: &'static str,
 ) -> std::io::Result<()> {
-    let leftmost_column_width = 40;
-    let rest_column_width = 12;
+    let leftmost_column_width = 60;
+    let rest_column_width = 15;
 
     write!(w, "{}", desc)?;
     writeln!(w, "")?;
@@ -570,7 +560,7 @@ fn print_results_for_property<W: std::io::Write>(
 }
 
 // helper function; runs one batch of controllers
-fn run_batch(args : &Args, batch : &Vec<String>, desc: &'static str) {
+fn run_batch(args : &Args, batch : &Vec<String>, props : &'static [Property], desc: &'static str) {
     let num_versions = batch.len();
 
     let num_configurations = CONFIGURATIONS
@@ -585,7 +575,7 @@ fn run_batch(args : &Args, batch : &Vec<String>, desc: &'static str) {
     );
 
     let mut w = std::io::stdout();
-    for &typ in CONFIGURATIONS {
+    for &typ in props {
         let results = (
                     &typ,
                     run_edit(
@@ -605,19 +595,19 @@ fn run_batch(args : &Args, batch : &Vec<String>, desc: &'static str) {
 }
 
 // runs all controllers
-fn run_all(args: &Args, version: GetUserVersion) {
+fn run_all(args: &Args, version: GetUserVersion, props : &'static [Property]) {
     if version == GetUserVersion::PreBug1Fix {
-        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Bug 1: Batch 3 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 3 Results");
     } else if version == GetUserVersion::PostBug1Fix {
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Bug 1 Fix: Batch 3 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 3 Results");
     } else {
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), "Batch 1 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), "Batch 2 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), "Batch 3 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Batch 1 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Batch 2 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Batch 3 Results:");
     }
 }
 
@@ -628,12 +618,12 @@ fn run_all(args: &Args, version: GetUserVersion) {
 // For the controllers that the Lemmy developers found, each controller runs once before the bug fix, once after
 // For Bug 4, this is once batch: the controllers Paralegal found
 fn run_bugs(args: &Args) {
-    run_all(args, GetUserVersion::PreBug1Fix);
-    run_all(args, GetUserVersion::PostBug1Fix);
-    run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 2 Batch");
-    run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 3 Batch -- Lemmy developers found and fixed");
-    run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 3 Batch -- Paralegal found");
-    run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), "Bug 4 Batch");
+    run_all(args, GetUserVersion::PreBug1Fix, &[Property::Instance]);
+    run_all(args, GetUserVersion::PostBug1Fix, &[Property::Instance]);
+    run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
+    run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
+    run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Paralegal found");
+    run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 4 Batch");
 }
 
 fn main() {
@@ -642,12 +632,12 @@ fn main() {
     
     if args.all {
         println!("INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4.");
-        run_all(&args, GetUserVersion::Bug2Onward);
+        run_all(&args, GetUserVersion::Bug2Onward, CONFIGURATIONS);
     } else if args.ctrlers.is_empty() {
-        println!("INFO: No controllers specified; running relevant controllers for each bug");
+        println!("INFO: No controllers specified; running relevant controllers and properties for each bug");
         run_bugs(&args)
     } else {
         println!("INFO: Running specified controllers.");
-        run_batch(&args, &args.ctrlers, "");
+        run_batch(&args, &args.ctrlers, CONFIGURATIONS, "");
     }
 }
