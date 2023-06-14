@@ -557,15 +557,11 @@ fn run_batch(args : &Args,
 
     let verbose = args.verbose;
     let verbose_commands = args.verbose_commands();
-    
-    let num_versions = batch.len();
 
-    let num_configurations = CONFIGURATIONS
-        .len()
-        * (2 // compile 
-            * num_versions);
+    // for each ctrler, run dfpp (1) and test each property (props.len)
+    let num_tasks = batch.len() * (1 + props.len());
 
-    let progress = ProgressBar::new(num_configurations as u64).with_style(
+    let progress = ProgressBar::new(num_tasks as u64).with_style(
         indicatif::ProgressStyle::default_bar()
             .template("{msg:11} {bar:40} {pos:>3}/{len:3}")
             .unwrap(),
