@@ -324,18 +324,22 @@ struct Args {
     /// `--verbose-commands`)
     #[clap(long)]
     verbose: bool,
-    
-    /// Whether to run all the controllers at once; default is to only run ones relevant to each bug
-    #[clap(long)]
-    all: bool,
 
     /// Print the shell commands we are running
     #[clap(long)]
     verbose_commands: bool,
+    
+    /// Run all the controllers (for bugs 2-4).
+    #[clap(long)]
+    all: bool,
 
     #[clap(long)]
-    /// Controllers to run in api
+    /// Specific controllers to run. Valid options are those in each BATCH list (see main.rs).
     ctrlers: Vec<String>,
+    
+    /// Bug(s) to verify. Options are bug1, bug1fix, bugs234. Required if neither all nor ctrlers is passed.
+    #[clap(long, required_unless_present_any(["all", "ctrlers"]), default_value="bugs234")]
+    bug: String,
 }
 
 impl Args {
@@ -355,6 +359,16 @@ enum GetUserVersion {
     PreBug1Fix,
     PostBug1Fix,
     Bug2Onward,
+}
+
+impl Display for GetUserVersion {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str(match self {
+            GetUserVersion::PreBug1Fix => "bug1",
+            GetUserVersion::PostBug1Fix => "bug1fix",
+            GetUserVersion::Bug2Onward => "bugs234",
+        })
+    }
 }
 
 impl Display for Property {
@@ -512,7 +526,7 @@ fn run_props_for_ctrler(
         if verbose_commands {
             progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
         }
-        let mut now = SystemTime::now();
+        let now = SystemTime::now();
         let status = racket_cmd.status().unwrap();
         let verify_time = now.elapsed().unwrap();
         progress.inc(1);
@@ -601,19 +615,19 @@ fn run_batch(args : &Args,
 }
 
 // runs all controllers
-fn run_all(args: &Args, version: GetUserVersion, props : &'static [Property]) {
+fn run_all(args: &Args, version: GetUserVersion) {
     if version == GetUserVersion::PreBug1Fix {
-        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Bug 1: Batch 3 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
     } else if version == GetUserVersion::PostBug1Fix {
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Bug 1 Fix: Batch 3 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
     } else {
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), props, "Batch 1 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), props, "Batch 2 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), props, "Batch 3 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 1 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 2 Results:");
+        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 3 Results:");
     }
 }
 
@@ -624,21 +638,31 @@ fn run_all(args: &Args, version: GetUserVersion, props : &'static [Property]) {
 // For the controllers that the Lemmy developers found, each controller runs once before the bug fix, once after
 // For Bug 4, this is once batch: the controllers Paralegal found
 fn run_bugs(args: &Args) {
-    // run_all(args, GetUserVersion::PreBug1Fix, &[Property::Instance]);
-    run_all(args, GetUserVersion::PostBug1Fix, &[Property::Instance]);
-    run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
-    run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
-    run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Paralegal found");
-    run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 4 Batch");
+    if args.bug == GetUserVersion::PreBug1Fix.to_string() {
+        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
+    } else if args.bug == GetUserVersion::PostBug1Fix.to_string() {
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
+    } else if args.bug == GetUserVersion::Bug2Onward.to_string() {
+        run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
+        run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
+        run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Paralegal found");
+        run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 4 Batch");
+    } else {
+        println!("ERROR: invalid value for --bug. Valid values are {}, {}, {}", GetUserVersion::PreBug1Fix.to_string(), 
+        GetUserVersion::PostBug1Fix.to_string(), GetUserVersion::Bug2Onward.to_string());
+    }
 }
 
 fn main() {
-    // use std::io::Write;
     let args = Args::parse();
     
     if args.all {
         println!("INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4.");
-        run_all(&args, GetUserVersion::Bug2Onward, CONFIGURATIONS);
+        run_all(&args, GetUserVersion::Bug2Onward);
     } else if args.ctrlers.is_empty() {
         println!("INFO: No controllers specified; running relevant controllers and properties for each bug");
         run_bugs(&args)
