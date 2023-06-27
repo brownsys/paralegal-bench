@@ -1,1 +1,0 @@
-alter table site add column default_theme text not null default 'browser';

@@ -58,7 +58,7 @@ impl PerformCrud for EditComment {
       context.pool(),
     )
     .await?;
-    #[cfg(feature = "comment-update-correct")]
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
     check_post_deleted_or_removed(&orig_comment.post)?;
 

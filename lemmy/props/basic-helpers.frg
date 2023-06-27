@@ -9,16 +9,17 @@ fun labeled_callsites[ls: Label, labels_set: set Object->Label] : CallSite {
 
 fun to_source[c: Ctrl, o: one Type + Src + CallSite] : Src {
     {src : sources_of[c] |
-        o in Type and src->o in types or 
-		(o = src 
-		or o->src in arg_call_site)
+        ((some o & Type) and (some src->o & types)) or 
+		(src in o) or 
+		(some o->src & arg_call_site)
     }
 }
 
 fun to_sink[c: Ctrl, o: one Type + Src] : Sink {
     { sink : sinks_of[c] |
-        o in Type and sink->o in types or 
-        (o = sink or o->sink in arg_call_site )
+        ((some o & Type) and (some sink->o & types)) or 
+        (sink in o) or 
+		(some sink->o & arg_call_site )
     }
 }
 
@@ -105,3 +106,4 @@ pred flows_to_without[o: one Src + CallSite, f : (CallArgument + CallSite), with
 fun path_of[o: one Src + Sink, f: Src + Sink, flow: set Src->Sink]: set Src + Sink {
     { s: Src + Sink | o->s + s->f in ^(flow + arg_call_site)}
 }
+

@@ -49,7 +49,7 @@ impl PerformCrud for DeletePost {
       context.pool(),
     )
     .await?;
-    #[cfg(feature = "post-delete-correct")]
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the creator can delete

@@ -63,7 +63,7 @@ impl PerformCrud for EditPost {
       context.pool(),
     )
     .await?;
-    #[cfg(feature = "post-update-correct")]
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the creator can edit

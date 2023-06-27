@@ -41,6 +41,8 @@ use std::str::FromStr;
 use tracing::warn;
 
 pub fn apply_label_read<T>(t: T) -> T { t }
+pub fn apply_label_banned<T>(t: T) -> T { t }
+pub fn apply_label_deleted<T>(t: T) -> T { t }
 pub fn apply_label_user_read<T>(t: T) -> T { t }
 pub fn apply_label_write<T>(t: T) -> T { t }
 pub fn apply_label_community_write<T>(t: T) -> T { t }
@@ -136,6 +138,20 @@ pub async fn get_local_user_view_from_jwt(
   let local_user_id = LocalUserId(claims.sub);
   let local_user_view =
     apply_label_user_read(blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??);
+  
+  #[cfg(feature = "bug-1-code")]
+  // Check for a site ban
+  if apply_label_banned(local_user_view.person.banned) {
+    return Err(LemmyError::from_message("site_ban"));
+  }
+
+  // Check for user deletion
+  #[cfg(feature = "bug-1-fix")]
+  if apply_label_deleted(local_user_view.person.deleted) {
+    return Err(LemmyError::from_message("deleted"));
+  }
+  
+  #[cfg(feature = "post-bug-1")]
   check_user_valid(
     local_user_view.person.banned,
     local_user_view.person.ban_expires,
