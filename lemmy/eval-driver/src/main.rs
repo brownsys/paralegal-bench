@@ -18,169 +18,8 @@ const CONFIGURATIONS: &'static [Property] = &[
 // The "correct" feature flag is for a controller that the Lemmy developers found and fixed themselves.
 // e.g. user-login is the version before the bug fix, and user-login correct is the version after.
 
-const BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
-    "bug-1-code comment-like",
-    "bug-1-code comment-mark-as-read",
-    "bug-1-code comment-save",
-    "bug-1-code comment-report-create",
-    "bug-1-code comment-report-list",
-    "bug-1-code comment-report-resolve",
-    "bug-1-code community-add-mod",
-    "bug-1-code community-ban",
-    "bug-1-code community-block",
-    "bug-1-code community-follow",
-    "bug-1-code community-hide",
-    "bug-1-code community-transfer",
-    "bug-1-code notification-list-mentions",
-    "bug-1-code notification-list-replies",
-    "bug-1-code notification-mark-all-read",
-    "bug-1-code notification-mark-mention-read",
-    "bug-1-code notification-unread-count",
-    "bug-1-code user-add-admin",
-    "bug-1-code user-ban-person",
-    "bug-1-code user-block",
-    "bug-1-code user-change-password",
-    "bug-1-code user-list-banned",
-    "bug-1-code user-login",
-    "bug-1-code user-report-count",
-    "bug-1-code user-save-settings",
-];
-
-const BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
-    "bug-1-code post-like",
-    "bug-1-code post-lock",
-    "bug-1-code post-mark-read",
-    "bug-1-code post-save",
-    "bug-1-code post-sticky",
-    "bug-1-code post-report-create",
-    "bug-1-code post-report-list",
-    "bug-1-code post-report-resolve",
-    "bug-1-code private-message-mark-read",
-    "bug-1-code purge-comment",
-    "bug-1-code purge-community",
-    "bug-1-code purge-person",
-    "bug-1-code purge-post",
-    "bug-1-code registration-approve",
-    "bug-1-code registration-list",
-    "bug-1-code registration-unread-counts",
-    "bug-1-code site-leave-admin",
-    "bug-1-code site-mod-log",
-    "bug-1-code site-resolve-object",
-    "bug-1-code site-search",
-    "bug-1-code comment-create",
-    "bug-1-code comment-delete",
-    "bug-1-code comment-list",
-    "bug-1-code comment-read",
-    "bug-1-code comment-remove",
-    "bug-1-code comment-update",
-];
-
-const BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
-    "bug-1-code community-create",
-    "bug-1-code community-delete",
-    "bug-1-code community-list",
-    "bug-1-code community-read",
-    "bug-1-code community-remove",
-    "bug-1-code community-update",
-    "bug-1-code post-create",
-    "bug-1-code post-delete",
-    "bug-1-code post-list",
-    "bug-1-code post-read",
-    "bug-1-code post-remove",
-    "bug-1-code post-update",
-    "bug-1-code private-message-create",
-    "bug-1-code private-message-delete",
-    "bug-1-code private-message-read",
-    "bug-1-code private-message-update",
-    "bug-1-code site-create",
-    "bug-1-code site-read",
-    "bug-1-code site-update",
-    "bug-1-code user-delete",
-    "bug-1-code user-read"
-];
-
-const BUG_1_FIX_CTRL_BATCH_1: &'static [&'static str] = &[
-    "bug-1-code bug-1-fix comment-like",
-    "bug-1-code bug-1-fix comment-mark-as-read",
-    "bug-1-code bug-1-fix comment-save",
-    "bug-1-code bug-1-fix comment-report-create",
-    "bug-1-code bug-1-fix comment-report-list",
-    "bug-1-code bug-1-fix comment-report-resolve",
-    "bug-1-code bug-1-fix community-add-mod",
-    "bug-1-code bug-1-fix community-ban",
-    "bug-1-code bug-1-fix community-block",
-    "bug-1-code bug-1-fix community-follow",
-    "bug-1-code bug-1-fix community-hide",
-    "bug-1-code bug-1-fix community-transfer",
-    "bug-1-code bug-1-fix notification-list-mentions",
-    "bug-1-code bug-1-fix notification-list-replies",
-    "bug-1-code bug-1-fix notification-mark-all-read",
-    "bug-1-code bug-1-fix notification-mark-mention-read",
-    "bug-1-code bug-1-fix notification-unread-count",
-    "bug-1-code bug-1-fix user-add-admin",
-    "bug-1-code bug-1-fix user-ban-person",
-    "bug-1-code bug-1-fix user-block",
-    "bug-1-code bug-1-fix user-change-password",
-    "bug-1-code bug-1-fix user-list-banned",
-    "bug-1-code bug-1-fix user-login",
-    "bug-1-code bug-1-fix user-report-count",
-    "bug-1-code bug-1-fix user-save-settings",
-];
-
-const BUG_1_FIX_CTRL_BATCH_2 : &'static [&'static str] = &[
-    "bug-1-code bug-1-fix post-like",
-    "bug-1-code bug-1-fix post-lock",
-    "bug-1-code bug-1-fix post-mark-read",
-    "bug-1-code bug-1-fix post-save",
-    "bug-1-code bug-1-fix post-sticky",
-    "bug-1-code bug-1-fix post-report-create",
-    "bug-1-code bug-1-fix post-report-list",
-    "bug-1-code bug-1-fix post-report-resolve",
-    "bug-1-code bug-1-fix private-message-mark-read",
-    "bug-1-code bug-1-fix purge-comment",
-    "bug-1-code bug-1-fix purge-community",
-    "bug-1-code bug-1-fix purge-person",
-    "bug-1-code bug-1-fix purge-post",
-    "bug-1-code bug-1-fix registration-approve",
-    "bug-1-code bug-1-fix registration-list",
-    "bug-1-code bug-1-fix registration-unread-counts",
-    "bug-1-code bug-1-fix site-leave-admin",
-    "bug-1-code bug-1-fix site-mod-log",
-    "bug-1-code bug-1-fix site-resolve-object",
-    "bug-1-code bug-1-fix site-search",
-    "bug-1-code bug-1-fix comment-create",
-    "bug-1-code bug-1-fix comment-delete",
-    "bug-1-code bug-1-fix comment-list",
-    "bug-1-code bug-1-fix comment-read",
-    "bug-1-code bug-1-fix comment-remove",
-    "bug-1-code bug-1-fix comment-update",
-];
-
-const BUG_1_FIX_CTRL_BATCH_3 : &'static [&'static str] = &[
-    "bug-1-code bug-1-fix community-create",
-    "bug-1-code bug-1-fix community-delete",
-    "bug-1-code bug-1-fix community-list",
-    "bug-1-code bug-1-fix community-read",
-    "bug-1-code bug-1-fix community-remove",
-    "bug-1-code bug-1-fix community-update",
-    "bug-1-code bug-1-fix post-create",
-    "bug-1-code bug-1-fix post-delete",
-    "bug-1-code bug-1-fix post-list",
-    "bug-1-code bug-1-fix post-read",
-    "bug-1-code bug-1-fix post-remove",
-    "bug-1-code bug-1-fix post-update",
-    "bug-1-code bug-1-fix private-message-create",
-    "bug-1-code bug-1-fix private-message-delete",
-    "bug-1-code bug-1-fix private-message-read",
-    "bug-1-code bug-1-fix private-message-update",
-    "bug-1-code bug-1-fix site-create",
-    "bug-1-code bug-1-fix site-read",
-    "bug-1-code bug-1-fix site-update",
-    "bug-1-code bug-1-fix user-delete",
-    "bug-1-code bug-1-fix user-read"
-];
-
-const POST_BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
+/// Batches to run all of the controllers for Lemmy version bugs 2-4
+const POST_BUG_1_BATCH_1: &'static [&'static str] = &[
     "post-bug-1 comment-like",
     "post-bug-1 comment-mark-as-read",
     "post-bug-1 comment-save",
@@ -208,7 +47,7 @@ const POST_BUG_1_CTRL_BATCH_1: &'static [&'static str] = &[
     "post-bug-1 user-save-settings",
 ];
 
-const POST_BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
+const POST_BUG_1_BATCH_2 : &'static [&'static str] = &[
     "post-bug-1 post-like",
     "post-bug-1 post-lock",
     "post-bug-1 post-mark-read",
@@ -239,7 +78,7 @@ const POST_BUG_1_CTRL_BATCH_2 : &'static [&'static str] = &[
     "post-bug-1 comment-update correct",
 ];
 
-const POST_BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
+const POST_BUG_1_BATCH_3 : &'static [&'static str] = &[
     "post-bug-1 community-create",
     "post-bug-1 community-delete",
     "post-bug-1 community-list",
@@ -266,7 +105,168 @@ const POST_BUG_1_CTRL_BATCH_3 : &'static [&'static str] = &[
     "post-bug-1 user-read"
 ];
 
-// no bug 1 batch because bug 1 involves all of the controllers
+/// Batches for each bug
+const BUG_1_BATCH_1: &'static [&'static str] = &[
+    "bug-1-code comment-like",
+    "bug-1-code comment-mark-as-read",
+    "bug-1-code comment-save",
+    "bug-1-code comment-report-create",
+    "bug-1-code comment-report-list",
+    "bug-1-code comment-report-resolve",
+    "bug-1-code community-add-mod",
+    "bug-1-code community-ban",
+    "bug-1-code community-block",
+    "bug-1-code community-follow",
+    "bug-1-code community-hide",
+    "bug-1-code community-transfer",
+    "bug-1-code notification-list-mentions",
+    "bug-1-code notification-list-replies",
+    "bug-1-code notification-mark-all-read",
+    "bug-1-code notification-mark-mention-read",
+    "bug-1-code notification-unread-count",
+    "bug-1-code user-add-admin",
+    "bug-1-code user-ban-person",
+    "bug-1-code user-block",
+    "bug-1-code user-change-password",
+    "bug-1-code user-list-banned",
+    "bug-1-code user-login",
+    "bug-1-code user-report-count",
+    "bug-1-code user-save-settings",
+];
+
+const BUG_1_BATCH_2 : &'static [&'static str] = &[
+    "bug-1-code post-like",
+    "bug-1-code post-lock",
+    "bug-1-code post-mark-read",
+    "bug-1-code post-save",
+    "bug-1-code post-sticky",
+    "bug-1-code post-report-create",
+    "bug-1-code post-report-list",
+    "bug-1-code post-report-resolve",
+    "bug-1-code private-message-mark-read",
+    "bug-1-code purge-comment",
+    "bug-1-code purge-community",
+    "bug-1-code purge-person",
+    "bug-1-code purge-post",
+    "bug-1-code registration-approve",
+    "bug-1-code registration-list",
+    "bug-1-code registration-unread-counts",
+    "bug-1-code site-leave-admin",
+    "bug-1-code site-mod-log",
+    "bug-1-code site-resolve-object",
+    "bug-1-code site-search",
+    "bug-1-code comment-create",
+    "bug-1-code comment-delete",
+    "bug-1-code comment-list",
+    "bug-1-code comment-read",
+    "bug-1-code comment-remove",
+    "bug-1-code comment-update",
+];
+
+const BUG_1_BATCH_3 : &'static [&'static str] = &[
+    "bug-1-code community-create",
+    "bug-1-code community-delete",
+    "bug-1-code community-list",
+    "bug-1-code community-read",
+    "bug-1-code community-remove",
+    "bug-1-code community-update",
+    "bug-1-code post-create",
+    "bug-1-code post-delete",
+    "bug-1-code post-list",
+    "bug-1-code post-read",
+    "bug-1-code post-remove",
+    "bug-1-code post-update",
+    "bug-1-code private-message-create",
+    "bug-1-code private-message-delete",
+    "bug-1-code private-message-read",
+    "bug-1-code private-message-update",
+    "bug-1-code site-create",
+    "bug-1-code site-read",
+    "bug-1-code site-update",
+    "bug-1-code user-delete",
+    "bug-1-code user-read"
+];
+
+const BUG_1_FIX_BATCH_1: &'static [&'static str] = &[
+    "bug-1-code bug-1-fix comment-like",
+    "bug-1-code bug-1-fix comment-mark-as-read",
+    "bug-1-code bug-1-fix comment-save",
+    "bug-1-code bug-1-fix comment-report-create",
+    "bug-1-code bug-1-fix comment-report-list",
+    "bug-1-code bug-1-fix comment-report-resolve",
+    "bug-1-code bug-1-fix community-add-mod",
+    "bug-1-code bug-1-fix community-ban",
+    "bug-1-code bug-1-fix community-block",
+    "bug-1-code bug-1-fix community-follow",
+    "bug-1-code bug-1-fix community-hide",
+    "bug-1-code bug-1-fix community-transfer",
+    "bug-1-code bug-1-fix notification-list-mentions",
+    "bug-1-code bug-1-fix notification-list-replies",
+    "bug-1-code bug-1-fix notification-mark-all-read",
+    "bug-1-code bug-1-fix notification-mark-mention-read",
+    "bug-1-code bug-1-fix notification-unread-count",
+    "bug-1-code bug-1-fix user-add-admin",
+    "bug-1-code bug-1-fix user-ban-person",
+    "bug-1-code bug-1-fix user-block",
+    "bug-1-code bug-1-fix user-change-password",
+    "bug-1-code bug-1-fix user-list-banned",
+    "bug-1-code bug-1-fix user-login",
+    "bug-1-code bug-1-fix user-report-count",
+    "bug-1-code bug-1-fix user-save-settings",
+];
+
+const BUG_1_FIX_BATCH_2 : &'static [&'static str] = &[
+    "bug-1-code bug-1-fix post-like",
+    "bug-1-code bug-1-fix post-lock",
+    "bug-1-code bug-1-fix post-mark-read",
+    "bug-1-code bug-1-fix post-save",
+    "bug-1-code bug-1-fix post-sticky",
+    "bug-1-code bug-1-fix post-report-create",
+    "bug-1-code bug-1-fix post-report-list",
+    "bug-1-code bug-1-fix post-report-resolve",
+    "bug-1-code bug-1-fix private-message-mark-read",
+    "bug-1-code bug-1-fix purge-comment",
+    "bug-1-code bug-1-fix purge-community",
+    "bug-1-code bug-1-fix purge-person",
+    "bug-1-code bug-1-fix purge-post",
+    "bug-1-code bug-1-fix registration-approve",
+    "bug-1-code bug-1-fix registration-list",
+    "bug-1-code bug-1-fix registration-unread-counts",
+    "bug-1-code bug-1-fix site-leave-admin",
+    "bug-1-code bug-1-fix site-mod-log",
+    "bug-1-code bug-1-fix site-resolve-object",
+    "bug-1-code bug-1-fix site-search",
+    "bug-1-code bug-1-fix comment-create",
+    "bug-1-code bug-1-fix comment-delete",
+    "bug-1-code bug-1-fix comment-list",
+    "bug-1-code bug-1-fix comment-read",
+    "bug-1-code bug-1-fix comment-remove",
+    "bug-1-code bug-1-fix comment-update",
+];
+
+const BUG_1_FIX_BATCH_3 : &'static [&'static str] = &[
+    "bug-1-code bug-1-fix community-create",
+    "bug-1-code bug-1-fix community-delete",
+    "bug-1-code bug-1-fix community-list",
+    "bug-1-code bug-1-fix community-read",
+    "bug-1-code bug-1-fix community-remove",
+    "bug-1-code bug-1-fix community-update",
+    "bug-1-code bug-1-fix post-create",
+    "bug-1-code bug-1-fix post-delete",
+    "bug-1-code bug-1-fix post-list",
+    "bug-1-code bug-1-fix post-read",
+    "bug-1-code bug-1-fix post-remove",
+    "bug-1-code bug-1-fix post-update",
+    "bug-1-code bug-1-fix private-message-create",
+    "bug-1-code bug-1-fix private-message-delete",
+    "bug-1-code bug-1-fix private-message-read",
+    "bug-1-code bug-1-fix private-message-update",
+    "bug-1-code bug-1-fix site-create",
+    "bug-1-code bug-1-fix site-read",
+    "bug-1-code bug-1-fix site-update",
+    "bug-1-code bug-1-fix user-delete",
+    "bug-1-code bug-1-fix user-read"
+];
 
 const BUG_2_BATCH : &'static [&'static str] = &[
     "post-bug-1 user-login",
@@ -274,7 +274,7 @@ const BUG_2_BATCH : &'static [&'static str] = &[
 ];
 
 // these are the buggy controllers that the Lemmy developers found and fixed themselves
-const BUG_3_BUGGY_BATCH : &'static [&'static str] = &[
+const BUG_3_FIXED_BATCH : &'static [&'static str] = &[
     "post-bug-1 comment-create",
     "post-bug-1 comment-create correct",
     "post-bug-1 comment-update",
@@ -511,13 +511,28 @@ fn run_props_for_ctrler(
 ) -> Vec<RunResult> {
     use std::process::*;
 
+    let error_eval_dir = "../error-eval/";
+    let mut bash_perms = Command::new("chmod");
+    bash_perms
+        .current_dir(error_eval_dir)
+        .args(["u+x", "eval-driver-helper.sh"])
+        .stdin(Stdio::null())
+        .status();
+
     props
     .iter()
     .map(|typ| {
+        let mut bash_cmd = Command::new("bash");
+        bash_cmd
+            .current_dir(error_eval_dir)
+            .args(["eval-driver-helper.sh".to_owned(), typ.to_string()])
+            .stdin(Stdio::null())
+            .status();
+        
         let propfile = format!("props/{typ}-props.frg");
         let mut racket_cmd = Command::new("racket");
         racket_cmd
-            .current_dir("../")
+            .current_dir(error_eval_dir)
             .arg(propfile)
             .stdin(Stdio::null());
         if !verbose {
@@ -613,17 +628,17 @@ fn run_batch(args : &Args,
 // runs all controllers
 fn run_all(args: &Args, version: GetUserVersion) {
     if version == GetUserVersion::PreBug1Fix {
-        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
+        run_batch(args, &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
     } else if version == GetUserVersion::PostBug1Fix {
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
     } else {
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 1 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 2 Results:");
-        run_batch(args, &(POST_BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 3 Results:");
+        run_batch(args, &(POST_BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 1 Results:");
+        run_batch(args, &(POST_BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 2 Results:");
+        run_batch(args, &(POST_BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 3 Results:");
     }
 }
 
@@ -635,16 +650,16 @@ fn run_all(args: &Args, version: GetUserVersion) {
 // For Bug 4, this is once batch: the controllers Paralegal found
 fn run_bugs(args: &Args) {
     if args.bug == GetUserVersion::PreBug1Fix.to_string() {
-        run_batch(args, &(BUG_1_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
+        run_batch(args, &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
+        run_batch(args, &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
+        run_batch(args, &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
     } else if args.bug == GetUserVersion::PostBug1Fix.to_string() {
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_CTRL_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
+        run_batch(args, &(BUG_1_FIX_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
     } else if args.bug == GetUserVersion::Bug2Onward.to_string() {
         run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
-        run_batch(args, &(BUG_3_BUGGY_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
+        run_batch(args, &(BUG_3_FIXED_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
         run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Paralegal found");
         run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 4 Batch");
     } else {

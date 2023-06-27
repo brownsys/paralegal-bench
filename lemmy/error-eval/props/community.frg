@@ -1,3 +1,4 @@
+
 // if there is a database write to a community, must enforce community auth check
 pred property[flow: set Src->CallArgument, labels: set Object->Label] {
     all c : Ctrl | {

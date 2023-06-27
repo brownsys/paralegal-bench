@@ -1,3 +1,4 @@
+
 // if there is a database access (other than reading the user), must enforce instance auth check
 pred property[flow_set: set Src->CallArgument, labels: set Object->Label] {
    all c : Ctrl | {
