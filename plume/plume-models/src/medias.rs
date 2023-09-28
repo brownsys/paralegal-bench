@@ -18,6 +18,7 @@ use url::Url;
 
 const REMOTE_MEDIA_DIRECTORY: &str = "remote";
 
+#[cfg_attr(feature = "require-delete-media", paralegal_flow::marker(user_data))]
 #[derive(Clone, Identifiable, Queryable, AsChangeset)]
 pub struct Media {
     pub id: i32,

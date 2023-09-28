@@ -21,7 +21,7 @@ pub mod notification_kind {
 }
 
 #[derive(Clone, Queryable, Identifiable)]
-#[dfpp::label(user_data)]
+#[paralegal_flow::marker(user_data)]
 pub struct Notification {
     pub id: i32,
     pub user_id: i32,
@@ -66,7 +66,7 @@ impl Notification {
             .map_err(Error::from)
     }
 
-    #[dfpp::label(noinline, arguments = [0])]
+    #[paralegal_flow::marker(noinline, arguments = [0])]
     pub fn find_followed_by(conn: &Connection, user: &User) -> Result<Vec<Notification>> {
         notifications::table
             .inner_join(follows::table.on(notifications::object_id.eq(follows::id)))

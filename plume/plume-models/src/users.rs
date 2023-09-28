@@ -57,7 +57,7 @@ pub enum Role {
 
 #[derive(Queryable, Identifiable, Clone, Debug, AsChangeset)]
 #[changeset_options(treat_none_as_null = "true")]
-#[dfpp::label(user)]
+#[paralegal_flow::marker(user)]
 pub struct User {
     pub id: i32,
     pub username: String,
@@ -134,7 +134,7 @@ impl User {
             .map_err(Error::from)
     }
 
-    #[dfpp::analyze]
+    #[paralegal_flow::analyze]
     pub fn delete(&self, conn: &Connection) -> Result<()> {
         use crate::schema::post_authors;
 
@@ -177,6 +177,11 @@ impl User {
                 conn,
                 serde_json::to_value(&delete_activity).map_err(Error::from)?,
             )?;
+        }
+
+        #[cfg(feature = "delete-media")]
+        for media in Media::for_user(conn, self.id)? {
+            media.delete(conn)?;
         }
 
         diesel::delete(self)

@@ -33,7 +33,7 @@ use plume_common::{
 use std::collections::HashSet;
 
 #[derive(Queryable, Identifiable, Clone, AsChangeset)]
-#[dfpp::label(user_data)]
+#[paralegal_flow::marker(user_data)]
 pub struct Comment {
     pub id: i32,
     pub content: SafeString,

@@ -2,7 +2,7 @@
 #![feature(proc_macro_hygiene)]
 #![feature(box_patterns)]
 #![feature(register_tool)]
-#![register_tool(dfpp)]
+#![register_tool(paralegal_flow)]
 
 #[macro_use]
 extern crate diesel;
@@ -214,7 +214,7 @@ macro_rules! find_by {
 macro_rules! list_by {
     ($table:ident, $fn:ident, $($col:ident as $type:ty),+) => {
         /// Try to find a $table with a given $col
-        #[dfpp::label(user_data)]
+        #[paralegal_flow::marker(user_data)]
         pub fn $fn(conn: &crate::Connection, $($col: $type),+) -> Result<Vec<Self>> {
             $table::table
                 $(.filter($table::$col.eq($col)))+
@@ -238,7 +238,7 @@ macro_rules! list_by {
 /// ```
 macro_rules! get {
     ($table:ident) => {
-        #[dfpp::label(user_data)]
+        #[paralegal_flow::marker(user_data)]
         pub fn get(conn: &crate::Connection, id: i32) -> Result<Self> {
             $table::table
                 .filter($table::id.eq(id))

@@ -61,4 +61,8 @@ diesel_migrations = "1.3.0"
 postgres = ["diesel/postgres", "plume-macro/postgres" ]
 sqlite = ["diesel/sqlite", "plume-macro/sqlite" ]
 search-lindera = ["lindera-tantivy"]
+
+# Added for Paralegal experiments
 delete-comments = []
+require-delete-media = []
+delete-media = []

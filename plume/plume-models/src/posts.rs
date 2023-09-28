@@ -32,7 +32,7 @@ static BLOG_FQN_CACHE: Lazy<Mutex<HashMap<i32, String>>> = Lazy::new(|| Mutex::n
 
 #[derive(Queryable, Identifiable, Clone, AsChangeset, Debug)]
 #[changeset_options(treat_none_as_null = "true")]
-#[dfpp::label(user_data)]
+#[paralegal_flow::marker(user_data)]
 pub struct Post {
     pub id: i32,
     pub blog_id: i32,

@@ -30,7 +30,7 @@ use webfinger::*;
 
 #[derive(Queryable, Identifiable, Clone, AsChangeset, Debug)]
 #[changeset_options(treat_none_as_null = "true")]
-#[dfpp::label(user_data)]
+#[paralegal_flow::marker(user_data)]
 pub struct Blog {
     pub id: i32,
     pub actor_id: String,
@@ -132,7 +132,7 @@ impl Blog {
             .map_err(Error::from)
     }
 
-    #[dfpp::label(noinline, arguments = [0])]
+    #[paralegal_flow::marker(noinline, arguments = [0])]
     pub fn find_for_author(conn: &Connection, author: &User) -> Result<Vec<Blog>> {
         use crate::schema::blog_authors;
         let author_ids = blog_authors::table
