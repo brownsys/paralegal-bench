@@ -1,0 +1,11 @@
+[["sled::Db::open_tree"]]
+marker = "db_access"
+on_return = true
+
+[["sled::Tree::remove"]]
+marker = "deletes"
+on_argument = [1]
+
+[["chrono::Utc::now"]]
+marker = "time"
+on_return = true

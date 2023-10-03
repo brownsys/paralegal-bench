@@ -10,3 +10,4 @@ config.toml
 
 analysis_result.frg
 analysis_result.info.json
+flow-graph.json
