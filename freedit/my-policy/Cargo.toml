@@ -1,0 +1,15 @@
+[package]
+name = "my-policy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1"
+# Path adjusted for wherever you cloned the dfpp repository
+paralegal-policy = { path = "../../../paralegal/crates/paralegal-policy" }
+
+[workspace]
+# An empty workspace section avoids any errors if the project we're 
+# checking is itself a workspace
