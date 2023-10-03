@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+      
+jobs:
+  cargo:
+    name: Cargo test, clippy and doc
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      
+      - name: Setup cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo test
+        run: cargo test
+      
+      - name: Cargo fmt
+        run: cargo fmt -- --check
+
+      - name: Cargo clippy
+        run: cargo clippy --all-targets --all-features --message-format=json > clippy_result.json
+        continue-on-error: true
+      
+      - name: Install clippy-sarif sarif-fmt (require cargo)
+        run: |
+          cargo install clippy-sarif sarif-fmt
+          cat clippy_result.json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true
+
+      - name: Cargo doc
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          cargo doc --no-deps --document-private-items
+          echo "<meta http-equiv='refresh' content='0; url=freedit'>" > target/doc/index.html
+          rm target/doc/.lock
+
+      - name: Upload artifact
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'target/doc'
+
+  Deploy:
+    needs: cargo
+    name: Deploy to GitHub Pages
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: 'github-pages'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

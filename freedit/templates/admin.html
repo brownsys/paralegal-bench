@@ -1,0 +1,230 @@
+{% extends "layout.html" %} 
+
+{% block content %}
+<form  class="box" id="admin" action="/admin" method="POST">
+    <fieldset>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="site_name">Sitename</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="site_name" required maxlength="64" value="{{ site_config.site_name|trim }}" placeholder="Sitename" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="domain">Domain</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="domain" required maxlength="64" value="{{ site_config.domain }}" placeholder="domain" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="description">Description</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <textarea name="description" class="textarea" maxlength="2048" placeholder="{{site_config.description}}">{{site_config.description}}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="read_only">Read only</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <label class="radio"><input type="radio" name="read_only" value="true" {% if site_config.read_only %} checked {% endif %} autocomplete="off" /> True</label>
+                        <label class="radio"><input type="radio" name="read_only" value="false" {% if !site_config.read_only %} checked {% endif %} autocomplete="off" /> False</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="inn_mod_max">Inn mod max</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="32" name="inn_mod_max" value="{{ site_config.inn_mod_max }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="title_max_length">Title max length</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="256" name="title_max_length" value="{{ site_config.title_max_length }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="article_max_length">Article max length</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="65535" name="article_max_length" value="{{ site_config.article_max_length }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="comment_max_length">Comment max length</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="65535" name="comment_max_length" value="{{ site_config.comment_max_length }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="solo_interval">Solo interval</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="3600" name="solo_interval" value="{{ site_config.solo_interval }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="post_interval">Post interval</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="3600" name="post_interval" value="{{ site_config.post_interval }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="comment_interval">Comment interval</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="3600" name="comment_interval" value="{{ site_config.comment_interval }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="per_page">Per page</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" max="100" name="per_page" value="{{ site_config.per_page }}" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="captcha_difficulty">Captcha difficulty</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <p class="help">About <a href="https://docs.rs/captcha/0.0.9/captcha/fn.by_name.html" target="_blank">captcha</a></p>
+                    <div class="control">
+                        <label class="radio"><input type="radio" name="captcha_difficulty" value="Easy" {% if site_config.captcha_difficulty.as_str() == "Easy" %} checked {% endif %} autocomplete="off" /> Easy</label>
+                        <label class="radio"><input type="radio" name="captcha_difficulty" value="Medium" {% if site_config.captcha_difficulty.as_str() == "Medium" %} checked {% endif %} autocomplete="off" /> Medium</label>
+                        <label class="radio"><input type="radio" name="captcha_difficulty" value="Hard" {% if site_config.captcha_difficulty.as_str() == "Hard" %} checked {% endif %} autocomplete="off" /> Hard</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="captcha_name">Captcha type</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <label class="radio"><input type="radio" name="captcha_name" value="Amelia" {% if site_config.captcha_name.as_str() == "Amelia" %} checked {% endif %} autocomplete="off" /> Amelia</label>
+                        <label class="radio"><input type="radio" name="captcha_name" value="Lucy" {% if site_config.captcha_name.as_str() == "Lucy" %} checked {% endif %} autocomplete="off" /> Lucy</label>
+                        <label class="radio"><input type="radio" name="captcha_name" value="Mila" {% if site_config.captcha_name.as_str() == "Mila" %} checked {% endif %} autocomplete="off" /> Mila</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="home_page">Default home page</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <div class="select">
+                            <select name="home_page" required>
+                                <option {% if site_config.home_page ==0 %} selected {% endif %} value="0">Inn/All</option>
+                                <option {% if site_config.home_page ==2 %} selected {% endif %} value="2">Inn/Joined</option>
+                                <option {% if site_config.home_page ==3 %} selected {% endif %} value="3">Inn/Following</option>
+                                <option {% if site_config.home_page ==4 %} selected {% endif %} value="4">Solo/All</option>
+                                <option {% if site_config.home_page ==5 %} selected {% endif %} value="5">Solo/Following</option>
+                                <option {% if site_config.home_page ==6 %} selected {% endif %} value="6">Explore all ⚓ inns</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label"></div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <button type="submit" form="admin" class="button is-link">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</form>
+
+<div class="divider"></div>
+{% endblock %}

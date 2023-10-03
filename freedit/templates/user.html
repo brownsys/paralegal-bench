@@ -1,0 +1,87 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<article class="media box">
+    <figure class="media-left">
+        <p class="image is-64x64">
+            <a href="/user/{{user.uid}}"><img class="image is-64x64" src="/static/avatars/{{user.uid}}.png"></a>
+        </p>
+        <p><small>{{user.role_desc}}</small></p>
+        <p><small>uid: {{user.uid}}</small></p>
+    </figure>
+    <div class="media-content">
+        <div class="content">
+            <h3>{{user.username}}</h3>
+            <p><small>Created: {{user.created_at}}</small></p>
+            <p>Url: <a href="{{user.url}}">{{user.url}}</a></p>
+            <p>About: {{user.about}}</p>
+        </div>
+    </div>
+
+    <div class="media-right">
+    {% match has_followed %} {% when Some with (true) %}
+        <a href="/user/{{user.uid}}/follow"><button class="button is-small is-rounded">Unfollow</button></a>
+    {% when Some with (false) %}
+        <a href="/user/{{user.uid}}/follow"><button class="button is-success is-small is-rounded">Follow</button></a>
+    {% else %}
+        {% match page_data.claim %}{% when Some with (val) %}
+        {% if val.uid == user.uid %}
+        <a href="/user/setting">
+            <span class="icon is-large">
+                <span class="icon">
+                    {% include "icons/setting.svg" %}
+                </span>
+            </span>
+        </a>
+        <a href="/signout">
+            <span class="icon is-large">
+                <span class="icon">
+                    {% include "icons/signout.svg" %}
+                </span>
+            </span>
+        </a>
+        {% endif %}
+        {% else %}{% endmatch %}
+    {% endmatch %}
+    </div>
+</article>
+
+<div class="box">
+    <nav class="level is-mobile">
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Solos</p>
+                <p class="title"><a href="/solo/user/{{user.uid}}">{{user_solos_count}}</a></p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Posts</p>
+                <p class="title">
+                    <a href="/inn/0?filter={{user.uid}}">{{user_posts_count}}</a>
+                </p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Feeds</p>
+                <p class="title"><a href="/feed/{{user.uid}}">{{user_feeds_count}}</a></p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Following</p>
+                <p class="title"><a href="/user/list?filter=following&id={{user.uid}}">{{user_following_count}}</a></p>
+            </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+                <p class="heading">Followers</p>
+                <p class="title"><a href="/user/list?filter=followers&id={{user.uid}}">{{user_followers_count}}</a></p>
+            </div>
+        </div>
+    </nav>
+</div>
+<div class="divider"></div>
+
+{% endblock %}

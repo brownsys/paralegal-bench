@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<form id="inn_icon" class="box" action="/mod/inn_icon?page_type=inn&iid={{inn.iid}}" method="POST" enctype="multipart/form-data">
+    <fieldset>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label">
+                    <figure class="image is-128x128 ml-0">
+                        <img class="is-rounded" src="/static/inn_icons/{{inn.iid}}.png">
+                    </figure>
+                </label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="file" name="upload" required accept=".jpg, .jpeg, .png, .gif" placeholder="Upload image" />
+                    </div>
+                    <p class="help">Please clear browser cache (ctrl + f5)</p>
+                    <div class="control">
+                        <button type="submit" form="inn_icon" class="button is-link">Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</form>
+
+<form id="inn" class="box" action="/mod/{{inn.iid}}" method="POST">
+    <fieldset>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="inn_name">Inn name</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="inn_name" pattern="^\D.*" required maxlength="64" placeholder="Inn name" value="{{inn.inn_name}}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="about">About</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="about" required maxlength="512" placeholder="About" value="{{inn.about}}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="description">Description</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <textarea class="textarea" name="description" required maxlength="65535" minlength="1" placeholder="Long description, markdown supported" >{{inn.description}}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="topics">topics</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="topics" value='{{inn.topics|join("#")}}' required maxlength="128" placeholder="topics, separated by #" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="inn_type">Inn type</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        {% if inn.inn_type != "Private" %}
+                        <label class="radio"><input type="radio" name="inn_type" value="Public" required {% if inn.inn_type == "Public"  %} checked {% endif %} /> Public</label>
+                        <label class="radio"><input type="radio" name="inn_type" value="Apply" {% if inn.inn_type == "Apply"  %} checked {% endif %} /> Apply</label>
+                        {% else %}
+                        <label class="radio"><input type="radio" name="inn_type" value="Private" {% if inn.inn_type == "Private"  %} checked {% endif %} /> Private</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="early_birds">Early birds</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" name="early_birds" value='{{inn.early_birds}}'  autocomplete="off" />
+                    </div>
+                    <p class="help">An early bird will be <i>Fellow</i> automatically.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="limit_edit_seconds">Limit Edit Seconds</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="number" min="0" name="limit_edit_seconds" value='{{inn.limit_edit_seconds}}' required autocomplete="off" />
+                    </div>
+                    <p class="help">How long before users are blocked from editing? (set 0 to allow anytime)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label"></div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <button type="submit" form="inn" class="button is-link">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</form>
+
+<form id="inn_feed" class="box" action="/mod/feed/{{inn.iid}}" method="POST">
+    <fieldset>
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label class="label" for="url">url</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" type="text" name="url" required maxlength="500" placeholder="rss or atom link" />
+                    </div>
+                    <p class="help">Submit url again to unsubscribe.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label"></div>
+            <div class="field-body">
+                <div class="field">
+                    <div class="control">
+                        <button type="submit" form="inn_feed" class="button is-link">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field is-horizontal">
+            <div class="field-label"></div>
+            <div class="field-body">
+                <div class="content">
+                    {% for feed in inn_feeds %}
+                    <p>{{feed.title}} &nbsp;&nbsp;&nbsp;&nbsp; {{feed.link}}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</form>
+
+<div class="divider"></div>
+{% endblock %}

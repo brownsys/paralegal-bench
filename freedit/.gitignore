@@ -1,0 +1,12 @@
+/target
+/freedit.db
+/certs
+/static/imgs
+.rustc_info.json
+.rustdoc_fingerprint.json
+config.toml
+/snapshots
+/tantivy
+
+analysis_result.frg
+analysis_result.info.json
