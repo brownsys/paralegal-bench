@@ -32,6 +32,7 @@ fn user_stats() -> &'static str {
     "user_stats"
 }
 
+#[inline(never)]
 #[paralegal_flow::analyze]
 async fn user_chron_job() -> ! {
     loop {
