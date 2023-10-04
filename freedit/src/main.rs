@@ -2,9 +2,6 @@
 #![warn(clippy::nursery)]
 #![warn(clippy::pedantic)]
 
-#![feature(register_tool)]
-#![register_tool(paralegal_flow)]
-
 use chrono::Utc;
 use freedit::{
     app_router::router,
@@ -26,26 +23,6 @@ use tikv_jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
-
-#[paralegal_flow::marker(pageviews)]
-fn user_stats() -> &'static str {
-    "user_stats"
-}
-
-#[inline(never)]
-#[paralegal_flow::analyze]
-async fn user_chron_job() -> ! {
-    loop {
-        sleep_seconds(600).await;
-        if let Err(e) = cron_feed(&DB).await {
-            error!(%e);
-        }
-        if let Err(e) = clear_invalid(&DB, user_stats()).await {
-            error!(%e);
-        }
-        sleep_seconds(3600 * 4).await;
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {

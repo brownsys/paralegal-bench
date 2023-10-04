@@ -240,6 +240,7 @@ fn main() -> Result<()> {
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     cmd.get_command().args([
         "--eager-local-markers",
+        "--inline-elision",
         "--external-annotations",
         "external-annotations.toml",
     ]);

@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
 
+
+#![feature(register_tool)]
+#![register_tool(paralegal_flow)]
+
 pub mod app_router;
 pub mod config;
 pub mod controller;
@@ -14,8 +18,7 @@ use std::{
     fs::File,
     io::{BufReader, Read},
 };
-use tracing::info;
-
+use tracing::{info, error};
 use crate::config::CONFIG;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -57,3 +60,30 @@ pub static DB: Lazy<Db> = Lazy::new(|| {
     info!(%db_url);
     db
 });
+
+#[paralegal_flow::marker(pageviews)]
+fn user_stats() -> &'static str {
+    "user_stats"
+}
+
+
+#[inline(never)]
+#[paralegal_flow::analyze]
+pub async fn user_chron_job() -> ! {
+    use controller::{db_utils::clear_invalid, feed::cron_feed, meta_handler::shutdown_signal, tantivy::Tan };
+    loop {
+        sleep_seconds(600).await;
+        if let Err(e) = cron_feed(&DB).await {
+            error!(%e);
+        }
+        if let Err(e) = clear_invalid(&DB, user_stats()).await {
+            error!(%e);
+        }
+        sleep_seconds(3600 * 4).await;
+    }
+}
+
+async fn sleep_seconds(seconds: u64) {
+    tokio::time::sleep(std::time::Duration::from_secs(seconds)).await;
+}
+
