@@ -47,7 +47,7 @@ async fn main() -> Result<(), AppError> {
         }
     });
 
-    tokio::spawn(user_chron_job());
+    tokio::spawn(freedit::user_chron_job());
 
     tokio::spawn(async move {
         let mut tan = Tan::init().unwrap();

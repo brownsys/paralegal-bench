@@ -72,7 +72,7 @@ macro_rules! iterator_quantifiers {
         } else { true })
     };
     ($s:stmt; $($rest:tt)*) => {
-        $s
+        $s;
         iterator_quantifiers!($($rest)*)
     };
     ($e:expr) => {
@@ -104,7 +104,7 @@ impl Markeable for CallSite {
 
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
-    fn arguments(&self, cs: &CallSite) -> Box<dyn Iterator<Item = DataSink>>;
+    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
     fn any_flows<'a>(
         &self,
         ctrl_id: ControllerId,
@@ -126,17 +126,10 @@ impl ContextExt for Context {
         ) as Box<_>
     }
 
-    fn arguments(&self, cs: &CallSite) -> Box<dyn Iterator<Item = DataSink>> {
-        let (_, ObjectType::Function(args)) = self.desc().annotations[&cs.function] else {
-            return Box::new([].into_iter()) as Box<_>;
-        };
-
-        let cs = cs.clone();
-
-        Box::new((0..args).map(move |i| DataSink::Argument {
-            function: cs.clone(),
-            arg_slot: i,
-        })) as Box<_>
+    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a> {
+        Box::new(self.desc().all_sinks()
+            .into_iter()
+            .filter(move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs)))
     }
 
     fn any_flows<'a>(
@@ -200,8 +193,8 @@ fn check(ctx: Arc<Context>) -> Result<()> {
             let time_source = ctx
                 .current()
                 .data_sources()
-                .filter(|ds| 
-                    matches!(ds, DataSource::FunctionCall(cs) 
+                .filter(|ds|
+                    matches!(ds, DataSource::FunctionCall(cs)
                                     if cs.function.is_marked(ctx.deref(), time_marker))
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
@@ -222,11 +215,11 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 tick(6);
                 any time_check = ctx.current().data_flow.keys().filter_map(DataSource::as_function_call);
                 tick(7);
-                let time_check_args = ctx.arguments(time_check).collect::<Vec<_>>();
-                let time_check_arg_refs = time_check_args.iter().collect::<Vec<_>>();
-                ctx.any_flows(ctx.id(), &[&type_source], &time_check_arg_refs).is_some()
-                    && ctx.any_flows(ctx.id(), &time_source, &time_check_arg_refs).is_some()
-                    && ctx.current().ctrl_flow[&DataSource::FunctionCall(time_check.clone())].contains(delete_call_site)
+                let time_check_arg_refs = ctx.arguments(time_check).collect::<Vec<_>>();
+                let type_flows_to_check = ctx.any_flows(ctx.id(), &[&type_source], &time_check_arg_refs).is_some();
+                let time_flows_to_check = ctx.any_flows(ctx.id(), &time_source, &time_check_arg_refs).is_some();
+                let check_ctrls_delete = ctx.current().ctrl_flow[&DataSource::FunctionCall(time_check.clone())].contains(delete_call_site);
+                (dbg!([type_flows_to_check, time_flows_to_check, check_ctrls_delete])
             )
         });
         println!("Last seen {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
@@ -243,6 +236,8 @@ fn main() -> Result<()> {
         "--inline-elision",
         "--external-annotations",
         "external-annotations.toml",
+        "--",
+        "--lib",
     ]);
     cmd.run(dir)?.with_context(check)?;
     println!("Policy check succeeded");
