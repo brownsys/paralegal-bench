@@ -102,6 +102,29 @@ impl Markeable for CallSite {
     }
 }
 
+struct DisplayDef<'a> {
+    def_id: DefId,
+    ctx: &'a Context,
+}
+
+impl<'a> std::fmt::Display for DisplayDef<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use std::fmt::Write;
+        let info = &self.ctx.desc().def_info[&self.def_id];
+        f.write_str(match info.kind {
+            DefKind::Type => "type",
+            DefKind::Function => "function",
+        })?;
+        f.write_str(" `")?;
+        for segment in &info.path {
+            f.write_str(segment.as_str())?;
+            f.write_str("::")?;
+        }
+        f.write_str(info.name.as_str())?;
+        f.write_char('`')
+    }
+}
+
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
@@ -112,6 +135,7 @@ trait ContextExt {
         to: &[&'a DataSink],
     ) -> Option<(&'a DataSource, &'a DataSink)>;
     fn annotations_for(&self, id: DefId) -> &[Annotation];
+    fn describe_def(&self, def_id: DefId) -> DisplayDef;
 }
 
 impl ContextExt for Context {
@@ -149,6 +173,9 @@ impl ContextExt for Context {
             .annotations
             .get(&id)
             .map_or(&[] as &[_], |it| it.0.as_slice())
+    }    
+    fn describe_def(&self, def_id: DefId) -> DisplayDef {
+        DisplayDef { ctx: self, def_id }
     }
 }
 
@@ -190,7 +217,7 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 .marked_sinks(ctx.current().data_sinks(), marker!(deletes))
                 .collect::<Vec<_>>();
             let time_marker = marker!(time);
-            let time_source = ctx
+            let time_sources = ctx
                 .current()
                 .data_sources()
                 .filter(|ds|
@@ -199,6 +226,7 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
                 all typ = pageview_data.iter();
+                any time_source = &time_sources;
                 tick(1);
                 any type_ident_call_site = ctx.current().call_sites_for(*typ);
                 let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
@@ -213,13 +241,21 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 tick(6);
                 guard ctx.flows_to(ctx.id(), type_source, delete);
                 tick(6);
-                any time_check = ctx.current().data_flow.keys().filter_map(DataSource::as_function_call);
+                any time_check = ctx.current().ctrl_flow.keys().filter_map(DataSource::as_function_call);
                 tick(7);
-                let time_check_arg_refs = ctx.arguments(time_check).collect::<Vec<_>>();
-                let type_flows_to_check = ctx.any_flows(ctx.id(), &[&type_source], &time_check_arg_refs).is_some();
-                let time_flows_to_check = ctx.any_flows(ctx.id(), &time_source, &time_check_arg_refs).is_some();
+                let arguments = ctx.arguments(time_check).collect::<Vec<_>>();
+                any time_check_time_arg = &arguments;
+                any time_check_type_arg = &arguments;
+                let type_flows_to_check = ctx.flows_to(ctx.id(), &type_source, &time_check_type_arg);
+                tick(8);
+                guard type_flows_to_check;
+                let time_flows_to_check = ctx.flows_to(ctx.id(), &time_source, &time_check_time_arg);
+                tick(9);
+                //println!("time source: {time_source} time_check_arg: {time_check_arg_ref} func: {}", ctx.describe_def(time_check.function));
+                guard time_flows_to_check;
                 let check_ctrls_delete = ctx.current().ctrl_flow[&DataSource::FunctionCall(time_check.clone())].contains(delete_call_site);
-                (dbg!([type_flows_to_check, time_flows_to_check, check_ctrls_delete])
+                tick(10);
+                check_ctrls_delete
             )
         });
         println!("Last seen {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
@@ -231,11 +267,12 @@ fn check(ctx: Arc<Context>) -> Result<()> {
 fn main() -> Result<()> {
     let dir = "..";
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
-    cmd.get_command().args([
+    cmd.external_annotations("external-annotations.toml")
+        .abort_after_analysis()
+        .get_command()
+        .args([
         "--eager-local-markers",
         "--inline-elision",
-        "--external-annotations",
-        "external-annotations.toml",
         "--",
         "--lib",
     ]);
