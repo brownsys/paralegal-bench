@@ -562,6 +562,7 @@ fn inn_rm_index(db: &Db, iid: u32, pid: u32) -> Result<u32, AppError> {
         .map_err(|e| AppError::Custom(format!("transaction error: {e}")))
 }
 
+#[paralegal_flow::analyze]
 /// `POST /post/edit/:pid` post create/edit page
 ///
 /// if pid is 0, then create a new post
@@ -1545,6 +1546,7 @@ pub(crate) struct FormComment {
     content: String,
 }
 
+#[paralegal_flow::analyze]
 /// `POST /post/:iid/:pid/` comment create
 pub(crate) async fn comment_post(
     cookie: Option<TypedHeader<Cookie>>,

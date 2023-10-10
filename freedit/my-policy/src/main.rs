@@ -47,16 +47,22 @@ macro_rules! marker {
 /// `false` is returned. You may also use it as `guard pattern = expr` in which
 /// case `false` is returned if the pattern does not match.
 macro_rules! iterator_quantifiers {
-    (guard $e:expr; $($rest:tt)*) => {
+    (require $e:expr; $($rest:tt)*) => {
         if !$e {
             return false;
         }
         iterator_quantifiers!($($rest)*);
     };
-    (guard $pat:pat = $e:expr; $($rest:tt)*) => {
+    (require $pat:pat = $e:expr; $($rest:tt)*) => {
         let $pat = !$e {
             return false
         };
+        iterator_quantifiers!($($rest)*);
+    };
+    (allow $e:expr; $($rest:tt)*) => {
+        if $e {
+            return true;
+        }
         iterator_quantifiers!($($rest)*);
     };
     (any $pat:pat_param = $e:expr; $($rest:tt)*) => {
@@ -128,12 +134,6 @@ impl<'a> std::fmt::Display for DisplayDef<'a> {
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
-    fn any_flows<'a>(
-        &self,
-        ctrl_id: ControllerId,
-        from: &[&'a DataSource],
-        to: &[&'a DataSink],
-    ) -> Option<(&'a DataSource, &'a DataSink)>;
     fn annotations_for(&self, id: DefId) -> &[Annotation];
     fn describe_def(&self, def_id: DefId) -> DisplayDef;
 }
@@ -156,24 +156,12 @@ impl ContextExt for Context {
             .filter(move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs)))
     }
 
-    fn any_flows<'a>(
-        &self,
-        ctrl_id: ControllerId,
-        from: &[&'a DataSource],
-        to: &[&'a DataSink],
-    ) -> Option<(&'a DataSource, &'a DataSink)> {
-        from.iter().find_map(|&src| {
-            to.iter()
-                .find_map(|&sink| self.flows_to(ctrl_id, src, sink).then_some((src, sink)))
-        })
-    }
-
     fn annotations_for(&self, id: DefId) -> &[Annotation] {
         self.desc()
             .annotations
             .get(&id)
             .map_or(&[] as &[_], |it| it.0.as_slice())
-    }    
+    }
     fn describe_def(&self, def_id: DefId) -> DisplayDef {
         DisplayDef { ctx: self, def_id }
     }
@@ -198,8 +186,53 @@ impl CtrlExt for Ctrl {
 }
 
 fn check(ctx: Arc<Context>) -> Result<()> {
-    ctx.named_policy("expiration", |ctx| {
-        let pageview_data = ctx.marked(marker!(pageviews)).map(|d| d.0).collect::<Vec<_>>();
+    let pageview_data = ctx.marked(marker!(pageviews)).map(|d| d.0).collect::<Vec<_>>();
+    ctx.clone().named_policy("date store", |ctx| {
+        assert_warning!(
+            ctx,
+            !pageview_data.is_empty(),
+            "No pageview data found. The policy may be vacuous."
+        );
+        let farthest = std::sync::atomic::AtomicI64::default();
+
+        let tick = |num| {
+            farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
+        };
+        let mut found_store_controller = false;
+        ctx.controller_contexts().all(|ctx|{
+            println!("Checking {}", ctx.describe_def(ctx.id()));
+            let db_store_marker = marker!(db_store);
+            ctx.report_marker_if_absent(db_store_marker);
+            let time_marker = marker!(time);
+            ctx.report_marker_if_absent(time_marker);
+            let time_sources = ctx
+                .current()
+                .data_sources()
+                .filter(|ds|
+                    matches!(ds, DataSource::FunctionCall(cs)
+                                    if cs.function.is_marked(ctx.deref(), time_marker))
+                ).collect::<Vec<_>>();
+            iterator_quantifiers!(
+                all typ = pageview_data.iter();
+                all type_ident_call_site = ctx.current().call_sites_for(*typ);
+                tick(1);
+                let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
+                all sink = ctx.marked_sinks(ctx.current().data_sinks(), db_store_marker);
+                tick(2);
+                let type_is_stored = ctx.flows_to(ctx.id(), &type_ident, &sink.clone().into());
+                allow !type_is_stored;
+                tick(3);
+                found_store_controller = true;
+                assert_error!(ctx, !time_sources.is_empty(), "Found store but no local source of time");
+                any time_source = &time_sources;
+                assert_error!(ctx, ctx.flows_to(ctx.id(), time_source, &sink.clone().into()), "Found store and local source of time, but no connection");
+                true
+            )
+        });
+        assert_warning!(ctx, found_store_controller, "No controller storing pageviews found, policy may be vacuous");
+        println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
+    });
+    ctx.named_policy("expiration check", |ctx| {
         assert_warning!(
             ctx,
             !pageview_data.is_empty(),
@@ -233,26 +266,26 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 tick(2);
                 any type_source@DataSource::FunctionCall(f) = ctx.current().data_sources();
                 tick(3);
-                guard f.is_marked(ctx.deref(), db_access_marker);
+                require f.is_marked(ctx.deref(), db_access_marker);
                 tick(4);
-                guard ctx.arguments(f).any(|arg| ctx.flows_to(ctx.id(), &type_ident, &arg));
+                require ctx.arguments(f).any(|arg| ctx.flows_to(ctx.id(), &type_ident, &arg.clone().into()));
                 tick(5);
                 any delete@DataSink::Argument { function: delete_call_site, .. } = &delete_sinks;
+                let ref delete = (*delete).clone().into();
                 tick(6);
-                guard ctx.flows_to(ctx.id(), type_source, delete);
+                require ctx.flows_to(ctx.id(), type_source, delete);
                 tick(6);
                 any time_check = ctx.current().ctrl_flow.keys().filter_map(DataSource::as_function_call);
                 tick(7);
                 let arguments = ctx.arguments(time_check).collect::<Vec<_>>();
                 any time_check_time_arg = &arguments;
                 any time_check_type_arg = &arguments;
-                let type_flows_to_check = ctx.flows_to(ctx.id(), &type_source, &time_check_type_arg);
+                let type_flows_to_check = ctx.flows_to(ctx.id(), &type_source, &(*time_check_type_arg).clone().into());
                 tick(8);
-                guard type_flows_to_check;
-                let time_flows_to_check = ctx.flows_to(ctx.id(), &time_source, &time_check_time_arg);
+                require type_flows_to_check;
+                let time_flows_to_check = ctx.flows_to(ctx.id(), &time_source, &(*time_check_time_arg).clone().into());
                 tick(9);
-                //println!("time source: {time_source} time_check_arg: {time_check_arg_ref} func: {}", ctx.describe_def(time_check.function));
-                guard time_flows_to_check;
+                require time_flows_to_check;
                 let check_ctrls_delete = ctx.current().ctrl_flow[&DataSource::FunctionCall(time_check.clone())].contains(delete_call_site);
                 tick(10);
                 check_ctrls_delete

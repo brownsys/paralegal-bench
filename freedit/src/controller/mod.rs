@@ -155,6 +155,11 @@ struct User {
     about: String,
 }
 
+#[paralegal_flow::marker(pageviews)]
+pub fn user_stats() -> &'static str {
+    "user_stats"
+}
+
 impl User {
     fn is_mod(db: &Db, uid: u32, iid: u32) -> Result<bool, AppError> {
         let k = [&u32_to_ivec(uid), &u32_to_ivec(iid)].concat();
@@ -196,7 +201,7 @@ impl User {
             .unwrap()
             .timestamp();
         let key = format!("{expire:x}_{uid}_{stat_type}");
-        incr_id(&db.open_tree("user_stats")?, key)?;
+        incr_id(&db.open_tree(user_stats())?, key)?;
         Ok(())
     }
 }

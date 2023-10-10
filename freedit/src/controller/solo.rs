@@ -352,6 +352,7 @@ fn get_solos_by_uids(
     Ok(sids)
 }
 
+#[paralegal_flow::analyze]
 /// `POST /solo/user/:uid` solo page
 pub(crate) async fn solo_post(
     cookie: Option<TypedHeader<Cookie>>,

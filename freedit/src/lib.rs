@@ -61,12 +61,6 @@ pub static DB: Lazy<Db> = Lazy::new(|| {
     db
 });
 
-#[paralegal_flow::marker(pageviews)]
-fn user_stats() -> &'static str {
-    "user_stats"
-}
-
-
 #[paralegal_flow::analyze]
 pub async fn user_chron_job() -> ! {
     use controller::{db_utils::clear_invalid, feed::cron_feed, meta_handler::shutdown_signal, tantivy::Tan };
@@ -75,7 +69,7 @@ pub async fn user_chron_job() -> ! {
         // if let Err(e) = cron_feed(&DB).await {
         //     error!(%e);
         // }
-        if let Err(e) = clear_invalid(&DB, user_stats()).await {
+        if let Err(e) = clear_invalid(&DB, controller::user_stats()).await {
             error!(%e);
         }
         sleep_seconds(3600 * 4).await;
