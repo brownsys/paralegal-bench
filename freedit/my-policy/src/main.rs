@@ -108,7 +108,6 @@ impl Markeable for CallSite {
     }
 }
 
-
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
@@ -128,9 +127,9 @@ impl ContextExt for Context {
     }
 
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a> {
-        Box::new(self.desc().all_sinks()
-            .into_iter()
-            .filter(move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs)))
+        Box::new(self.desc().all_sinks().into_iter().filter(
+            move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs),
+        ))
     }
 
     fn annotations_for(&self, id: DefId) -> &[Annotation] {
@@ -139,7 +138,6 @@ impl ContextExt for Context {
             .get(&id)
             .map_or(&[] as &[_], |it| it.0.as_slice())
     }
-
 }
 
 trait CtrlExt {
@@ -161,7 +159,10 @@ impl CtrlExt for Ctrl {
 }
 
 fn check(ctx: Arc<Context>) -> Result<()> {
-    let pageview_data = ctx.marked(marker!(pageviews)).map(|d| d.0).collect::<Vec<_>>();
+    let pageview_data = ctx
+        .marked(marker!(pageviews))
+        .map(|d| d.0)
+        .collect::<Vec<_>>();
     ctx.clone().named_policy("date store", |ctx| {
         assert_warning!(
             ctx,
@@ -294,12 +295,7 @@ fn main() -> Result<()> {
     cmd.external_annotations("external-annotations.toml")
         .abort_after_analysis()
         .get_command()
-        .args([
-        "--eager-local-markers",
-        "--inline-elision",
-        "--",
-        "--lib",
-    ]);
+        .args(["--eager-local-markers", "--inline-elision", "--", "--lib"]);
     cmd.run(dir)?.with_context(check)?;
     println!("Policy check succeeded");
     Ok(())
