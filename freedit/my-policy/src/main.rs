@@ -108,34 +108,11 @@ impl Markeable for CallSite {
     }
 }
 
-struct DisplayDef<'a> {
-    def_id: DefId,
-    ctx: &'a Context,
-}
-
-impl<'a> std::fmt::Display for DisplayDef<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use std::fmt::Write;
-        let info = &self.ctx.desc().def_info[&self.def_id];
-        f.write_str(match info.kind {
-            DefKind::Type => "type",
-            DefKind::Function => "function",
-        })?;
-        f.write_str(" `")?;
-        for segment in &info.path {
-            f.write_str(segment.as_str())?;
-            f.write_str("::")?;
-        }
-        f.write_str(info.name.as_str())?;
-        f.write_char('`')
-    }
-}
 
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
     fn annotations_for(&self, id: DefId) -> &[Annotation];
-    fn describe_def(&self, def_id: DefId) -> DisplayDef;
 }
 
 impl ContextExt for Context {
@@ -162,9 +139,7 @@ impl ContextExt for Context {
             .get(&id)
             .map_or(&[] as &[_], |it| it.0.as_slice())
     }
-    fn describe_def(&self, def_id: DefId) -> DisplayDef {
-        DisplayDef { ctx: self, def_id }
-    }
+
 }
 
 trait CtrlExt {
@@ -198,8 +173,8 @@ fn check(ctx: Arc<Context>) -> Result<()> {
         let tick = |num| {
             farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
         };
-        let mut found_store_controller = false;
-        ctx.controller_contexts().all(|ctx|{
+        let mut storing_controller = 0;
+        let result = ctx.controller_contexts().all(|ctx|{
             println!("Checking {}", ctx.describe_def(ctx.id()));
             let db_store_marker = marker!(db_store);
             ctx.report_marker_if_absent(db_store_marker);
@@ -217,19 +192,35 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 all type_ident_call_site = ctx.current().call_sites_for(*typ);
                 tick(1);
                 let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
+                assert_warning!(ctx, !ctx.reaching(ctx.id(), &type_ident).is_empty());
+                // This will be `sled::Tree::update_and_fetch` in `controller::db_utils::incr_id`
                 all sink = ctx.marked_sinks(ctx.current().data_sinks(), db_store_marker);
                 tick(2);
-                let type_is_stored = ctx.flows_to(ctx.id(), &type_ident, &sink.clone().into());
+                // The next two statements are a hack. The problem here is that for call
+                // `tree.update_and_fetch(key, increment)` the `time_source` flows into the
+                // properly marked `key`, however `type_source` flows into `tree` and I hadn't marked
+                // that because I thought they'd flow into the same argument. So
+                // here I'm just hacking it together, but this should actually be done properly via marker
+                let mut ty_sink = sink.clone();
+                match &mut ty_sink {
+                    DataSink::Argument { function: _, arg_slot } => *arg_slot = 0,
+                    _ => (),
+                };
+                let type_is_stored = ctx.flows_to(ctx.id(), &type_ident, &ty_sink.into());
                 allow !type_is_stored;
                 tick(3);
-                found_store_controller = true;
-                assert_error!(ctx, !time_sources.is_empty(), "Found store but no local source of time");
-                any time_source = &time_sources;
-                assert_error!(ctx, ctx.flows_to(ctx.id(), time_source, &sink.clone().into()), "Found store and local source of time, but no connection");
+                storing_controller += 1;
+                let any_fits = time_sources
+                    .iter()
+                    .any(|time_source|
+                        ctx.flows_to(ctx.id(), time_source, &sink.clone().into())
+                    );
+                assert_error!(ctx, any_fits, "Found no local source that influences to the pageview store {sink}");
                 true
             )
         });
-        assert_warning!(ctx, found_store_controller, "No controller storing pageviews found, policy may be vacuous");
+        // We expect this to happen in `edit_post_post`, `comment_post` and `solo_post`
+        assert_error!(ctx, storing_controller == 3, format!("Not as many controllers ({storing_controller} != 3) storing pageviews as expected found, policy must be wrong"));
         println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
     });
     ctx.named_policy("expiration check", |ctx| {

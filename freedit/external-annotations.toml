@@ -9,3 +9,7 @@ on_argument = [1]
 [["chrono::Utc::now"]]
 marker = "time"
 on_return = true
+
+[["sled::Tree::update_and_fetch"]]
+marker = "db_store"
+on_argument = [1]
