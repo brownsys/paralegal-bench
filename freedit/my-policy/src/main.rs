@@ -112,6 +112,11 @@ trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
     fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
     fn annotations_for(&self, id: DefId) -> &[Annotation];
+    fn marked_sources<'a>(
+        &'a self,
+        ctrl_id: ControllerId,
+        marker: Marker,
+    ) -> Box<dyn Iterator<Item = &'a DataSource> + 'a>;
 }
 
 impl ContextExt for Context {
@@ -138,6 +143,23 @@ impl ContextExt for Context {
             .get(&id)
             .map_or(&[] as &[_], |it| it.0.as_slice())
     }
+
+    fn marked_sources<'a>(
+        &'a self,
+        ctrl_id: ControllerId,
+        marker: Marker,
+    ) -> Box<dyn Iterator<Item = &'a DataSource> + 'a> {
+        Box::new(
+            self.desc().controllers[&ctrl_id]
+                .data_sources()
+                .filter(move |s| {
+                    matches!(s,
+                        DataSource::FunctionCall(f)
+                        if f.is_marked(self, marker)
+                    )
+                }),
+        )
+    }
 }
 
 trait CtrlExt {
@@ -158,7 +180,60 @@ impl CtrlExt for Ctrl {
     }
 }
 
+fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
+    ctx.named_policy("no expired read", |ctx| {
+        let expirable_data = ctx.marked(marker!(expires)).map(|i| i.0).collect::<Vec<_>>();
+        let time_marker = marker!(time);
+        ctx.report_marker_if_absent(time_marker);
+        let db_access_marker = marker!(db_access);
+        ctx.report_marker_if_absent(db_access_marker);
+        let externalizes_marker = marker!(externalizes);
+        ctx.report_marker_if_absent(externalizes_marker);
+         ctx.controller_contexts().all(|ctx| {
+            let time_sources = ctx
+                .current()
+                .data_sources()
+                .filter(|ds|
+                    matches!(ds, DataSource::FunctionCall(cs)
+                                    if cs.function.is_marked(ctx.deref(), time_marker))
+                ).collect::<Vec<_>>();
+            iterator_quantifiers!(
+                all typ = &expirable_data;
+                // Another option is to say expiration must be for all data,
+                // with exceptions for certain marked types.
+                all type_ident_call_site = ctx.current().call_sites_for(*typ);
+                let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
+                all type_source = ctx.marked_sources(ctx.id(), db_access_marker)
+                    .filter(|s|
+                        matches!(s,
+                            DataSource::FunctionCall(f)
+                            if ctx.arguments(f)
+                                .any(|arg|
+                                    ctx.flows_to(ctx.id(), &type_ident, &arg.clone().into()))
+                        )
+                    );
+                all _release@DataSink::Argument { function: release_call_site, .. } = ctx.marked_sinks(ctx.current().data_sinks(), externalizes_marker)
+                    .filter(|s| ctx.flows_to(ctx.id(), type_source, &(*s).clone().into()));
+                any time_source = &time_sources;
+
+                any check@DataSink::Argument { function, .. } = ctx.current().data_sinks();
+                require ctx.flows_to(ctx.id(), type_source, &check.clone().into());
+                require ctx.arguments(function)
+                        .any(|arg| ctx.flows_to(ctx.id(), time_source, &arg.clone().into()));
+                require ctx.current().ctrl_flow[&DataSource::FunctionCall(function.clone())].contains(release_call_site);
+                true
+            )
+         })
+    });
+    Ok(())
+}
+
 fn check(ctx: Arc<Context>) -> Result<()> {
+    check_date_store(ctx.clone())?;
+    check_no_expired_read(ctx)
+}
+
+fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     let pageview_data = ctx
         .marked(marker!(pageviews))
         .map(|d| d.0)
@@ -175,7 +250,7 @@ fn check(ctx: Arc<Context>) -> Result<()> {
             farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
         };
         let mut storing_controller = 0;
-        let result = ctx.controller_contexts().all(|ctx|{
+        ctx.controller_contexts().all(|ctx|{
             println!("Checking {}", ctx.describe_def(ctx.id()));
             let db_store_marker = marker!(db_store);
             ctx.report_marker_if_absent(db_store_marker);
@@ -256,9 +331,7 @@ fn check(ctx: Arc<Context>) -> Result<()> {
                 any type_ident_call_site = ctx.current().call_sites_for(*typ);
                 let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
                 tick(2);
-                any type_source@DataSource::FunctionCall(f) = ctx.current().data_sources();
-                tick(3);
-                require f.is_marked(ctx.deref(), db_access_marker);
+                any type_source@DataSource::FunctionCall(f) = ctx.marked_sources(ctx.id(), db_access_marker);
                 tick(4);
                 require ctx.arguments(f).any(|arg| ctx.flows_to(ctx.id(), &type_ident, &arg.clone().into()));
                 tick(5);
