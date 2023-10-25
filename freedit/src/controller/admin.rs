@@ -6,7 +6,7 @@ use super::{
     Claim, Feed, FormPost, Item, SiteConfig,
 };
 use crate::{
-    controller::{Comment, Inn, Post, Solo, User},
+    controller::{Comment, Inn, Post, Solo, User, user_stats},
     error::AppError,
     DB,
 };
@@ -178,7 +178,7 @@ pub(crate) async fn admin_view(
                     let id2 = u8_slice_to_u32(&k[4..8]);
                     ones.push(format!("k: {id1}#{id2}, v: {v:?}"));
                 }
-                "user_stats" => {
+                s if s == user_stats() => {
                     let mut k_str = std::str::from_utf8(&k)?.split('_');
                     let timestamp = i64::from_str_radix(k_str.next().unwrap(), 16).unwrap();
                     let date = ts_to_date(timestamp);
@@ -384,7 +384,7 @@ pub(crate) async fn admin_stats(
     }
 
     let mut stats = Vec::with_capacity(100);
-    for i in &DB.open_tree("user_stats")? {
+    for i in &DB.open_tree(user_stats())? {
         let (k, v) = i?;
         let mut k_str = std::str::from_utf8(&k)?.split('_');
         let timestamp = i64::from_str_radix(k_str.next().unwrap(), 16).unwrap();

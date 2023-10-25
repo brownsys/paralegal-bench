@@ -9,7 +9,8 @@ edition = "2021"
 anyhow = "1"
 # Path adjusted for wherever you cloned the dfpp repository
 paralegal-policy = { path = "../../../paralegal/crates/paralegal-policy" }
+lazy_static = "1"
 
 [workspace]
-# An empty workspace section avoids any errors if the project we're 
+# An empty workspace section avoids any errors if the project we're
 # checking is itself a workspace
