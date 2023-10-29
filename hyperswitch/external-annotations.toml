@@ -1,0 +1,3 @@
+[["blake3::keyed_hash"]]
+marker = "hashed"
+on_return = true

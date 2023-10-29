@@ -1,0 +1,41 @@
+* @juspay/hyperswitch-maintainers
+
+docs/ @juspay/hyperswitch-maintainers
+scripts/ @juspay/hyperswitch-maintainers
+*.md @juspay/hyperswitch-maintainers
+*.sh @juspay/hyperswitch-maintainers
+LICENSE @juspay/hyperswitch-maintainers
+NOTICE @juspay/hyperswitch-maintainers
+.gitignore @juspay/hyperswitch-maintainers
+Makefile @juspay/hyperswitch-maintainers
+
+.github/ @juspay/hyperswitch-devops
+
+config/ @juspay/hyperswitch-framework
+crates/ @juspay/hyperswitch-framework
+crates/router/src/types/ @juspay/hyperswitch-framework
+crates/router/src/services/ @juspay/hyperswitch-framework
+crates/router/src/db/ @juspay/hyperswitch-framework
+crates/router/src/routes/ @juspay/hyperswitch-framework
+migrations/ @juspay/hyperswitch-framework
+openapi/ @juspay/hyperswitch-framework
+postman/ @juspay/hyperswitch-framework
+Cargo.toml @juspay/hyperswitch-framework
+Cargo.lock @juspay/hyperswitch-framework
+
+connector-template/ @juspay/hyperswitch-connector
+crates/router/src/connector/ @juspay/hyperswitch-connector
+crates/router/tests/connectors/ @juspay/hyperswitch-connector
+crates/test_utils/tests/connectors/ @juspay/hyperswitch-connector
+crates/test_utils/tests/sample_auth.toml @juspay/hyperswitch-connector
+
+crates/router/src/compatibility/ @juspay/hyperswitch-compatibility
+
+crates/router/src/core/ @juspay/hyperswitch-core
+
+crates/router/src/scheduler/ @juspay/hyperswitch-process-tracker
+
+Dockerfile @juspay/hyperswitch-infra
+docker-compose.yml @juspay/hyperswitch-infra
+.dockerignore @juspay/hyperswitch-infra
+monitoring/ @juspay/hyperswitch-infra
