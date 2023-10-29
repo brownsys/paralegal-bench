@@ -1,0 +1,17 @@
+[package]
+name = "my-policy"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "my-policy"
+
+
+[dependencies]
+anyhow = "1"
+paralegal-policy = { path = "../../../paralegal-main/crates/paralegal-policy" }
+lazy_static = "1"
+
+
+[workspace]
