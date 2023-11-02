@@ -386,6 +386,7 @@ pub async fn get_payment_method_from_hs_locker<'a>(
     Ok(payment_method_data)
 }
 
+#[paralegal::marker(store, arguments = [1])]
 #[instrument(skip_all)]
 pub async fn call_to_locker_hs<'a>(
     state: &routes::AppState,

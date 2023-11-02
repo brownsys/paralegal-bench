@@ -170,54 +170,54 @@ impl TryFrom<types::SetupMandateRequestData> for types::ConnectorCustomerData {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-impl types::SetupMandateRouterData {
-    pub async fn decide_flow<'a, 'b>(
-        &'b self,
-        state: &'a AppState,
-        connector: &api::ConnectorData,
-        maybe_customer: &Option<domain::Customer>,
-        confirm: Option<bool>,
-        call_connector_action: payments::CallConnectorAction,
-        merchant_account: &domain::MerchantAccount,
-        key_store: &domain::MerchantKeyStore,
-    ) -> RouterResult<Self> {
-        match confirm {
-            Some(true) => {
-                let connector_integration: services::BoxedConnectorIntegration<
-                    '_,
-                    api::SetupMandate,
-                    types::SetupMandateRequestData,
-                    types::PaymentsResponseData,
-                > = connector.connector.get_connector_integration();
-                let resp = services::execute_connector_processing_step(
-                    state,
-                    connector_integration,
-                    self,
-                    call_connector_action,
-                    None,
-                )
-                .await
-                .to_setup_mandate_failed_response()?;
+// #[allow(clippy::too_many_arguments)]
+// impl types::SetupMandateRouterData {
+//     pub async fn decide_flow<'a, 'b>(
+//         &'b self,
+//         state: &'a AppState,
+//         connector: &api::ConnectorData,
+//         maybe_customer: &Option<domain::Customer>,
+//         confirm: Option<bool>,
+//         call_connector_action: payments::CallConnectorAction,
+//         merchant_account: &domain::MerchantAccount,
+//         key_store: &domain::MerchantKeyStore,
+//     ) -> RouterResult<Self> {
+//         match confirm {
+//             Some(true) => {
+//                 let connector_integration: services::BoxedConnectorIntegration<
+//                     '_,
+//                     api::SetupMandate,
+//                     types::SetupMandateRequestData,
+//                     types::PaymentsResponseData,
+//                 > = connector.connector.get_connector_integration();
+//                 let resp = services::execute_connector_processing_step(
+//                     state,
+//                     connector_integration,
+//                     self,
+//                     call_connector_action,
+//                     None,
+//                 )
+//                 .await
+//                 .to_setup_mandate_failed_response()?;
 
-                let payment_method_type = self.request.payment_method_type;
-                let pm_id = tokenization::save_payment_method(
-                    state,
-                    connector,
-                    resp.to_owned(),
-                    maybe_customer,
-                    merchant_account,
-                    payment_method_type,
-                    key_store,
-                )
-                .await?;
+//                 let payment_method_type = self.request.payment_method_type;
+//                 let pm_id = tokenization::save_payment_method(
+//                     state,
+//                     connector,
+//                     resp.to_owned(),
+//                     maybe_customer,
+//                     merchant_account,
+//                     payment_method_type,
+//                     key_store,
+//                 )
+//                 .await?;
 
-                Ok(mandate::mandate_procedure(state, resp, maybe_customer, pm_id).await?)
-            }
-            _ => Ok(self.clone()),
-        }
-    }
-}
+//                 Ok(mandate::mandate_procedure(state, resp, maybe_customer, pm_id).await?)
+//             }
+//             _ => Ok(self.clone()),
+//         }
+//     }
+// }
 
 impl mandate::MandateBehaviour for types::SetupMandateRequestData {
     fn get_amount(&self) -> i64 {

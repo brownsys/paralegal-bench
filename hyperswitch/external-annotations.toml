@@ -1,3 +1,9 @@
 [["blake3::keyed_hash"]]
 marker = "hashed"
 on_return = true
+
+[["api_models::payments::Card"]]
+marker = "credit_card"
+
+[["common_enums::FutureUsage"]]
+marker = "future_usage_decision"
