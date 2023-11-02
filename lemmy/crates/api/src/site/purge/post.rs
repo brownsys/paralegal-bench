@@ -1,73 +1,85 @@
-use crate::Perform;
-use actix_web::web::Data;
 use crate::lemmy_api_common::{
-  request::purge_image_from_pictrs,
-  site::{PurgeItemResponse, PurgePost},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, apply_label_write, apply_label_read},
+    request::purge_image_from_pictrs,
+    site::{PurgeItemResponse, PurgePost},
+    utils::{
+        apply_label_read, apply_label_write, blocking, get_local_user_view_from_jwt, is_admin,
+    },
 };
 use crate::lemmy_db_schema::{
-  source::{
-    moderator::{AdminPurgePost, AdminPurgePostForm},
-    post::Post,
-  },
-  traits::Crud,
+    source::{
+        moderator::{AdminPurgePost, AdminPurgePostForm},
+        post::Post,
+    },
+    traits::Crud,
 };
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
+use crate::Perform;
+use actix_web::web::Data;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for PurgePost {
-  type Response = PurgeItemResponse;
+    type Response = PurgeItemResponse;
 
-  #[tracing::instrument(skip(context, _websocket_id))]
-  #[cfg_attr(feature = "purge-post", dfpp::analyze)]
-  async fn perform(
-    &self,
-    context: &Data<LemmyContext>,
-    _websocket_id: Option<ConnectionId>,
-  ) -> Result<Self::Response, LemmyError> {
-    let data: &Self = self;
-    let local_user_view =
-      get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
+    #[tracing::instrument(skip(context, _websocket_id))]
+    #[cfg_attr(feature = "purge-post", paralegal::analyze)]
+    async fn perform(
+        &self,
+        context: &Data<LemmyContext>,
+        _websocket_id: Option<ConnectionId>,
+    ) -> Result<Self::Response, LemmyError> {
+        let data: &Self = self;
+        let local_user_view =
+            get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-    // Only let admins purge an item
-    is_admin(&local_user_view)?;
+        // Only let admins purge an item
+        is_admin(&local_user_view)?;
 
-    let post_id = data.post_id;
+        let post_id = data.post_id;
 
-    // Read the post to get the community_id
-    let post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
+        // Read the post to get the community_id
+        let post = apply_label_read(
+            blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
+        );
 
-    // Purge image
-    if let Some(url) = post.url {
-      apply_label_write(purge_image_from_pictrs(context.client(), context.settings(), &url)
-        .await
-        .ok());
+        // Purge image
+        if let Some(url) = post.url {
+            apply_label_write(
+                purge_image_from_pictrs(context.client(), context.settings(), &url)
+                    .await
+                    .ok(),
+            );
+        }
+        // Purge thumbnail
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            apply_label_write(
+                purge_image_from_pictrs(context.client(), context.settings(), &thumbnail_url)
+                    .await
+                    .ok(),
+            );
+        }
+
+        let community_id = post.community_id;
+
+        apply_label_write(
+            blocking(context.pool(), move |conn| Post::delete(conn, post_id)).await??,
+        );
+
+        // Mod tables
+        let reason = data.reason.to_owned();
+        let form = AdminPurgePostForm {
+            admin_person_id: local_user_view.person.id,
+            reason,
+            community_id,
+        };
+
+        apply_label_write(
+            blocking(context.pool(), move |conn| {
+                AdminPurgePost::create(conn, &form)
+            })
+            .await??,
+        );
+
+        Ok(PurgeItemResponse { success: true })
     }
-    // Purge thumbnail
-    if let Some(thumbnail_url) = post.thumbnail_url {
-      apply_label_write(purge_image_from_pictrs(context.client(), context.settings(), &thumbnail_url)
-        .await
-        .ok());
-    }
-
-    let community_id = post.community_id;
-
-    apply_label_write(blocking(context.pool(), move |conn| Post::delete(conn, post_id)).await??);
-
-    // Mod tables
-    let reason = data.reason.to_owned();
-    let form = AdminPurgePostForm {
-      admin_person_id: local_user_view.person.id,
-      reason,
-      community_id,
-    };
-
-    apply_label_write(blocking(context.pool(), move |conn| {
-      AdminPurgePost::create(conn, &form)
-    })
-    .await??);
-
-    Ok(PurgeItemResponse { success: true })
-  }
 }

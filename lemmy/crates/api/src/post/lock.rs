@@ -1,99 +1,99 @@
-use crate::Perform;
-use actix_web::web::Data;
 use crate::lemmy_api_common::{
-  post::{LockPost, PostResponse},
-  utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
-    is_mod_or_admin,
-    apply_label_read,
-    apply_label_community_write
-  },
+    post::{LockPost, PostResponse},
+    utils::{
+        apply_label_community_write, apply_label_read, blocking, check_community_ban,
+        check_community_deleted_or_removed, get_local_user_view_from_jwt, is_mod_or_admin,
+    },
 };
 use crate::lemmy_apub::{
-  objects::post::ApubPost,
-  protocol::activities::{create_or_update::post::CreateOrUpdatePost, CreateOrUpdateType},
+    objects::post::ApubPost,
+    protocol::activities::{create_or_update::post::CreateOrUpdatePost, CreateOrUpdateType},
 };
 use crate::lemmy_db_schema::{
-  source::{
-    moderator::{ModLockPost, ModLockPostForm},
-    post::Post,
-  },
-  traits::Crud,
+    source::{
+        moderator::{ModLockPost, ModLockPostForm},
+        post::Post,
+    },
+    traits::Crud,
 };
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::{send::send_post_ws_message, LemmyContext, UserOperation};
-
+use crate::Perform;
+use actix_web::web::Data;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for LockPost {
-  type Response = PostResponse;
+    type Response = PostResponse;
 
-  #[tracing::instrument(skip(context, websocket_id))]
-  #[cfg_attr(feature = "post-lock", dfpp::analyze)]
-  async fn perform(
-    &self,
-    context: &Data<LemmyContext>,
-    websocket_id: Option<ConnectionId>,
-  ) -> Result<PostResponse, LemmyError> {
-    let data: &LockPost = self;
-    let local_user_view =
-    get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
+    #[tracing::instrument(skip(context, websocket_id))]
+    #[cfg_attr(feature = "post-lock", paralegal::analyze)]
+    async fn perform(
+        &self,
+        context: &Data<LemmyContext>,
+        websocket_id: Option<ConnectionId>,
+    ) -> Result<PostResponse, LemmyError> {
+        let data: &LockPost = self;
+        let local_user_view =
+            get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-    let post_id = data.post_id;
-    let orig_post = apply_label_read(blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??);
-    
-    check_community_ban(
-      local_user_view.person.id,
-      orig_post.community_id,
-      context.pool(),
-    )
-    .await?;
-    check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+        let post_id = data.post_id;
+        let orig_post = apply_label_read(
+            blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
+        );
 
-    // Verify that only the mods can lock
-    is_mod_or_admin(
-      context.pool(),
-      local_user_view.person.id,
-      orig_post.community_id,
-    )
-    .await?;
+        check_community_ban(
+            local_user_view.person.id,
+            orig_post.community_id,
+            context.pool(),
+        )
+        .await?;
+        check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
-    // Update the post
-    let post_id = data.post_id;
-    let locked = data.locked;
-    let updated_post: ApubPost = apply_label_community_write(blocking(context.pool(), move |conn| {
-      Post::update_locked(conn, post_id, locked)
-    })
-    .await??)
-    .into();
+        // Verify that only the mods can lock
+        is_mod_or_admin(
+            context.pool(),
+            local_user_view.person.id,
+            orig_post.community_id,
+        )
+        .await?;
 
-    // Mod tables
-    let form = ModLockPostForm {
-      mod_person_id: local_user_view.person.id,
-      post_id: data.post_id,
-      locked: Some(locked),
-    };
-    apply_label_community_write(blocking(context.pool(), move |conn| ModLockPost::create(conn, &form)).await??);
+        // Update the post
+        let post_id = data.post_id;
+        let locked = data.locked;
+        let updated_post: ApubPost = apply_label_community_write(
+            blocking(context.pool(), move |conn| {
+                Post::update_locked(conn, post_id, locked)
+            })
+            .await??,
+        )
+        .into();
 
-    // apub updates
-    CreateOrUpdatePost::send(
-      updated_post,
-      &local_user_view.person.clone().into(),
-      CreateOrUpdateType::Update,
-      context,
-    )
-    .await?;
+        // Mod tables
+        let form = ModLockPostForm {
+            mod_person_id: local_user_view.person.id,
+            post_id: data.post_id,
+            locked: Some(locked),
+        };
+        apply_label_community_write(
+            blocking(context.pool(), move |conn| ModLockPost::create(conn, &form)).await??,
+        );
 
-    send_post_ws_message(
-      data.post_id,
-      UserOperation::LockPost,
-      websocket_id,
-      Some(local_user_view.person.id),
-      context,
-    )
-    .await
-  }
+        // apub updates
+        CreateOrUpdatePost::send(
+            updated_post,
+            &local_user_view.person.clone().into(),
+            CreateOrUpdateType::Update,
+            context,
+        )
+        .await?;
+
+        send_post_ws_message(
+            data.post_id,
+            UserOperation::LockPost,
+            websocket_id,
+            Some(local_user_view.person.id),
+            context,
+        )
+        .await
+    }
 }

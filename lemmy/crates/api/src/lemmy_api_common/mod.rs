@@ -1,6 +1,3 @@
-#![feature(register_tool)]
-#![register_tool(dfpp)]
-
 pub mod comment;
 pub mod community;
 pub mod person;

@@ -1,45 +1,47 @@
-use crate::Perform;
-use actix_web::web::Data;
 use crate::lemmy_api_common::{
-  person::{GetPersonMentions, GetPersonMentionsResponse},
-  utils::{blocking, get_local_user_view_from_jwt, apply_label_read},
+    person::{GetPersonMentions, GetPersonMentionsResponse},
+    utils::{apply_label_read, blocking, get_local_user_view_from_jwt},
 };
 use crate::lemmy_db_views_actor::person_mention_view::PersonMentionQueryBuilder;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
+use crate::Perform;
+use actix_web::web::Data;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for GetPersonMentions {
-  type Response = GetPersonMentionsResponse;
+    type Response = GetPersonMentionsResponse;
 
-  #[tracing::instrument(skip(context, _websocket_id))]
-  #[cfg_attr(feature = "notification-list-mentions", dfpp::analyze)]
-  async fn perform(
-    &self,
-    context: &Data<LemmyContext>,
-    _websocket_id: Option<ConnectionId>,
-  ) -> Result<GetPersonMentionsResponse, LemmyError> {
-    let data: &GetPersonMentions = self;
-    let local_user_view =
-      get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
+    #[tracing::instrument(skip(context, _websocket_id))]
+    #[cfg_attr(feature = "notification-list-mentions", paralegal::analyze)]
+    async fn perform(
+        &self,
+        context: &Data<LemmyContext>,
+        _websocket_id: Option<ConnectionId>,
+    ) -> Result<GetPersonMentionsResponse, LemmyError> {
+        let data: &GetPersonMentions = self;
+        let local_user_view =
+            get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-    let sort = data.sort;
-    let page = data.page;
-    let limit = data.limit;
-    let unread_only = data.unread_only;
-    let person_id = local_user_view.person.id;
-    let mentions = apply_label_read(blocking(context.pool(), move |conn| {
-      PersonMentionQueryBuilder::create(conn)
-        .recipient_id(person_id)
-        .my_person_id(person_id)
-        .sort(sort)
-        .unread_only(unread_only)
-        .page(page)
-        .limit(limit)
-        .list()
-    })
-    .await??);
+        let sort = data.sort;
+        let page = data.page;
+        let limit = data.limit;
+        let unread_only = data.unread_only;
+        let person_id = local_user_view.person.id;
+        let mentions = apply_label_read(
+            blocking(context.pool(), move |conn| {
+                PersonMentionQueryBuilder::create(conn)
+                    .recipient_id(person_id)
+                    .my_person_id(person_id)
+                    .sort(sort)
+                    .unread_only(unread_only)
+                    .page(page)
+                    .limit(limit)
+                    .list()
+            })
+            .await??,
+        );
 
-    Ok(GetPersonMentionsResponse { mentions })
-  }
+        Ok(GetPersonMentionsResponse { mentions })
+    }
 }

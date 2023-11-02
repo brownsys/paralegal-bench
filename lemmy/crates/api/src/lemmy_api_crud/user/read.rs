@@ -1,125 +1,131 @@
-use crate::lemmy_api_crud::PerformCrud;
-use actix_web::web::Data;
 use crate::lemmy_api_common::{
-  person::{GetPersonDetails, GetPersonDetailsResponse},
-  utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt, apply_label_read},
+    person::{GetPersonDetails, GetPersonDetailsResponse},
+    utils::{apply_label_read, blocking, check_private_instance, get_local_user_view_from_jwt_opt},
 };
+use crate::lemmy_api_crud::PerformCrud;
 use crate::lemmy_apub::{fetcher::resolve_actor_identifier, objects::person::ApubPerson};
 use crate::lemmy_db_schema::source::person::Person;
 use crate::lemmy_db_views::{comment_view::CommentQueryBuilder, post_view::PostQueryBuilder};
 use crate::lemmy_db_views_actor::structs::{CommunityModeratorView, PersonViewSafe};
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
+use actix_web::web::Data;
 
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for GetPersonDetails {
-  type Response = GetPersonDetailsResponse;
+    type Response = GetPersonDetailsResponse;
 
-  #[tracing::instrument(skip(self, context, _websocket_id))]
-  #[cfg_attr(feature = "user-read", dfpp::analyze)]
-  async fn perform(
-    &self,
-    context: &Data<LemmyContext>,
-    _websocket_id: Option<ConnectionId>,
-  ) -> Result<GetPersonDetailsResponse, LemmyError> {
-    let data: &GetPersonDetails = self;
+    #[tracing::instrument(skip(self, context, _websocket_id))]
+    #[cfg_attr(feature = "user-read", paralegal::analyze)]
+    async fn perform(
+        &self,
+        context: &Data<LemmyContext>,
+        _websocket_id: Option<ConnectionId>,
+    ) -> Result<GetPersonDetailsResponse, LemmyError> {
+        let data: &GetPersonDetails = self;
 
-    // Check to make sure a person name or an id is given
-    if data.username.is_none() && data.person_id.is_none() {
-      return Err(LemmyError::from_message("no_id_given"));
-    }
-
-    let local_user_view =
-      get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
-        .await?;
-
-    check_private_instance(&local_user_view, context.pool()).await?;
-
-    let show_nsfw = local_user_view.as_ref().map(|t| t.local_user.show_nsfw);
-    let show_bot_accounts = local_user_view
-      .as_ref()
-      .map(|t| t.local_user.show_bot_accounts);
-    let show_read_posts = local_user_view
-      .as_ref()
-      .map(|t| t.local_user.show_read_posts);
-
-    let person_details_id = match data.person_id {
-      Some(id) => id,
-      None => {
-        if let Some(username) = &data.username {
-          resolve_actor_identifier::<ApubPerson, Person>(username, context)
-            .await
-            .map_err(|e| e.with_message("couldnt_find_that_username_or_email"))?
-            .id
-        } else {
-          return Err(LemmyError::from_message(
-            "couldnt_find_that_username_or_email",
-          ));
+        // Check to make sure a person name or an id is given
+        if data.username.is_none() && data.person_id.is_none() {
+            return Err(LemmyError::from_message("no_id_given"));
         }
-      }
-    };
 
-    let person_id = local_user_view.map(|uv| uv.person.id);
+        let local_user_view =
+            get_local_user_view_from_jwt_opt(data.auth.as_ref(), context.pool(), context.secret())
+                .await?;
 
-    // You don't need to return settings for the user, since this comes back with GetSite
-    // `my_user`
-    let person_view = apply_label_read(blocking(context.pool(), move |conn| {
-      PersonViewSafe::read(conn, person_details_id)
-    })
-    .await??);
+        check_private_instance(&local_user_view, context.pool()).await?;
 
-    let sort = data.sort;
-    let page = data.page;
-    let limit = data.limit;
-    let saved_only = data.saved_only;
-    let community_id = data.community_id;
+        let show_nsfw = local_user_view.as_ref().map(|t| t.local_user.show_nsfw);
+        let show_bot_accounts = local_user_view
+            .as_ref()
+            .map(|t| t.local_user.show_bot_accounts);
+        let show_read_posts = local_user_view
+            .as_ref()
+            .map(|t| t.local_user.show_read_posts);
 
-    let (posts, comments) = apply_label_read(blocking(context.pool(), move |conn| {
-      let mut posts_query = PostQueryBuilder::create(conn)
-        .sort(sort)
-        .show_nsfw(show_nsfw)
-        .show_bot_accounts(show_bot_accounts)
-        .show_read_posts(show_read_posts)
-        .saved_only(saved_only)
-        .community_id(community_id)
-        .my_person_id(person_id)
-        .page(page)
-        .limit(limit);
+        let person_details_id = match data.person_id {
+            Some(id) => id,
+            None => {
+                if let Some(username) = &data.username {
+                    resolve_actor_identifier::<ApubPerson, Person>(username, context)
+                        .await
+                        .map_err(|e| e.with_message("couldnt_find_that_username_or_email"))?
+                        .id
+                } else {
+                    return Err(LemmyError::from_message(
+                        "couldnt_find_that_username_or_email",
+                    ));
+                }
+            }
+        };
 
-      let mut comments_query = CommentQueryBuilder::create(conn)
-        .my_person_id(person_id)
-        .show_bot_accounts(show_bot_accounts)
-        .sort(sort)
-        .saved_only(saved_only)
-        .community_id(community_id)
-        .page(page)
-        .limit(limit);
+        let person_id = local_user_view.map(|uv| uv.person.id);
 
-      // If its saved only, you don't care what creator it was
-      // Or, if its not saved, then you only want it for that specific creator
-      if !saved_only.unwrap_or(false) {
-        posts_query = posts_query.creator_id(person_details_id);
-        comments_query = comments_query.creator_id(person_details_id);
-      }
+        // You don't need to return settings for the user, since this comes back with GetSite
+        // `my_user`
+        let person_view = apply_label_read(
+            blocking(context.pool(), move |conn| {
+                PersonViewSafe::read(conn, person_details_id)
+            })
+            .await??,
+        );
 
-      let posts = posts_query.list()?;
-      let comments = comments_query.list()?;
+        let sort = data.sort;
+        let page = data.page;
+        let limit = data.limit;
+        let saved_only = data.saved_only;
+        let community_id = data.community_id;
 
-      Ok((posts, comments)) as Result<_, LemmyError>
-    })
-    .await??);
+        let (posts, comments) = apply_label_read(
+            blocking(context.pool(), move |conn| {
+                let mut posts_query = PostQueryBuilder::create(conn)
+                    .sort(sort)
+                    .show_nsfw(show_nsfw)
+                    .show_bot_accounts(show_bot_accounts)
+                    .show_read_posts(show_read_posts)
+                    .saved_only(saved_only)
+                    .community_id(community_id)
+                    .my_person_id(person_id)
+                    .page(page)
+                    .limit(limit);
 
-    let moderates = apply_label_read(blocking(context.pool(), move |conn| {
-      CommunityModeratorView::for_person(conn, person_details_id)
-    })
-    .await??);
+                let mut comments_query = CommentQueryBuilder::create(conn)
+                    .my_person_id(person_id)
+                    .show_bot_accounts(show_bot_accounts)
+                    .sort(sort)
+                    .saved_only(saved_only)
+                    .community_id(community_id)
+                    .page(page)
+                    .limit(limit);
 
-    // Return the jwt
-    Ok(GetPersonDetailsResponse {
-      person_view,
-      moderates,
-      comments,
-      posts,
-    })
-  }
+                // If its saved only, you don't care what creator it was
+                // Or, if its not saved, then you only want it for that specific creator
+                if !saved_only.unwrap_or(false) {
+                    posts_query = posts_query.creator_id(person_details_id);
+                    comments_query = comments_query.creator_id(person_details_id);
+                }
+
+                let posts = posts_query.list()?;
+                let comments = comments_query.list()?;
+
+                Ok((posts, comments)) as Result<_, LemmyError>
+            })
+            .await??,
+        );
+
+        let moderates = apply_label_read(
+            blocking(context.pool(), move |conn| {
+                CommunityModeratorView::for_person(conn, person_details_id)
+            })
+            .await??,
+        );
+
+        // Return the jwt
+        Ok(GetPersonDetailsResponse {
+            person_view,
+            moderates,
+            comments,
+            posts,
+        })
+    }
 }

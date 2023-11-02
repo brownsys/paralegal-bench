@@ -8,10 +8,7 @@ use std::fmt::{Display, Write};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-const CONFIGURATIONS: &'static [Property] = &[
-    Property::Instance,
-    Property::Community,
-];
+const CONFIGURATIONS: &'static [Property] = &[Property::Instance, Property::Community];
 
 // Controllers are broken into batches.
 // Batches are arbitrary, except all of a subfolder's controllers are kept together.
@@ -47,7 +44,7 @@ const POST_BUG_1_BATCH_1: &'static [&'static str] = &[
     "post-bug-1 user-save-settings",
 ];
 
-const POST_BUG_1_BATCH_2 : &'static [&'static str] = &[
+const POST_BUG_1_BATCH_2: &'static [&'static str] = &[
     "post-bug-1 post-like",
     "post-bug-1 post-lock",
     "post-bug-1 post-mark-read",
@@ -78,7 +75,7 @@ const POST_BUG_1_BATCH_2 : &'static [&'static str] = &[
     "post-bug-1 comment-update correct",
 ];
 
-const POST_BUG_1_BATCH_3 : &'static [&'static str] = &[
+const POST_BUG_1_BATCH_3: &'static [&'static str] = &[
     "post-bug-1 community-create",
     "post-bug-1 community-delete",
     "post-bug-1 community-list",
@@ -102,7 +99,7 @@ const POST_BUG_1_BATCH_3 : &'static [&'static str] = &[
     "post-bug-1 site-read",
     "post-bug-1 site-update",
     "post-bug-1 user-delete",
-    "post-bug-1 user-read"
+    "post-bug-1 user-read",
 ];
 
 /// Batches for each bug
@@ -134,7 +131,7 @@ const BUG_1_BATCH_1: &'static [&'static str] = &[
     "bug-1-code user-save-settings",
 ];
 
-const BUG_1_BATCH_2 : &'static [&'static str] = &[
+const BUG_1_BATCH_2: &'static [&'static str] = &[
     "bug-1-code post-like",
     "bug-1-code post-lock",
     "bug-1-code post-mark-read",
@@ -163,7 +160,7 @@ const BUG_1_BATCH_2 : &'static [&'static str] = &[
     "bug-1-code comment-update",
 ];
 
-const BUG_1_BATCH_3 : &'static [&'static str] = &[
+const BUG_1_BATCH_3: &'static [&'static str] = &[
     "bug-1-code community-create",
     "bug-1-code community-delete",
     "bug-1-code community-list",
@@ -184,7 +181,7 @@ const BUG_1_BATCH_3 : &'static [&'static str] = &[
     "bug-1-code site-read",
     "bug-1-code site-update",
     "bug-1-code user-delete",
-    "bug-1-code user-read"
+    "bug-1-code user-read",
 ];
 
 const BUG_1_FIX_BATCH_1: &'static [&'static str] = &[
@@ -215,7 +212,7 @@ const BUG_1_FIX_BATCH_1: &'static [&'static str] = &[
     "bug-1-code bug-1-fix user-save-settings",
 ];
 
-const BUG_1_FIX_BATCH_2 : &'static [&'static str] = &[
+const BUG_1_FIX_BATCH_2: &'static [&'static str] = &[
     "bug-1-code bug-1-fix post-like",
     "bug-1-code bug-1-fix post-lock",
     "bug-1-code bug-1-fix post-mark-read",
@@ -244,7 +241,7 @@ const BUG_1_FIX_BATCH_2 : &'static [&'static str] = &[
     "bug-1-code bug-1-fix comment-update",
 ];
 
-const BUG_1_FIX_BATCH_3 : &'static [&'static str] = &[
+const BUG_1_FIX_BATCH_3: &'static [&'static str] = &[
     "bug-1-code bug-1-fix community-create",
     "bug-1-code bug-1-fix community-delete",
     "bug-1-code bug-1-fix community-list",
@@ -265,16 +262,14 @@ const BUG_1_FIX_BATCH_3 : &'static [&'static str] = &[
     "bug-1-code bug-1-fix site-read",
     "bug-1-code bug-1-fix site-update",
     "bug-1-code bug-1-fix user-delete",
-    "bug-1-code bug-1-fix user-read"
+    "bug-1-code bug-1-fix user-read",
 ];
 
-const BUG_2_BATCH : &'static [&'static str] = &[
-    "post-bug-1 user-login",
-    "post-bug-1 user-login correct",
-];
+const BUG_2_BATCH: &'static [&'static str] =
+    &["post-bug-1 user-login", "post-bug-1 user-login correct"];
 
 // these are the buggy controllers that the Lemmy developers found and fixed themselves
-const BUG_3_FIXED_BATCH : &'static [&'static str] = &[
+const BUG_3_FIXED_BATCH: &'static [&'static str] = &[
     "post-bug-1 comment-create",
     "post-bug-1 comment-create correct",
     "post-bug-1 comment-update",
@@ -288,7 +283,7 @@ const BUG_3_FIXED_BATCH : &'static [&'static str] = &[
 ];
 
 // these are the buggy controllers that Paralegal found
-const BUG_3_BATCH : &'static [&'static str] = &[
+const BUG_3_BATCH: &'static [&'static str] = &[
     "post-bug-1 comment-like",
     "post-bug-1 comment-mark-as-read",
     "post-bug-1 comment-save",
@@ -304,14 +299,14 @@ const BUG_3_BATCH : &'static [&'static str] = &[
     "post-bug-1 community-delete",
     "post-bug-1 community-remove",
     "post-bug-1 community-update",
-    "post-bug-1 post-remove"
+    "post-bug-1 post-remove",
 ];
 
-const BUG_4_BATCH : &'static [&'static str] = &[
+const BUG_4_BATCH: &'static [&'static str] = &[
     "post-bug-1 community-add-mod",
     "post-bug-1 community-ban",
     "post-bug-1 community-hide",
-    "post-bug-1 community-transfer"
+    "post-bug-1 community-transfer",
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -328,7 +323,7 @@ struct Args {
     /// Print the shell commands we are running
     #[clap(long)]
     verbose_commands: bool,
-    
+
     /// Run all the controllers (for bugs 2-4).
     #[clap(long)]
     all: bool,
@@ -336,7 +331,7 @@ struct Args {
     #[clap(long)]
     /// Specific controllers to run. Valid options are those in each BATCH list (see main.rs).
     ctrlers: Vec<String>,
-    
+
     /// Bug(s) to verify. Options are bug1, bug1fix, bugs234. Required if neither all nor ctrlers is passed.
     #[clap(long, required_unless_present_any(["all", "ctrlers"]), default_value="bugs234")]
     bug: String,
@@ -394,9 +389,9 @@ impl FromStr for Property {
 
 #[derive(Clone, Copy)]
 struct RunResult {
-	error: RunError,
-	analyze_time: Duration,
-	verify_time: Duration,
+    error: RunError,
+    analyze_time: Duration,
+    verify_time: Duration,
 }
 
 #[derive(Clone, Copy)]
@@ -448,7 +443,7 @@ impl std::fmt::Display for RunError {
 
 fn print_table_header<W: std::io::Write>(
     mut w: W,
-    props : &'static [Property],
+    props: &'static [Property],
     desc: &'static str,
 ) -> std::io::Result<()> {
     let leftmost_column_width = 60;
@@ -465,7 +460,7 @@ fn print_table_header<W: std::io::Write>(
         write!(w, "| {:rest_column_width$} ", "vtime")?;
     }
     writeln!(w, "")?;
-    
+
     // dividing line
     write!(w, "-{:-<leftmost_column_width$}-", "")?;
     for _ in 0..(props.len() * 3) {
@@ -487,8 +482,16 @@ fn print_ctrler_results<W: std::io::Write>(
 
     for result in results.clone().into_iter() {
         write!(w, "| {:^rest_column_width$} ", result.error)?;
-        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.analyze_time))?;
-        write!(w, "| {:^rest_column_width$} ", format!("{:?}", result.verify_time))?;
+        write!(
+            w,
+            "| {:^rest_column_width$} ",
+            format!("{:?}", result.analyze_time)
+        )?;
+        write!(
+            w,
+            "| {:^rest_column_width$} ",
+            format!("{:?}", result.verify_time)
+        )?;
     }
 
     // dividing line
@@ -503,11 +506,11 @@ fn print_ctrler_results<W: std::io::Write>(
 
 // helper function: runs a single controller on given props
 fn run_props_for_ctrler(
-    props : &'static [Property],
+    props: &'static [Property],
     verbose: bool,
     verbose_commands: bool,
     progress: &ProgressBar,
-    analyze_time: Duration
+    analyze_time: Duration,
 ) -> Vec<RunResult> {
     use std::process::*;
 
@@ -520,54 +523,50 @@ fn run_props_for_ctrler(
         .status();
 
     props
-    .iter()
-    .map(|typ| {
-        let mut bash_cmd = Command::new("bash");
-        bash_cmd
-            .current_dir(error_eval_dir)
-            .args(["eval-driver-helper.sh".to_owned(), typ.to_string()])
-            .stdin(Stdio::null())
-            .status();
-        
-        let propfile = format!("props/{typ}-props.frg");
-        let mut racket_cmd = Command::new("racket");
-        racket_cmd
-            .current_dir(error_eval_dir)
-            .arg(propfile)
-            .stdin(Stdio::null());
-        if !verbose {
-            racket_cmd.stderr(Stdio::null()).stdout(Stdio::null());
-        }
-        if verbose_commands {
-            progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
-        }
-        let now = SystemTime::now();
-        let status = racket_cmd.status().unwrap();
-        let verify_time = now.elapsed().unwrap();
-        progress.inc(1);
-        if status.success() {
-            RunResult{
-                analyze_time,
-                verify_time,
-                error: RunError::Success
+        .iter()
+        .map(|typ| {
+            let mut bash_cmd = Command::new("bash");
+            bash_cmd
+                .current_dir(error_eval_dir)
+                .args(["eval-driver-helper.sh".to_owned(), typ.to_string()])
+                .stdin(Stdio::null())
+                .status();
+
+            let propfile = format!("props/{typ}-props.frg");
+            let mut racket_cmd = Command::new("racket");
+            racket_cmd
+                .current_dir(error_eval_dir)
+                .arg(propfile)
+                .stdin(Stdio::null());
+            if !verbose {
+                racket_cmd.stderr(Stdio::null()).stdout(Stdio::null());
             }
-        } else {
-            RunResult{
-                analyze_time,
-                verify_time,
-                error: RunError::CheckError
+            if verbose_commands {
+                progress.suspend(|| println!("Executing check command: {:?}", racket_cmd));
             }
-        }
-    })
-    .collect()
+            let now = SystemTime::now();
+            let status = racket_cmd.status().unwrap();
+            let verify_time = now.elapsed().unwrap();
+            progress.inc(1);
+            if status.success() {
+                RunResult {
+                    analyze_time,
+                    verify_time,
+                    error: RunError::Success,
+                }
+            } else {
+                RunResult {
+                    analyze_time,
+                    verify_time,
+                    error: RunError::CheckError,
+                }
+            }
+        })
+        .collect()
 }
 
 // runs given batch of controllers on given props
-fn run_batch(args : &Args, 
-    batch : &Vec<String>, 
-    props : &'static [Property], 
-    desc: &'static str) {
-    
+fn run_batch(args: &Args, batch: &Vec<String>, props: &'static [Property], desc: &'static str) {
     use std::process::*;
 
     let verbose = args.verbose;
@@ -585,7 +584,7 @@ fn run_batch(args : &Args,
     let mut w = std::io::stdout();
 
     print_table_header(&mut w, props, desc).unwrap();
-    
+
     for ctrler in batch {
         let mut dfpp_cmd = Command::new("cargo");
         dfpp_cmd.current_dir("../").arg("dfpp").stdin(Stdio::null());
@@ -601,7 +600,7 @@ fn run_batch(args : &Args,
         if external_ann_file.exists() {
             dfpp_cmd.args(&["--external-annotations", external_ann_file_name.as_str()]);
         }
-        
+
         dfpp_cmd.args(&["--", "--features", &format!("{ctrler}")]);
         if !args.verbose {
             dfpp_cmd.stderr(Stdio::null()).stdout(Stdio::null());
@@ -614,12 +613,10 @@ fn run_batch(args : &Args,
         let analyze_time = now.elapsed().unwrap();
         progress.inc(1);
 
-        let results = run_props_for_ctrler(props, verbose, verbose_commands, &progress, analyze_time);
-            
-        progress.suspend(|| {
-            print_ctrler_results(&mut w, &ctrler, results)
-                .unwrap()
-        });
+        let results =
+            run_props_for_ctrler(props, verbose, verbose_commands, &progress, analyze_time);
+
+        progress.suspend(|| print_ctrler_results(&mut w, &ctrler, results).unwrap());
     }
 
     progress.finish_and_clear();
@@ -628,17 +625,86 @@ fn run_batch(args : &Args,
 // runs all controllers
 fn run_all(args: &Args, version: GetUserVersion) {
     if version == GetUserVersion::PreBug1Fix {
-        run_batch(args, &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
+        run_batch(
+            args,
+            &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 1 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 2 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 3 Results",
+        );
     } else if version == GetUserVersion::PostBug1Fix {
-        run_batch(args, &(BUG_1_FIX_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_1
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 1 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_2
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 2 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_3
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 3 Results",
+        );
     } else {
-        run_batch(args, &(POST_BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 1 Results:");
-        run_batch(args, &(POST_BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 2 Results:");
-        run_batch(args, &(POST_BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Batch 3 Results:");
+        run_batch(
+            args,
+            &(POST_BUG_1_BATCH_1
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Batch 1 Results:",
+        );
+        run_batch(
+            args,
+            &(POST_BUG_1_BATCH_2
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Batch 2 Results:",
+        );
+        run_batch(
+            args,
+            &(POST_BUG_1_BATCH_3
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Batch 3 Results:",
+        );
     }
 }
 
@@ -650,29 +716,101 @@ fn run_all(args: &Args, version: GetUserVersion) {
 // For Bug 4, this is once batch: the controllers Paralegal found
 fn run_bugs(args: &Args) {
     if args.bug == GetUserVersion::PreBug1Fix.to_string() {
-        run_batch(args, &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 1 Results");
-        run_batch(args, &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 2 Results");
-        run_batch(args, &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1: Batch 3 Results");
+        run_batch(
+            args,
+            &(BUG_1_BATCH_1.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 1 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_BATCH_2.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 2 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_BATCH_3.iter().cloned().map(str::to_string).collect()),
+            CONFIGURATIONS,
+            "Bug 1: Batch 3 Results",
+        );
     } else if args.bug == GetUserVersion::PostBug1Fix.to_string() {
-        run_batch(args, &(BUG_1_FIX_BATCH_1.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 1 Results");
-        run_batch(args, &(BUG_1_FIX_BATCH_2.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 2 Results");
-        run_batch(args, &(BUG_1_FIX_BATCH_3.iter().cloned().map(str::to_string).collect()), CONFIGURATIONS, "Bug 1 Fix: Batch 3 Results");
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_1
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 1 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_2
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 2 Results",
+        );
+        run_batch(
+            args,
+            &(BUG_1_FIX_BATCH_3
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            CONFIGURATIONS,
+            "Bug 1 Fix: Batch 3 Results",
+        );
     } else if args.bug == GetUserVersion::Bug2Onward.to_string() {
-        run_batch(args, &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Instance], "Bug 2 Batch");
-        run_batch(args, &(BUG_3_FIXED_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Lemmy developers found and fixed");
-        run_batch(args, &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 3 Batch -- Paralegal found");
-        run_batch(args, &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()), &[Property::Community], "Bug 4 Batch");
+        run_batch(
+            args,
+            &(BUG_2_BATCH.iter().cloned().map(str::to_string).collect()),
+            &[Property::Instance],
+            "Bug 2 Batch",
+        );
+        run_batch(
+            args,
+            &(BUG_3_FIXED_BATCH
+                .iter()
+                .cloned()
+                .map(str::to_string)
+                .collect()),
+            &[Property::Community],
+            "Bug 3 Batch -- Lemmy developers found and fixed",
+        );
+        run_batch(
+            args,
+            &(BUG_3_BATCH.iter().cloned().map(str::to_string).collect()),
+            &[Property::Community],
+            "Bug 3 Batch -- Paralegal found",
+        );
+        run_batch(
+            args,
+            &(BUG_4_BATCH.iter().cloned().map(str::to_string).collect()),
+            &[Property::Community],
+            "Bug 4 Batch",
+        );
     } else {
-        println!("ERROR: invalid value for --bug. Valid values are {}, {}, {}", GetUserVersion::PreBug1Fix.to_string(), 
-        GetUserVersion::PostBug1Fix.to_string(), GetUserVersion::Bug2Onward.to_string());
+        println!(
+            "ERROR: invalid value for --bug. Valid values are {}, {}, {}",
+            GetUserVersion::PreBug1Fix.to_string(),
+            GetUserVersion::PostBug1Fix.to_string(),
+            GetUserVersion::Bug2Onward.to_string()
+        );
     }
 }
 
 fn main() {
     let args = Args::parse();
-    
+
     if args.all {
-        println!("INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4.");
+        println!(
+            "INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4."
+        );
         run_all(&args, GetUserVersion::Bug2Onward);
     } else if args.ctrlers.is_empty() {
         println!("INFO: No controllers specified; running relevant controllers and properties for each bug");
