@@ -1,8 +1,9 @@
+extern crate clap;
 extern crate anyhow;
 extern crate paralegal_policy;
 
 use anyhow::Result;
-use paralegal_policy::{assert_error, paralegal_spdg::Identifier, Context, Marker, Node};
+use paralegal_policy::{assert_error, assert_warning, EdgeType, paralegal_spdg::Identifier, Context, Marker, Node, Diagnostics};
 use std::sync::Arc;
 
 macro_rules! marker {
@@ -15,9 +16,9 @@ macro_rules! marker {
 }
 
 macro_rules! policy {
-    ($name: ident, $context: ident, $code:block) => {
+    ($name:ident $(,)? $context:ident $(,)? $code:block) => {
         fn $name(ctx: Arc<Context>) -> Result<()> {
-            ctx.named_policy(stringify!($name), |$context| $code)
+            ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
 }
@@ -41,12 +42,13 @@ impl ContextExt for Context {
     }
 
     fn determines_ctrl(&self, influencer: Node, target: Node) -> bool {
-        let Some(tcs) = target.as_data_sink(target) else {
-            self.error(format!("{target} cannot be influenced by control flow"));
+        let Some(tcs) = target.associated_call_site() else {
+            self.error(format!("{target:?} cannot be influenced by control flow"));
+            return false;
         };
 
-        ctx.influencees(influencer)
-            .any(|inf| ctx.flows_to(inf, tcx, EdgeType::Control))
+        self.influencees(influencer, EdgeType::Data)
+            .any(|inf| self.flows_to(inf, tcs, EdgeType::Control))
     }
 }
 
@@ -67,24 +69,25 @@ policy!(card_encryption, ctx, {
         ctx.marked_nodes(marker!(credit_card)),
         |node| ctx.has_marker(marker!(encrypt), node),
         |node| ctx.has_marker(marker!(store), node),
-    )
+    )?.report(ctx);
+    Ok(())
 });
 
 policy!(card_storage, ctx {
-    let srcs = ctx.marked_nodes(marker!(credit_card)).peekable();
+    let mut srcs = ctx.marked_nodes(marker!(credit_card)).peekable();
     let decision_sources = ctx.marked_nodes(marker!(future_usage_decision)).collect::<Vec<_>>();
     assert_warning!(ctx, srcs.peek().is_some());
     let mut any_sink_reached = false;
+    let sinks = ctx.marked_nodes(marker!(store)).collect::<Vec<_>>();
+    assert_warning!(ctx, !sinks.is_empty());
     for src in srcs {
-        let sinks = ctx.marked_nodes(marker!(store)).peekable();
-        assert_warning!(ctx, sinks.peek().is_some());
-        for sink in sinks {
-            if !ctx.flows_to(src, sink) {
+        for sink in sinks.iter().cloned() {
+            if !ctx.flows_to(src, sink, EdgeType::Data) {
                 continue;
             }
             any_sink_reached = true;
 
-            let decision_reaches = decision_sources.iter().any(|decision_source|
+            let decision_reaches = decision_sources.iter().cloned().any(|decision_source|
                 ctx.determines_ctrl(decision_source, sink)
             );
             assert_error!(ctx, decision_reaches);
@@ -93,6 +96,30 @@ policy!(card_storage, ctx {
     assert_warning!(ctx, any_sink_reached);
     Ok(())
 });
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+enum Policy {
+    CardStorage,
+    CardEncryption,
+    ApikeyStorage,
+}
+
+impl Policy {
+    fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
+        use Policy::*;
+        match self {
+            CardStorage => card_storage as fn(Arc<Context>) -> Result<()>,
+            CardEncryption => card_encryption as _,
+            ApikeyStorage => apikey_storage as _,
+        }
+    }
+}
+
+#[derive(clap::Parser)]
+struct Args {
+    #[clap(long, short)]
+    policy: Option<Vec<Policy>>,
+}
 
 fn main() -> Result<()> {
     let dir = "..";
@@ -109,10 +136,12 @@ fn main() -> Result<()> {
         "-p",
         "router",
     ]);
+    use clap::{Parser, ValueEnum};
+    let args = Args::parse();
     cmd.run(dir)?.with_context(|ctx| {
-        //apikey_storage(ctx.clone())?;
-        //card_encryption(ctx.clone())?;
-        card_storage(ctx.clone())?;
+        for p in args.policy.as_ref().map_or(Policy::value_variants(), Vec::as_slice) {
+            p.runnable()(ctx.clone())?
+        }
         Ok(())
     })?;
     println!("Policy successful");
