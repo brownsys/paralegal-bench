@@ -92,7 +92,7 @@ impl Commit {
     /// Allows for control over which validations should be performed.
     /// Returns the generated Commit, the old Resource and the new Resource.
     #[tracing::instrument(skip(store))]
-    #[dfpp::analyze]
+    #[paralegal::analyze]
     pub fn apply_opts(
         &self,
         store: &impl Storelike,
