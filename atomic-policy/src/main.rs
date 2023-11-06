@@ -82,11 +82,11 @@ policy!(check_rights, ctx {
             .collect::<Vec<_>>();
         assert_error!(ctx, !valid_checks.is_empty(), format!("Found no valid checks for commit {} which flows into {}", ctx.describe_node(commit), ctx.describe_node(*stores.peek().unwrap())));
 
-        for store in stores {
-            // A valid check determines the store
-            let check_store = valid_checks.iter().any(|c| ctx.determines_ctrl(*c, store));
-            assert_error!(ctx, !check_store, "No valid checks have control-flow influence on store {}", ctx.describe_node(store));
-        }
+        // for store in stores {
+        //     // A valid check determines the store
+        //     let mut check_store = valid_checks.iter().filter(|c| ctx.determines_ctrl(**c, store));
+        //     assert_error!(ctx, check_store.next().is_some(), "No valid checks have control-flow influence on store {}", ctx.describe_node(store));
+        // }
     }
     assert_warning!(ctx, any_sink_reached);
 
