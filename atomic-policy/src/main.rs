@@ -112,7 +112,7 @@ fn main() -> Result<()> {
         "--features",
         "db",
     ]);
-    cmd.run(dir)?.with_context(|ctx| check_rights(ctx))?;
+    cmd.run(dir)?.with_context(check_rights)?;
     println!("Policy successful");
     Ok(())
 }
