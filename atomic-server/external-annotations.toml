@@ -1,6 +1,6 @@
-[["atomic_lib::commit::Commit"]]
+[["atomic_lib::commit::Commit::apply_opts"]]
 marker = "commit"
-on_return = true
+on_argument = [0]
 
 [["atomic_lib::commit::Commit::into_resource"]]
 marker = "resource"
@@ -18,9 +18,9 @@ on_argument = [1]
 marker = "new_resource"
 on_return = true
 
-[["atomic_lib::resources::Resource::set_propval"]]
-marker = "new_resource"
-on_argument = [0]
+# [["atomic_lib::resources::Resource::set_propval"]]
+# marker = "new_resource"
+# on_argument = [0]
 
 [["atomic_lib::storelike::Storelike::add_resource"]]
 marker = "sink"
@@ -33,12 +33,3 @@ on_argument = [1]
 [["atomic_lib::storelike::Storelike::handle_commit"]]
 marker = "sink"
 on_argument = [1]
-
-# [["atomic_lib::resources::Resource::get"]]
-# marker = "noinline"
-
-# [["atomic_lib::resources::Resource::get_classes"]]
-# marker = "noinline"
-
-# [["atomic_lib::plugins::chatroom::after_apply_commit_message"]]
-# marker = "noinline"

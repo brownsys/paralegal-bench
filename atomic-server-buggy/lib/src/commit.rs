@@ -52,7 +52,7 @@ impl Commit {
     /// Creates, edits or destroys a resource.
     /// Allows for control over which validations should be performed.
     /// TODO: Should check if the Agent has the correct rights.
-	#[dfpp::analyze]
+	#[paralegal::analyze]
     pub fn apply_opts(
         &self,
         store: &impl Storelike,

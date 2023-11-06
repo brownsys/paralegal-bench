@@ -2,7 +2,7 @@ extern crate anyhow;
 extern crate clap;
 extern crate paralegal_policy;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeType,
     Marker, Node,
@@ -59,21 +59,34 @@ policy!(check_rights, ctx {
     let commits = ctx.marked_nodes(marker!(commit));
     let mut any_sink_reached = false;
     for commit in commits {
-        let mut stores = ctx.influencees(commit, EdgeType::DataAndControl).filter(|s| ctx.has_marker(marker!(sink), *s)).peekable();
+        // If commit is stored
+        let mut stores = ctx.influencees(commit, EdgeType::DataAndControl)
+            .filter(|s| ctx.has_marker(marker!(sink), *s))
+            .peekable();
 
         if stores.peek().is_none() {
             continue;
         }
         any_sink_reached = true;
 
-        let new_resources = ctx.influencees(commit, EdgeType::Data).filter(|n| ctx.has_marker(marker!(new_resource), *n)).collect::<Vec<_>>();
-        let valid_checks = ctx.influencees(commit, EdgeType::Data).filter(|check| ctx.has_marker(marker!(check_rights), *check) && new_resources.iter().all(|new| !ctx.flows_to(*new, *check, EdgeType::Data))).collect::<Vec<_>>();
-        assert_error!(ctx, !valid_checks.is_empty());
+        let new_resources = ctx.influencees(commit, EdgeType::Data)
+            .filter(|n| ctx.has_marker(marker!(new_resource), *n))
+            .collect::<Vec<_>>();
 
-        // for store in stores {
-        //     let check_store = valid_checks.iter().any(|c| ctx.determines_ctrl(*c, store));
-        //     assert_error!(ctx, !check_store);
-        // }
+        // All checks that flow from the commit but not from a new_resource
+        let valid_checks = ctx.influencees(commit, EdgeType::Data)
+            .filter(|check|
+                ctx.has_marker(marker!(check_rights), *check)
+                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeType::Data))
+            )
+            .collect::<Vec<_>>();
+        assert_error!(ctx, !valid_checks.is_empty(), format!("Found no valid checks for commit {} which flows into {}", ctx.describe_node(commit), ctx.describe_node(*stores.peek().unwrap())));
+
+        for store in stores {
+            // A valid check determines the store
+            let check_store = valid_checks.iter().any(|c| ctx.determines_ctrl(*c, store));
+            assert_error!(ctx, !check_store, "No valid checks have control-flow influence on store {}", ctx.describe_node(store));
+        }
     }
     assert_warning!(ctx, any_sink_reached);
 
@@ -81,7 +94,9 @@ policy!(check_rights, ctx {
 });
 
 fn main() -> Result<()> {
-    let dir = "..";
+    let dir = std::env::args()
+        .nth(1)
+        .ok_or_else(|| anyhow!("expected an argument"))?;
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     cmd.get_command().args([
         "--inline-elision",

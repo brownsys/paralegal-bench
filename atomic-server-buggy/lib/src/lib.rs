@@ -58,23 +58,21 @@ let fetched_new_resource = store.get_resource(&subject).unwrap();
 assert!(fetched_new_resource.get_shortname("description", &store).unwrap().to_string() == "the age of a person");
 ```
 */
-#![feature(register_tool)]
-#![register_tool(dfpp)]
 
 pub mod agents;
 pub mod atoms;
 pub mod client;
 pub mod collections;
 pub mod commit;
-pub mod datetime_helpers;
-#[cfg(feature = "db")]
-pub mod db;
 #[cfg(feature = "config")]
 pub mod config;
 pub mod datatype;
-pub mod errors;
+pub mod datetime_helpers;
+#[cfg(feature = "db")]
+pub mod db;
 #[cfg(feature = "db")]
 pub mod endpoints;
+pub mod errors;
 pub mod hierarchy;
 pub mod mapping;
 pub mod parse;
@@ -93,11 +91,10 @@ pub mod values;
 
 pub use atoms::Atom;
 pub use atoms::RichAtom;
+pub use commit::Commit;
 #[cfg(feature = "db")]
 pub use db::Db;
-pub use commit::Commit;
 pub use resources::Resource;
 pub use store::Store;
 pub use storelike::Storelike;
 pub use values::Value;
-

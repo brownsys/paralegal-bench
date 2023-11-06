@@ -1,5 +1,6 @@
-[["atomic_lib::commit::Commit"]]
+[["atomic_lib::commit::Commit::apply_opts"]]
 marker = "commit"
+on_argument = [0]
 
 [["atomic_lib::commit::Commit::into_resource"]]
 marker = "resource"
@@ -20,15 +21,3 @@ on_argument = [0]
 [["atomic_lib::storelike::Storelike::add_resource"]]
 marker = "sink"
 on_argument = [1]
-
-# [["atomic_lib::resources::Resource::get"]]
-# marker = "noinline"
-
-# [["atomic_lib::commit::Commit::serialize_deterministically_json_ad"]]
-# marker = "noinline"
-
-# [["atomic_lib::resources::Resource::check_required_props"]]
-# marker = "noinline"
-
-# [["atomic_lib::storelike::Storelike::remove_resource"]]
-# marker = "noinline"
