@@ -90,6 +90,12 @@ fn main() -> Result<()> {
         "--target",
         "atomic_lib",
         "--abort-after-analysis",
+        "--",
+        "-p",
+        "atomic_lib",
+        "--lib",
+        "--features",
+        "db",
     ]);
     cmd.run(dir)?.with_context(|ctx| check_rights(ctx))?;
     println!("Policy successful");
