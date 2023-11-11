@@ -1,9 +1,0 @@
-[workspace]
-members = [
-    # "server",
-    # "cli",
-    "lib",
-]
-
-[replace]
-"tantivy:0.19.2" = { path = "../tantivy" }

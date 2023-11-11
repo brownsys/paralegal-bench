@@ -1,27 +1,30 @@
 //! Content-type / Accept header negotiation, MIME types
 
-use actix_web::http::header::HeaderMap;
+use actix_web::{http::HeaderMap};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq)]
 pub enum ContentType {
     /// Plain JSON, using shortnames as keys instead of URLs
     /// https://docs.atomicdata.dev/interoperability/json.html#atomic-data-as-plain-json
-    Json,
+    JSON,
     /// JSON-AD, default Atomic Data serialization
     /// https://docs.atomicdata.dev/core/json-ad.html
-    JsonAd,
+    JSONAD,
     /// JSON-LD, RDF compatible JSON with @context mapping
     /// https://docs.atomicdata.dev/interoperability/json.html#from-json-to-json-ad
-    JsonLd,
-    Html,
+    JSONLD,
+    HTML,
     /// RDF Turtle format
     /// https://www.w3.org/TR/turtle/
-    Turtle,
+    TURTLE,
     /// RDF N-Triples format
     /// https://www.w3.org/TR/n-triples/
-    NTriples,
+    NT,
+    /// Atomic Data Triples (deprecated)
+    AD3,
 }
 
+const MIME_AD3: &str = "application/ad3-ndjson";
 const MIME_HTML: &str = "text/html";
 const MIME_XML: &str = "application/xml";
 const MIME_JSON: &str = "application/json";
@@ -33,22 +36,27 @@ const MIME_NT: &str = "application/n-triples";
 impl ContentType {
     pub fn to_mime(&self) -> &str {
         match self {
-            ContentType::Json => MIME_JSON,
-            ContentType::JsonAd => MIME_JSONAD,
-            ContentType::JsonLd => MIME_JSONLD,
-            ContentType::Html => MIME_HTML,
-            ContentType::Turtle => MIME_TURTLE,
-            ContentType::NTriples => MIME_NT,
+            ContentType::JSON => MIME_JSON,
+            ContentType::JSONAD => MIME_JSONAD,
+            ContentType::JSONLD => MIME_JSONLD,
+            ContentType::HTML => MIME_HTML,
+            ContentType::TURTLE => MIME_TURTLE,
+            ContentType::AD3 => MIME_AD3,
+            ContentType::NT => MIME_NT
         }
     }
 }
 
-/// Returns the preferred content type.
+/// Returns the preffered content type.
 /// Defaults to HTML if none is found.
 pub fn get_accept(map: &HeaderMap) -> ContentType {
     let accept_header = match map.get("Accept") {
-        Some(header) => header.to_str().unwrap_or(""),
-        None => return ContentType::Html,
+        Some(header) => {
+            header.to_str().unwrap_or("")
+        }
+        None => {
+            return ContentType::HTML
+        }
     };
     parse_accept_header(accept_header)
 }
@@ -59,30 +67,33 @@ pub fn get_accept(map: &HeaderMap) -> ContentType {
 /// Defaults to HTML
 pub fn parse_accept_header(header: &str) -> ContentType {
     for mimepart in header.split(',') {
-        if mimepart.contains(MIME_JSONAD) {
-            return ContentType::JsonAd;
+        if mimepart.contains(MIME_AD3) {
+            return ContentType::AD3
         }
         if mimepart.contains(MIME_HTML) {
-            return ContentType::Html;
+            return ContentType::HTML
         }
         if mimepart.contains(MIME_XML) {
-            return ContentType::Html;
+            return ContentType::HTML
         }
         if mimepart.contains(MIME_JSON) {
-            return ContentType::Json;
+            return ContentType::JSON
         }
         if mimepart.contains(MIME_JSONLD) {
-            return ContentType::JsonLd;
+            return ContentType::JSONLD
+        }
+        if mimepart.contains(MIME_JSONAD) {
+            return ContentType::JSONAD
         }
         if mimepart.contains(MIME_TURTLE) {
-            return ContentType::Turtle;
+            return ContentType::TURTLE
         }
         if mimepart.contains(MIME_NT) {
-            return ContentType::NTriples;
+            return ContentType::NT
         }
     }
-    tracing::info!("Unknown Accept header, defaut to HTML: {}", header);
-    ContentType::Html
+    log::info!("Unknown Accept header, defaut to HTML: {}", header);
+    ContentType::HTML
 }
 
 #[cfg(test)]
@@ -91,14 +102,15 @@ mod test {
 
     #[test]
     fn parse_types() {
-        assert!(parse_accept_header("text/html,application/xml") == ContentType::Html);
-        assert!(parse_accept_header("application/ad+json") == ContentType::JsonAd);
-        assert!(parse_accept_header("application/ld+json") == ContentType::JsonLd);
+        assert!(parse_accept_header("text/html,application/xml") == ContentType::HTML);
+        assert!(parse_accept_header("application/ad3-ndjson") == ContentType::AD3);
+        assert!(parse_accept_header("application/ad+json") == ContentType::JSONAD);
+        assert!(parse_accept_header("application/ld+json") == ContentType::JSONLD);
     }
 
     #[test]
     fn parse_types_with_blank_chars() {
-        assert!(parse_accept_header("application/ad+json ; ") == ContentType::JsonAd);
-        assert!(parse_accept_header(" application/ad+json ; ") == ContentType::JsonAd);
+        assert!(parse_accept_header("application/ad3-ndjson ; ") == ContentType::AD3);
+        assert!(parse_accept_header(" application/ad3-ndjson ; ") == ContentType::AD3);
     }
 }

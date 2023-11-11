@@ -1,15 +1,13 @@
-# `atomic-cli`
+# `atomic-cli` (CLI)
 
-[![crates.io](https://img.shields.io/crates/v/atomic-cli)](https://crates.io/crates/atomic-cli)
+[![crates.io](https://meritbadge.herokuapp.com/atomic-cli)](https://crates.io/crates/atomic-cli)
 [![Discord chat](https://img.shields.io/discord/723588174747533393.svg?logo=discord)](https://discord.gg/a72Rv2P)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![github](https://img.shields.io/github/stars/atomicdata-dev/atomic-server?style=social)](https://github.com/joepio/aget_basetomic)
+[![github](https://img.shields.io/github/stars/joepio/atomic?style=social)](https://github.com/joepio/aget_basetomic)
 
-_Status: Beta. [Breaking changes](../CHANGELOG.md) are expected until 1.0._
+_Status: Alpha. Prone to breaking changes. [Changelog](https://github.com/joepio/atomic/blob/master/CHANGELOG.md)_
 
-**A command-line application to create, read and interact with Atomic Data.**
-
-Designed and tested to work with [atomic-server](https://crates.io/crates/atomic-server/).
+A command-line application to create, read and interact with Atomic Data.
 
 ```
 atomic-cli 0.23.2
@@ -32,24 +30,25 @@ SUBCOMMANDS:
     new        Create a Resource
     remove     Remove a single Atom from a Resource.
     set        Update a single Atom. Creates both the Resource if they don't exist. Overwrites existing.
+    tpf        Finds Atoms using Triple Pattern Fragments.
 
 Visit https://atomicdata.dev for more info
 ```
 
 ## Installation
 
-You can install `atomic-cli: in multiple ways:
+Install [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) to build from source.
 
-### Using [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+Install using crates.io:
 
 ```sh
 cargo install atomic-cli
 ```
 
-### Build from source
+Or build from this repo:
 
 ```sh
-git clone git@github.com:atomicdata-dev/atomic-server.git
+git clone git@github.com:joepio/atomic.git
 cd atomic/cli
 # Install atomic to path
 cargo install --path ./
@@ -71,7 +70,7 @@ It will read the `~/.config/atomic/config.toml` file, and create one using some 
 
 ## Config
 
-Atomic creates a `~/.config/atomic` folder, which contains a `mapping.amp` and a `db`.
+Atomic creates a `~/.config/atomic` folder, which contains a `mapping.amp` and a `store.ad3`.
 This folder is also used by `atomic-server`.
 
 ## Mapping

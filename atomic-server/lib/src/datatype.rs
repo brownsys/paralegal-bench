@@ -1,12 +1,11 @@
-//! [DataType]s constrain values of Atoms
+//! Datatypes constrain values of Atoms
 
-use crate::urls;
-use serde::{Deserialize, Serialize};
 use std::{fmt, string::ParseError};
+use serde::{Deserialize, Serialize};
+use crate::urls;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum DataType {
-    /// Either a full Resource, a link to a resource (subject) or a Nested Anonymous Resource
     AtomicUrl,
     Boolean,
     Date,

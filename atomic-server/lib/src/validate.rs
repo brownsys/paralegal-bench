@@ -33,7 +33,7 @@ pub fn validate_store(
         resource_count += 1;
 
         if fetch_items {
-            match crate::client::fetch_resource(subject, store, store.get_default_agent().ok()) {
+            match crate::client::fetch_resource(&subject, store) {
                 Ok(_) => {}
                 Err(e) => unfetchable.push((subject.clone(), e.to_string())),
             }
@@ -41,13 +41,13 @@ pub fn validate_store(
 
         let mut found_props: Vec<String> = Vec::new();
 
-        for (prop_url, value) in propvals {
+        for (prop_url, value) in propvals.to_owned() {
             atom_count += 1;
 
-            let property = match store.get_property(prop_url) {
+            let property = match store.get_property(&prop_url) {
                 Ok(prop) => prop,
                 Err(e) => {
-                    unfetchable_props.push((prop_url.clone(), e.to_string()));
+                    unfetchable_props.push((prop_url, e.to_string()));
                     break;
                 }
             };
@@ -56,13 +56,13 @@ pub fn validate_store(
             match crate::Value::new(&value.to_string(), &property.data_type) {
                 Ok(_) => {}
                 Err(e) => invalid_value.push((
-                    crate::Atom::new(subject.clone(), prop_url.clone(), value.clone()),
+                    crate::Atom::new(subject.clone(), prop_url.clone(), value.to_string()),
                     e.to_string(),
                 )),
             };
             found_props.push(prop_url.clone());
         }
-        let classes = match store.get_classes_for_subject(subject) {
+        let classes = match store.get_classes_for_subject(&subject) {
             Ok(classes) => classes,
             Err(e) => {
                 unfetchable_classes.push((subject.clone(), e.to_string()));
@@ -84,7 +84,9 @@ pub fn validate_store(
                             ));
                         }
                     }
-                    Err(e) => unfetchable.push((required_prop_subject, e.to_string())),
+                    Err(e) => {
+                        unfetchable.push((required_prop_subject, e.to_string()))
+                    }
                 }
             }
         }
@@ -125,16 +127,16 @@ impl std::fmt::Display for ValidationReport {
             return Ok(());
         }
         for (subject, error) in &self.unfetchable {
-            fmt.write_str(&format!("Cannot fetch Resource {}: {} \n", subject, error))?;
+            fmt.write_str(&*format!("Cannot fetch Resource {}: {} \n", subject, error))?;
         }
         for (subject, error) in &self.unfetchable_classes {
-            fmt.write_str(&format!("Cannot fetch Class {}: {} \n", subject, error))?;
+            fmt.write_str(&*format!("Cannot fetch Class {}: {} \n", subject, error))?;
         }
         for (subject, error) in &self.unfetchable_props {
-            fmt.write_str(&format!("Cannot fetch Property {}: {} \n", subject, error))?;
+            fmt.write_str(&*format!("Cannot fetch Property {}: {} \n", subject, error))?;
         }
         for (atom, error) in &self.invalid_value {
-            fmt.write_str(&format!("Invalid value {:?}: {} \n", atom, error))?;
+            fmt.write_str(&*format!("Invalid value {:?}: {} \n", atom, error))?;
         }
         Ok(())
     }
@@ -142,15 +144,30 @@ impl std::fmt::Display for ValidationReport {
 
 #[cfg(test)]
 mod test {
-    use crate::{Store, Storelike};
+    use crate::{parse::parse_ad3, Store, Storelike};
 
     #[test]
     fn validate_populated() {
         let store = Store::init().unwrap();
         store.populate().unwrap();
-        // let report = store.validate();
-        // assert!(report.atom_count > 30);
-        // assert!(report.resource_count > 5);
-        // assert!(report.is_valid());
+        let report = store.validate();
+        assert!(report.atom_count > 30);
+        assert!(report.resource_count > 5);
+        assert!(report.is_valid());
+    }
+
+    #[test]
+    fn invalid_ad3() {
+        let store = Store::init().unwrap();
+        let ad3 = r#"["https://example.com","https://atomicdata.dev/properties/isA","[\"https://atomicdata.dev/classes/Class\"]"]"#;
+        let atoms = parse_ad3(ad3).unwrap();
+        // This used to work, but now the add_atoms process does all the validation. It already checks completeness of resource and datatype compliance.
+        store.add_atoms(atoms).unwrap_err();
+        // let report = validate_store(&store, false);
+        // println!("resource_count: {}", report.resource_count);
+        // assert!(report.resource_count == 10);
+        // println!("atom_count: {}", report.atom_count);
+        // assert!(report.atom_count == 44);
+        // assert!(!report.is_valid());
     }
 }

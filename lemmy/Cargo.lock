@@ -1631,6 +1631,7 @@ dependencies = [
  "once_cell",
  "openssl",
  "opentelemetry",
+ "paralegal",
  "parking_lot 0.12.0",
  "percent-encoding",
  "rand 0.8.5",
@@ -2088,6 +2089,15 @@ dependencies = [
  "pin-project",
  "rand 0.8.5",
  "thiserror",
+]
+
+[[package]]
+name = "paralegal"
+version = "0.1.0"
+dependencies = [
+ "cfg-if",
+ "proc-macro2 1.0.39",
+ "quote 1.0.18",
 ]
 
 [[package]]

@@ -10,26 +10,18 @@ on_return = true
 marker = "resource"
 on_return = true
 
-[["atomic_lib::hierarchy::check_rights"]]
+[["atomic_lib::commit::Commit::modify_parent"]]
+marker = "safe"
+on_return = true
+
+[["atomic_lib::hierarchy::check_write"]]
 marker = "check_rights"
 on_argument = [1]
 
-[["atomic_lib::commit::Commit::apply_changes"]]
+[["atomic_lib::resources::Resource::set_propval"]]
 marker = "new_resource"
 on_return = true
 
-# [["atomic_lib::resources::Resource::set_propval"]]
-# marker = "new_resource"
-# on_argument = [0]
-
 [["atomic_lib::storelike::Storelike::add_resource"]]
-marker = "sink"
-on_argument = [1]
-
-[["atomic_lib::storelike::Storelike::add_resource_opts"]]
-marker = "sink"
-on_argument = [1]
-
-[["atomic_lib::storelike::Storelike::handle_commit"]]
 marker = "sink"
 on_argument = [1]

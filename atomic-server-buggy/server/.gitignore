@@ -1,5 +1,0 @@
-/target
-.env
-.ssl/*
-.https/*
-/static/well-known/acme-challenge/*

@@ -94,16 +94,15 @@ policy!(check_rights, ctx {
 });
 
 fn main() -> Result<()> {
-    let dir = std::env::args()
-        .nth(1)
-        .ok_or_else(|| anyhow!("expected format: cargo run <path> [buggy|fixed]"))?;
-    let buggy_arg = std::env::args().nth(2);
+    let dir = "../";
+    let buggy_arg = std::env::args().nth(1);
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
 
     cmd.get_command().args([
         "--inline-elision",
         "--model-version",
         "v2",
+        "--skip-sigs",
         "--external-annotations",
         "external-annotations.toml",
         "--target",

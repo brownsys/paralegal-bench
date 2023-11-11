@@ -1,86 +1,65 @@
 //! Functions for interacting with an Atomic Server
-use crate::{
-    agents::Agent,
-    commit::sign_message,
-    errors::AtomicResult,
-    parse::{parse_json_ad_resource, ParseOpts},
-    Resource, Storelike,
-};
+use url::Url;
+
+use crate::{errors::AtomicResult, parse::parse_ad3, Resource, Storelike};
+
+fn fetch_basic(url: &str) -> AtomicResult<Vec<crate::Atom>> {
+    if !url.starts_with("http") {
+        return Err(format!("Could not fetch url '{}', must start with http.", url).into());
+    }
+    let resp = ureq::get(&url)
+        .set("Accept", crate::parse::AD3_MIME)
+        .timeout_read(2000)
+        .call();
+    if resp.status() != 200 {
+        return Err(format!("Could not fetch url '{}'. Status: {}", url, resp.status()).into());
+    };
+    let body = &resp
+        .into_string()
+        .map_err(|e| format!("Could not parse response {}: {}", url, e))?;
+    let atoms = parse_ad3(body).map_err(|e| format!("Error parsing body of {}: {}", url, e))?;
+    Ok(atoms)
+}
 
 /// Fetches a resource, makes sure its subject matches.
 /// Checks the datatypes for the Values.
 /// Ignores all atoms where the subject is different.
 /// WARNING: Calls store methods, and is called by store methods, might get stuck in a loop!
-#[tracing::instrument(skip(store), level = "info")]
-pub fn fetch_resource(
-    subject: &str,
-    store: &impl Storelike,
-    for_agent: Option<Agent>,
-) -> AtomicResult<Resource> {
-    let body = fetch_body(subject, crate::parse::JSON_AD_MIME, for_agent)?;
-    let resource = parse_json_ad_resource(&body, store, &ParseOpts::default())
-        .map_err(|e| format!("Error parsing body of {}. {}", subject, e))?;
+pub fn fetch_resource(subject: &str, store: &impl Storelike) -> AtomicResult<Resource> {
+    let atoms = fetch_basic(subject)?;
+    let mut resource = Resource::new(subject.into());
+    for atom in atoms {
+        resource.set_propval_string(atom.property, &atom.value, store)?;
+    }
     Ok(resource)
 }
 
-/// Returns the various x-atomic authentication headers, includign agent signature
-pub fn get_authentication_headers(url: &str, agent: &Agent) -> AtomicResult<Vec<(String, String)>> {
-    let mut headers = Vec::new();
-    let now = crate::utils::now().to_string();
-    let message = format!("{} {}", url, now);
-    let signature = sign_message(
-        &message,
-        agent
-            .private_key
-            .as_ref()
-            .ok_or("No private key in agent")?,
-        &agent.public_key,
-    )?;
-    headers.push(("x-atomic-public-key".into(), agent.public_key.to_string()));
-    headers.push(("x-atomic-signature".into(), signature));
-    headers.push(("x-atomic-timestamp".into(), now));
-    headers.push(("x-atomic-agent".into(), agent.subject.to_string()));
-    Ok(headers)
-}
-
-/// Fetches a URL, returns its body.
-/// Uses the store's Agent agent (if set) to sign the request.
-#[tracing::instrument(level = "info")]
-pub fn fetch_body(url: &str, content_type: &str, for_agent: Option<Agent>) -> AtomicResult<String> {
-    if !url.starts_with("http") {
-        return Err(format!("Could not fetch url '{}', must start with http.", url).into());
+/// Uses a TPF endpoint, fetches the atoms.
+pub fn fetch_tpf(
+    endpoint: &str,
+    q_subject: Option<&str>,
+    q_property: Option<&str>,
+    q_value: Option<&str>,
+) -> AtomicResult<Vec<crate::Atom>> {
+    let mut url = Url::parse(endpoint)?;
+    if let Some(val) = q_subject {
+        url.query_pairs_mut().append_pair("subject", val);
     }
-    if let Some(agent) = for_agent {
-        get_authentication_headers(url, &agent)?;
+    if let Some(val) = q_property {
+        url.query_pairs_mut().append_pair("property", val);
     }
-
-    let agent = ureq::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build();
-    let resp = agent
-        .get(url)
-        .set("Accept", content_type)
-        .call()
-        .map_err(|e| format!("Error when server tried fetching {} : {}", url, e))?;
-    let status = resp.status();
-    let body = resp
-        .into_string()
-        .map_err(|e| format!("Could not parse HTTP response for {}: {}", url, e))?;
-    if status != 200 {
-        return Err(format!(
-            "Could not fetch url '{}'. Status: {}. Body: {}",
-            url, status, body
-        )
-        .into());
-    };
-    Ok(body)
+    if let Some(val) = q_value {
+        url.query_pairs_mut().append_pair("value", val);
+    }
+    // let url = "https://atomicdata.dev/tpf?subject=&property=&value=1";
+    fetch_basic(url.as_str())
 }
 
 /// Posts a Commit to the endpoint of the Subject from the Commit
 pub fn post_commit(commit: &crate::Commit, store: &impl Storelike) -> AtomicResult<()> {
-    let server_url = crate::utils::server_url(commit.get_subject())?;
+    let base_url = crate::url_helpers::base_url(commit.get_subject())?;
     // Default Commit endpoint is `https://example.com/commit`
-    let endpoint = format!("{}commit", server_url);
+    let endpoint = format!("{}commit", base_url);
     post_commit_custom_endpoint(&endpoint, commit, store)
 }
 
@@ -91,19 +70,14 @@ pub fn post_commit_custom_endpoint(
     commit: &crate::Commit,
     store: &impl Storelike,
 ) -> AtomicResult<()> {
-    let json = commit.into_resource(store)?.to_json_ad()?;
+    let json = commit.clone().into_resource(store)?.to_json_ad()?;
 
-    let agent = ureq::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build();
-
-    let resp = agent
-        .post(endpoint)
+    let resp = ureq::post(&endpoint)
         .set("Content-Type", "application/json")
-        .send_string(&json)
-        .map_err(|e| format!("Error when posting commit to {} : {}", endpoint, e))?;
+        .timeout_read(2000)
+        .send_string(&json);
 
-    if resp.status() != 200 {
+    if resp.error() {
         Err(format!(
             "Failed applying commit to {}. Status: {} Body: {}",
             endpoint,
@@ -124,7 +98,7 @@ mod test {
     #[ignore]
     fn fetch_resource_basic() {
         let store = crate::Store::init().unwrap();
-        let resource = fetch_resource(crate::urls::SHORTNAME, &store, None).unwrap();
+        let resource = fetch_resource(crate::urls::SHORTNAME, &store).unwrap();
         let shortname = resource.get(crate::urls::SHORTNAME).unwrap();
         assert!(shortname.to_string() == "shortname");
     }
