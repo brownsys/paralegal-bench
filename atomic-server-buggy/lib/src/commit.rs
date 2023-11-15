@@ -52,7 +52,7 @@ impl Commit {
     /// Creates, edits or destroys a resource.
     /// Allows for control over which validations should be performed.
     /// TODO: Should check if the Agent has the correct rights.
-	#[dfpp::analyze]
+    #[paralegal::analyze]
     pub fn apply_opts(
         &self,
         store: &impl Storelike,
@@ -107,37 +107,51 @@ impl Commit {
             Ok(rs) => rs,
             Err(_) => Resource::new(self.subject.clone()),
         };
-        if let Some(set) = self.set.clone() {
-            for (prop, val) in set.iter() {
-                resource.set_propval(prop.into(), val.to_owned(), store)?;
+
+        #[cfg(not(feature = "bug-fix"))]
+        {
+            if let Some(set) = self.set.clone() {
+                for (prop, val) in set.iter() {
+                    resource.set_propval(prop.into(), val.to_owned(), store)?;
+                }
             }
-        }
-        if let Some(remove) = self.remove.clone() {
-            for prop in remove.iter() {
-                resource.remove_propval(&prop);
+            if let Some(remove) = self.remove.clone() {
+                for prop in remove.iter() {
+                    resource.remove_propval(&prop);
+                }
             }
-        }
-        // Check if all required props are there
-        if validate_schema {
-            resource.check_required_props(store)?;
+            // Check if all required props are there
+            if validate_schema {
+                resource.check_required_props(store)?;
+            }
         }
         // Set a parent only if the rights checks are to be validated
         if validate_rights {
-            // If there is no explicit parent set, revert to a default
-            if resource.get(urls::PARENT).is_err() {
-                let default_parent = store.get_self_url().ok_or("There is no self_url set, and no parent in the Commit. The commit can not be applied.")?;
-                resource.set_propval(
-                    urls::PARENT.into(),
-                    Value::AtomicUrl(default_parent),
-                    store,
-                )?;
-            }
+            self.modify_parent(&mut resource, store);
+
             if !crate::hierarchy::check_write(store, &resource, self.signer.clone())? {
                 return Err(format!("Agent {} is not permitted to edit {}. There should be a write right referring to this Agent in this Resource or its parent.",
                 &self.signer, self.subject).into());
             }
             println!("This should not happen!")
         };
+        #[cfg(feature = "bug-fix")]
+        {
+            if let Some(set) = self.set.clone() {
+                for (prop, val) in set.iter() {
+                    resource.set_propval(prop.into(), val.to_owned(), store)?;
+                }
+            }
+            if let Some(remove) = self.remove.clone() {
+                for prop in remove.iter() {
+                    resource.remove_propval(&prop);
+                }
+            }
+            // Check if all required props are there
+            if validate_schema {
+                resource.check_required_props(store)?;
+            }
+        }
         // If a Destroy field is found, remove the resource and return early
         // TODO: Should we remove the existing commits too? Probably.
         if let Some(destroy) = self.destroy {
@@ -150,6 +164,15 @@ impl Commit {
         store.add_resource(&commit_resource)?;
         store.add_resource(&resource)?;
         Ok(commit_resource)
+    }
+
+    // If there is no explicit parent set, revert to a default
+    fn modify_parent(&self, resource: &mut Resource, store: &impl Storelike) -> AtomicResult<()> {
+        if resource.get(urls::PARENT).is_err() {
+            let default_parent = store.get_self_url().ok_or("There is no self_url set, and no parent in the Commit. The commit can not be applied.")?;
+            resource.set_propval(urls::PARENT.into(), Value::AtomicUrl(default_parent), store)?;
+        }
+        Ok(())
     }
 
     /// Applies a commit without performing authorization / signature / schema checks.
@@ -342,12 +365,7 @@ fn sign_at(
         .serialize_deterministically_json_ad(store)
         .map_err(|e| format!("Failed serializing commit: {}", e))?;
     let private_key = agent.private_key.clone().ok_or("No private key in agent")?;
-    let signature = sign_message(
-        &stringified,
-        &private_key,
-        &agent.public_key,
-    )
-    .map_err(|e| {
+    let signature = sign_message(&stringified, &private_key, &agent.public_key).map_err(|e| {
         format!(
             "Failed to sign message for resource {} with agent {}: {}",
             commit.subject, agent.subject, e
