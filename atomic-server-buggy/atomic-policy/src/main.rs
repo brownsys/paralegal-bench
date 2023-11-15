@@ -89,6 +89,7 @@ policy!(check_rights, ctx {
             )
         );
 
+        // BELOW IS VALID POLICY CODE BUT DOESN'T WORK BC OF PARALEGAL BUG ------
         // for store in stores {
         //     // A valid check determines the store
         //     let mut check_store = valid_checks.iter().filter(|c| ctx.determines_ctrl(**c, store));
