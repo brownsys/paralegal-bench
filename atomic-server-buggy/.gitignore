@@ -7,3 +7,4 @@ trace-*.json
 
 tmp.txt
 analysis_result.*
+flow-graph.json

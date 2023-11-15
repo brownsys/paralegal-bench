@@ -1,8 +1,7 @@
 extern crate anyhow;
-extern crate clap;
 extern crate paralegal_policy;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeType,
     Marker, Node,
@@ -80,7 +79,15 @@ policy!(check_rights, ctx {
                 && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeType::Data))
             )
             .collect::<Vec<_>>();
-        assert_error!(ctx, !valid_checks.is_empty(), format!("Found no valid checks for commit {} which flows into {}", ctx.describe_node(commit), ctx.describe_node(*stores.peek().unwrap())));
+        assert_error!(
+            ctx,
+            !valid_checks.is_empty(),
+            format!(
+                "Found no valid checks for commit {} which flows into {}",
+                ctx.describe_node(commit),
+                ctx.describe_node(*stores.peek().unwrap())
+            )
+        );
 
         // for store in stores {
         //     // A valid check determines the store
@@ -88,7 +95,11 @@ policy!(check_rights, ctx {
         //     assert_error!(ctx, check_store.next().is_some(), "No valid checks have control-flow influence on store {}", ctx.describe_node(store));
         // }
     }
-    assert_warning!(ctx, any_sink_reached);
+    assert_warning!(
+        ctx,
+        any_sink_reached,
+        "No sink was reached across controllers, the policy may be vacuous or the markers not correctly assigned/unreachable."
+    );
 
     Ok(())
 });
