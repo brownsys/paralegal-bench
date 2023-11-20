@@ -26,21 +26,22 @@ macro_rules! policy {
 }
 
 trait ContextExt {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a>;
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Vec<Node<'a>>;
 
     fn determines_ctrl(&self, influencer: Node, target: Node) -> bool;
 }
 
 impl ContextExt for Context {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a> {
-        Box::new(
-            self.desc()
-                .controllers
-                .keys()
-                .copied()
-                .flat_map(move |k| self.all_nodes_for_ctrl(k))
-                .filter(move |node| self.has_marker(marker, *node)),
-        )
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Vec<Node<'a>> {
+        // Box::new(
+        self.desc()
+            .controllers
+            .keys()
+            .copied()
+            .flat_map(move |k| self.all_nodes_for_ctrl(k))
+            .filter(move |node| self.has_marker(marker, *node))
+            .collect::<Vec<_>>()
+        // )
     }
 
     fn determines_ctrl(&self, influencer: Node, target: Node) -> bool {
@@ -50,7 +51,9 @@ impl ContextExt for Context {
         };
 
         self.influencees(influencer, EdgeType::Data)
-            .any(|inf| self.flows_to(inf, tcs, EdgeType::Control))
+            .collect::<Vec<_>>()
+            .iter()
+            .any(|&inf| self.flows_to(inf, tcs, EdgeType::Control))
     }
 }
 
@@ -59,8 +62,11 @@ policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     for commit in commits {
         // If commit is stored
-        let mut stores = ctx.influencees(commit, EdgeType::Data)
-            .filter(|s| ctx.has_marker(marker!(sink), *s))
+        let a = ctx.influencees(commit, EdgeType::Data)
+        .collect::<Vec<_>>();
+        let mut stores = a
+            .iter()
+            .filter(|&s| ctx.has_marker(marker!(sink), *s))
             .peekable();
 
         if stores.peek().is_none() {
@@ -85,7 +91,7 @@ policy!(check_rights, ctx {
             format!(
                 "Found no valid checks for commit {} which flows into {}",
                 ctx.describe_node(commit),
-                ctx.describe_node(*stores.peek().unwrap())
+                ctx.describe_node(**stores.peek().unwrap())
             )
         );
 
