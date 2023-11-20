@@ -1,8 +1,6 @@
 #![feature(never_type)]
 #![feature(proc_macro_hygiene)]
 #![feature(box_patterns)]
-#![feature(register_tool)]
-#![register_tool(paralegal_flow)]
 
 #[macro_use]
 extern crate diesel;

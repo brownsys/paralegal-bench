@@ -59,7 +59,7 @@ policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     for commit in commits {
         // If commit is stored
-        let mut stores = ctx.influencees(commit, EdgeType::DataAndControl)
+        let mut stores = ctx.influencees(commit, EdgeType::Data)
             .filter(|s| ctx.has_marker(marker!(sink), *s))
             .peekable();
 
@@ -141,7 +141,17 @@ fn main() -> Result<()> {
         }
     };
 
-    cmd.run(dir)?.with_context(check_rights)?;
-    println!("Policy successful");
+    let gl = cmd.run(dir)?;
+    let pd = gl.build_desc()?;
+
+    let now = std::time::Instant::now();
+    let ctx = Arc::new(Context::new(pd));
+
+    check_rights(ctx.clone())?;
+    ctx.emit_diagnostics(std::io::stdout())?;
+    println!(
+        "Successfully finished {}",
+        humantime::format_duration(now.elapsed())
+    );
     Ok(())
 }
