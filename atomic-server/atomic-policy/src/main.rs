@@ -142,16 +142,21 @@ fn main() -> Result<()> {
     };
 
     let gl = cmd.run(dir)?;
-    let pd = gl.build_desc()?;
 
-    let now = std::time::Instant::now();
-    let ctx = Arc::new(Context::new(pd));
+    let mut sum = std::time::Duration::from_millis(0);
 
-    check_rights(ctx.clone())?;
-    ctx.emit_diagnostics(std::io::stdout())?;
-    println!(
-        "Successfully finished {}",
-        humantime::format_duration(now.elapsed())
-    );
+    for _ in 0..100 {
+        let pd = gl.build_desc()?;
+        let now = std::time::Instant::now();
+        let ctx = Arc::new(Context::new(pd));
+
+        check_rights(ctx.clone())?;
+        ctx.emit_diagnostics(std::io::stdout())?;
+
+        sum += now.elapsed()
+    }
+
+    println!("Successfully finished {}", humantime::format_duration(sum));
+
     Ok(())
 }
