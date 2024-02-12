@@ -46,10 +46,9 @@ impl
         .await
     }
 }
-
-#[async_trait]
-impl Feature<api::SetupMandate, types::SetupMandateRequestData> for types::SetupMandateRouterData {
-    async fn decide_flows<'a>(
+impl types::SetupMandateRouterData {
+    //#[paralegal::analyze]
+    async fn decide_flows_impl<'a>(
         self,
         state: &AppState,
         connector: &api::ConnectorData,
@@ -87,6 +86,22 @@ impl Feature<api::SetupMandate, types::SetupMandateRequestData> for types::Setup
         .await?;
 
         mandate::mandate_procedure(state, resp, maybe_customer, pm_id).await
+    }
+}
+
+#[async_trait]
+impl Feature<api::SetupMandate, types::SetupMandateRequestData> for types::SetupMandateRouterData {
+    async fn decide_flows<'a>(
+        self,
+        state: &AppState,
+        connector: &api::ConnectorData,
+        maybe_customer: &Option<domain::Customer>,
+        call_connector_action: payments::CallConnectorAction,
+        merchant_account: &domain::MerchantAccount,
+        connector_request: Option<services::Request>,
+        key_store: &domain::MerchantKeyStore,
+    ) -> RouterResult<Self> {
+        self.decide_flows_impl(state, connector, maybe_customer, call_connector_action, merchant_account, connector_request, key_store).await
     }
 
     async fn add_access_token<'a>(
