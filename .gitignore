@@ -22,3 +22,5 @@ Cargo.lock
 **/check-*.frg
 explore
 **.ntgb.json
+/plume/po/
+flow-graph.json
