@@ -275,26 +275,26 @@ all-controllers = [
 	# "post-remove",
 	# "post-update",
 
-	# Skipped because it takes a really long time at the moment.
-	# "private-message-create",
+	# thread 'rustc' panicked at crates/paralegal-flow/src/ana/mod.rs:509:43:
+	# internal error: entered unreachable code: _5 = [generator@crates/api/src/lemmy_apub/objects/private_message.rs:79:3: 79:35 (#11300)] { self: move _1, context: _2 }
+	# at into_apub::bb0[5] in perform::bb0[6]←<closure>::bb72[2]←<closure>::bb157[2]←<closure>::bb72[2]←<closure>::bb53[10]←into_apub::bb0[5]←<closure>::bb72[2]←<closure>::bb45[2]←<closure>::bb40[7]	# "private-message-create",
 
 	# Disabled because of "Tracking borrow behind shared reference." flowistry error
 	# "private-message-delete",
 
 	"private-message-read", # Rustc: 2s 789ms Flowistry: 945ms 861μs Conversion: 5ms 397μs Serialization: 1s 451ms
 
-	# Skipped because it takes a really long time at the moment.
-	# "private-message-update",
+	# thread 'rustc' panicked at crates/paralegal-flow/src/ana/mod.rs:509:43:
+	# internal error: entered unreachable code: _5 = [generator@crates/api/src/lemmy_apub/objects/private_message.rs:79:3: 79:35 (#11294)] { self: move _1, context: _2 }
+	# at into_apub::bb0[5] in perform::bb0[6]←<closure>::bb72[2]←<closure>::bb126[2]←<closure>::bb72[2]←<closure>::bb53[10]←into_apub::bb0[5]←<closure>::bb35[2]	# "private-message-update",
 
 	"site-create", # Rustc: 2s 807ms Flowistry: 2s 786ms Conversion: 11ms 8μs Serialization: 3s 86ms
 
-	# Skipped because it takes a really long time at the moment.
-	#"site-read",
+	# Skipped because it goes into an endless loop and overflows the memory
+	# "site-read",
 
 	"site-update", # Rustc: 2s 827ms Flowistry: 6s 837ms Conversion: 14ms 447μs Serialization: 4s 242ms
 
-	# Skipped because it takes a really long time at the moment.
-	# "user-delete",
-
-	"user-read", # Rustc: 2s 798ms Flowistry: 45s 898ms Conversion: 23ms 667μs Serialization: 6s 632ms
+	"user-delete", # Rustc: 4s 368ms Flowistry: 3min 37s Conversion: 37ms 369μs Serialization: 6s 976ms
+	"user-read",   # Rustc: 2s 798ms Flowistry: 45s 898ms Conversion: 23ms 667μs Serialization: 6s 632ms
 ]
