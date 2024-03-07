@@ -569,6 +569,8 @@ fn run_batch(
                     let mut cmd = Command::new("cargo");
                     cmd.current_dir(&args.lemmy_prop_dir)
                         .arg("run")
+                        .arg("--release")
+                        .arg("--")
                         .arg(lemmy_dir)
                         .args(["--skip-compile"]);
                     cmd.arg("--prop");
