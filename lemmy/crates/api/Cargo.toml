@@ -173,77 +173,128 @@ full = []
 default = ["full"]
 
 all-controllers = [
-	"comment-like",
-	"comment-mark-as-read",
-	"comment-save",
-	"comment-report-create",
-	"comment-report-list",
-	"comment-report-resolve",
-	"community-add-mod",
-	"community-ban",
-	"community-block",
-	"community-follow",
-	"community-hide",
-	"community-transfer",
-	"notification-list-mentions",
-	"notification-list-replies",
-	"notification-mark-all-read",
-	"notification-mark-mention-read",
-	"notification-unread-count",
-	"user-add-admin",
-	"user-ban-person",
-	"user-block",
-	"user-change-password",
-	"user-list-banned",
-	"user-login",
-	"user-report-count",
-	"user-save-settings",
-	"post-like",
-	"post-lock",
-	"post-mark-read",
-	"post-save",
-	"post-sticky",
-	"post-report-create",
-	"post-report-list",
-	"post-report-resolve",
-	"private-message-mark-read",
-	"purge-comment",
-	"purge-community",
-	"purge-person",
-	"purge-post",
-	"registration-approve",
-	"registration-list",
-	"registration-unread-counts",
-	"site-leave-admin",
-	"site-mod-log",
-	"site-resolve-object",
-	"site-search",
-	"comment-create",
-	"comment-delete",
-	"comment-list",
-	"comment-read",
-	"comment-remove",
-	"comment-update",
-	"community-create",
-	"community-delete",
-	"community-list",
-	"community-read",
-	"community-remove",
-	"community-update",
-	"post-create",
-	"post-delete",
-	"post-list",
-	"post-read",
-	"post-remove",
-	"post-update",
-	"private-message-create",
-	"private-message-delete",
-	"private-message-read",
-	"private-message-update",
-	"site-create",
-	"site-read",
-	"site-update",
-	"user-create",
-	"user-delete",
-	"user-read",
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "comment-like",
+
+	"comment-mark-as-read",   # Rustc: 2s 899ms Flowistry: 1s 629ms Conversion: 7ms 415μs Serialization: 2s 42ms
+	"comment-save",           # Rustc: 2s 907ms Flowistry: 1s 387ms Conversion: 7ms 43μs Serialization: 1s 945ms
+	"comment-report-create",  # Rustc: 2s 913ms Flowistry: 1min 0s Conversion: 27ms 803μs Serialization: 8s 112ms
+	"comment-report-list",    # Rustc: 2s 859ms Flowistry: 916ms 850μs Conversion: 5ms 140μs Serialization: 1s 402ms
+	"comment-report-resolve", # Rustc: 2s 801ms Flowistry: 2s 970ms Conversion: 13ms 473μs Serialization: 4s 73ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "community-add-mod",
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "community-ban",
+
+	"community-block",  # Rustc: 2s 875ms Flowistry: 35s 970ms Conversion: 21ms 713μs Serialization: 6s 452ms
+	"community-follow", # Rustc: 2s 882ms Flowistry: 1min 1s Conversion: 36ms 563μs Serialization: 12s 77ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "community-hide",
+
+	"community-transfer",             # Rustc: 2s 876ms Flowistry: 7s 800ms Conversion: 11ms 86μs Serialization: 3s 55ms
+	"notification-list-mentions",     # Rustc: 2s 912ms Flowistry: 951ms 552μs Conversion: 5ms 153μs Serialization: 1s 419ms
+	"notification-list-replies",      # Rustc: 2s 875ms Flowistry: 918ms 708μs Conversion: 5ms 226μs Serialization: 1s 433ms
+	"notification-mark-all-read",     # Rustc: 2s 866ms Flowistry: 2s 654ms Conversion: 7ms 634μs Serialization: 2s 175ms
+	"notification-mark-mention-read", # Rustc: 2s 890ms Flowistry: 1s 505ms Conversion: 7ms 137μs Serialization: 2s 18ms
+	"notification-unread-count",      # Rustc: 2s 878ms Flowistry: 1s 383ms Conversion: 6ms 486μs Serialization: 1s 890ms
+	"user-add-admin",                 # Rustc: 2s 886ms Flowistry: 1s 817ms Conversion: 7ms 50μs Serialization: 2s 90ms
+
+	# Disabled because "Tracking borrow behind shared reference."
+	# "user-ban-person",
+
+	"user-block",           # Rustc: 2s 882ms Flowistry: 1s 296ms Conversion: 7ms 17μs Serialization: 1s 987ms
+	"user-change-password", # Rustc: 2s 896ms Flowistry: 1s 75ms Conversion: 6ms 0μs Serialization: 1s 707ms
+	"user-list-banned",     # Rustc: 2s 882ms Flowistry: 490ms 624μs Conversion: 4ms 137μs Serialization: 1s 52ms
+	"user-login",           # Rustc: 2s 877ms Flowistry: 1s 118ms Conversion: 5ms 882μs Serialization: 1s 577ms
+	"user-report-count",    # Rustc: 2s 875ms Flowistry: 969ms 552μs Conversion: 5ms 782μs Serialization: 1s 640ms
+	"user-save-settings",   # Rustc: 2s 890ms Flowistry: 7s 349ms Conversion: 14ms 637μs Serialization: 4s 329ms
+
+	# Tracking borrow behind shared reference.
+	# "post-like",
+	# Tracking borrow behind shared reference.
+	# "post-lock",
+
+	"post-mark-read", # Rustc: 2s 878ms Flowistry: 1s 847ms Conversion: 9ms 215μs Serialization: 2s 661ms
+	"post-save",      # Rustc: 2s 916ms Flowistry: 2s 219ms Conversion: 9ms 218μs Serialization: 2s 542ms
+
+	# Tracking borrow behind shared reference.
+	# "post-sticky",
+
+	"post-report-create",        # Rustc: 2s 858ms Flowistry: 58s 271ms Conversion: 26ms 867μs Serialization: 7s 965ms
+	"post-report-list",          # Rustc: 2s 897ms Flowistry: 903ms 693μs Conversion: 4ms 995μs Serialization: 1s 424ms
+	"post-report-resolve",       # Rustc: 2s 888ms Flowistry: 2s 974ms Conversion: 13ms 91μs Serialization: 4s 63ms
+	"private-message-mark-read", # Rustc: 2s 891ms Flowistry: 3s 992ms Conversion: 12ms 332μs Serialization: 3s 720ms
+	"purge-comment",             # Rustc: 2s 880ms Flowistry: 1s 607ms Conversion: 7ms 281μs Serialization: 1s 982ms
+	"purge-community",           # Rustc: 2s 858ms Flowistry: 1min 2s Conversion: 19ms 180μs Serialization: 6s 415ms
+	"purge-person",              # Rustc: 2s 883ms Flowistry: 1min 1s Conversion: 18ms 548μs Serialization: 6s 706ms
+	"purge-post",                # Rustc: 2s 910ms Flowistry: 7s 509ms Conversion: 12ms 665μs Serialization: 3s 799ms
+
+	# Fails the assertion in ana/mod.rs:477
+	#"registration-approve",
+
+	"registration-list",          # Rustc: 2s 892ms Flowistry: 821ms 929μs Conversion: 5ms 122μs Serialization: 1s 282ms
+	"registration-unread-counts", # Rustc: 2s 889ms Flowistry: 657ms 953μs Conversion: 4ms 630μs Serialization: 1s 259ms
+	"site-leave-admin",           # Rustc: 2s 889ms Flowistry: 5s 381ms Conversion: 10ms 914μs Serialization: 3s 295ms
+	"site-mod-log",               # Rustc: 2s 881ms Flowistry: 15s 427ms Conversion: 13ms 995μs Serialization: 4s 662ms
+	"site-resolve-object",        # Rustc: 2s 897ms Flowistry: 56s 243ms Conversion: 25ms 827μs Serialization: 8s 309ms
+	"site-search",                # Rustc: 2s 892ms Flowistry: 1min 2s Conversion: 31ms 414μs Serialization: 8s 631ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "comment-create",
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "comment-delete",
+
+	"comment-list", # Rustc: 2s 888ms Flowistry: 55s 884ms Conversion: 45ms 711μs Serialization: 6s 721ms
+	"comment-read", # Rustc: 2s 878ms Flowistry: 2s 680ms Conversion: 8ms 478μs Serialization: 2s 747ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "comment-remove",
+
+	# Takes a very long time to analyze
+	# "comment-update",
+	"community-create", # Rustc: 2s 933ms Flowistry: 8s 52ms Conversion: 15ms 652μs Serialization: 4s 311ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "community-delete",
+
+	"community-list", # Rustc: 2s 875ms Flowistry: 2s 856ms Conversion: 9ms 592μs Serialization: 2s 882ms
+	"community-read", # Rustc: 2s 862ms Flowistry: 48s 137ms Conversion: 24ms 662μs Serialization: 6s 912ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "community-remove",
+	# "community-update",
+	# "post-create",
+	# "post-delete",
+
+	"post-list", # Rustc: 2s 871ms Flowistry: 55s 776ms Conversion: 24ms 227μs Serialization: 6s 755ms
+	"post-read", # Rustc: 2s 794ms Flowistry: 9s 972ms Conversion: 13ms 825μs Serialization: 4s 453ms
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "post-remove",
+	# "post-update",
+
+	# Skipped because it takes a really long time at the moment.
+	# "private-message-create",
+
+	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# "private-message-delete",
+
+	"private-message-read", # Rustc: 2s 789ms Flowistry: 945ms 861μs Conversion: 5ms 397μs Serialization: 1s 451ms
+
+	# Skipped because it takes a really long time at the moment.
+	# "private-message-update",
+
+	"site-create", # Rustc: 2s 807ms Flowistry: 2s 786ms Conversion: 11ms 8μs Serialization: 3s 86ms
+
+	# Skipped because it takes a really long time at the moment.
+	#"site-read",
+
+	"site-update", # Rustc: 2s 827ms Flowistry: 6s 837ms Conversion: 14ms 447μs Serialization: 4s 242ms
+
+	# Skipped because it takes a really long time at the moment.
+	# "user-delete",
+
+	"user-read", # Rustc: 2s 798ms Flowistry: 45s 898ms Conversion: 23ms 667μs Serialization: 6s 632ms
 ]
