@@ -11,5 +11,6 @@ name = "atomic-policy"
 anyhow = "1"
 paralegal-policy = { path = "../../../paralegal/crates/paralegal-policy" }
 lazy_static = "1"
+clap = { version = "4", features = ["derive"] }
 
 [workspace]

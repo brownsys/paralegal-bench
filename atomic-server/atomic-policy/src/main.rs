@@ -1,10 +1,14 @@
 extern crate anyhow;
+extern crate clap;
 extern crate paralegal_policy;
+
+use clap::Parser;
 
 use anyhow::{bail, Result};
 use paralegal_policy::{
-    assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeType,
-    Marker, Node,
+    assert_error, assert_warning,
+    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, Node},
+    Context, Diagnostics, Marker,
 };
 use std::sync::Arc;
 
@@ -26,13 +30,14 @@ macro_rules! policy {
 }
 
 trait ContextExt {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a>;
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
 
-    fn determines_ctrl(&self, influencer: Node, target: Node) -> bool;
+    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool;
+
 }
 
 impl ContextExt for Context {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a> {
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a> {
         Box::new(
             self.desc()
                 .controllers
@@ -43,14 +48,9 @@ impl ContextExt for Context {
         )
     }
 
-    fn determines_ctrl(&self, influencer: Node, target: Node) -> bool {
-        let Some(tcs) = target.associated_call_site() else {
-            self.error(format!("{target:?} cannot be influenced by control flow"));
-            return false;
-        };
-
-        self.influencees(influencer, EdgeType::Data)
-            .any(|inf| self.flows_to(inf, tcs, EdgeType::Control))
+    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool {
+        self.influencees(influencer, EdgeSelection::Data)
+            .any(|inf| self.flows_to(inf, target, EdgeSelection::Control))
     }
 }
 
@@ -59,7 +59,7 @@ policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     for commit in commits {
         // If commit is stored
-        let mut stores = ctx.influencees(commit, EdgeType::DataAndControl)
+        let mut stores = ctx.influencees(commit, EdgeSelection::Both)
             .filter(|s| ctx.has_marker(marker!(sink), *s))
             .peekable();
 
@@ -68,15 +68,15 @@ policy!(check_rights, ctx {
         }
         any_sink_reached = true;
 
-        let new_resources = ctx.influencees(commit, EdgeType::Data)
+        let new_resources = ctx.influencees(commit, EdgeSelection::Data)
             .filter(|n| ctx.has_marker(marker!(new_resource), *n))
             .collect::<Vec<_>>();
 
         // All checks that flow from the commit but not from a new_resource
-        let valid_checks = ctx.influencees(commit, EdgeType::Data)
+        let valid_checks = ctx.influencees(commit, EdgeSelection::Data)
             .filter(|check|
                 ctx.has_marker(marker!(check_rights), *check)
-                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeType::Data))
+                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeSelection::Data))
             )
             .collect::<Vec<_>>();
         assert_error!(
@@ -105,43 +105,33 @@ policy!(check_rights, ctx {
     Ok(())
 });
 
+#[derive(Parser)]
+struct Arguments {
+    #[clap(long)]
+    buggy: bool,
+    #[clap(long, default_value = "..")]
+    directory: std::path::PathBuf,
+}
+
 fn main() -> Result<()> {
     let dir = "../";
-    let buggy_arg = std::env::args().nth(1);
+    let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
+    cmd.external_annotations("external-annotations.toml")
+        .abort_after_analysis();
 
-    cmd.get_command().args([
-        "--inline-elision",
-        "--model-version",
-        "v2",
-        "--skip-sigs",
-        "--external-annotations",
-        "external-annotations.toml",
-        "--target",
-        "atomic_lib",
-        "--abort-after-analysis",
-        "--",
-        "-p",
-        "atomic_lib",
-        "--lib",
-        "--features",
-        "db",
-    ]);
+    cmd.get_command()
+        .args(["--target", "atomic_lib", "--", "--lib", "--features", "db"]);
 
-    match buggy_arg {
-        Some(s) => match s.as_str() {
-            "buggy" => (),
-            "fixed" => {
-                cmd.get_command().args(["--features", "bug-fix"]);
-            }
-            other => bail!("don't recognize the flag '{other}'"),
-        },
-        None => {
-            cmd.get_command().args(["--features", "bug-fix"]);
-        }
-    };
+    if !args.buggy {
+        cmd.get_command().args(["--features", "bug-fix"]);
+    }
 
-    cmd.run(dir)?.with_context(check_rights)?;
-    println!("Policy successful");
+    let result = cmd.run(dir)?.with_context(check_rights)?;
+    println!(
+        "Policy {}successful with {}",
+        if result.success { "" } else { "un" },
+        result.stats
+    );
     Ok(())
 }
