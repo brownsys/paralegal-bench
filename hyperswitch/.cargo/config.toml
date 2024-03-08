@@ -1,6 +1,5 @@
 [target.'cfg(all())']
 rustflags = [
-    "-Funsafe_code",
     "-Wclippy::as_conversions",
     "-Wclippy::expect_used",
     "-Wclippy::missing_panics_doc",
