@@ -1,9 +1,13 @@
-extern crate clap;
 extern crate anyhow;
+extern crate clap;
 extern crate paralegal_policy;
 
 use anyhow::Result;
-use paralegal_policy::{assert_error, assert_warning, EdgeType, paralegal_spdg::Identifier, Context, Marker, Node, Diagnostics};
+use paralegal_policy::{
+    assert_error, assert_warning,
+    paralegal_spdg::{GlobalNode, Identifier, Node},
+    Context, Diagnostics, EdgeSelection, Marker,
+};
 use std::sync::Arc;
 
 macro_rules! marker {
@@ -24,13 +28,13 @@ macro_rules! policy {
 }
 
 trait ContextExt {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a>;
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
 
-    fn determines_ctrl(&self, influencer: Node, target: Node) -> bool;
+    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool;
 }
 
 impl ContextExt for Context {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = Node<'a>> + 'a> {
+    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a> {
         Box::new(
             self.desc()
                 .controllers
@@ -41,14 +45,9 @@ impl ContextExt for Context {
         )
     }
 
-    fn determines_ctrl(&self, influencer: Node, target: Node) -> bool {
-        let Some(tcs) = target.associated_call_site() else {
-            self.error(format!("{target:?} cannot be influenced by control flow"));
-            return false;
-        };
-
-        self.influencees(influencer, EdgeType::Data)
-            .any(|inf| self.flows_to(inf, tcs, EdgeType::Control))
+    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool {
+        self.influencees(influencer, EdgeSelection::Data)
+            .any(|inf| self.flows_to(inf, target, EdgeSelection::Control))
     }
 }
 
@@ -69,7 +68,8 @@ policy!(card_encryption, ctx, {
         ctx.marked_nodes(marker!(credit_card)),
         |node| ctx.has_marker(marker!(encrypt), node),
         |node| ctx.has_marker(marker!(store), node),
-    )?.report(ctx);
+    )?
+    .report(ctx);
     Ok(())
 });
 
@@ -82,7 +82,7 @@ policy!(card_storage, ctx {
     assert_warning!(ctx, !sinks.is_empty());
     for src in srcs {
         for sink in sinks.iter().cloned() {
-            if !ctx.flows_to(src, sink, EdgeType::Data) {
+            if !ctx.flows_to(src, sink, EdgeSelection::Data) {
                 continue;
             }
             any_sink_reached = true;
@@ -119,27 +119,24 @@ impl Policy {
 struct Args {
     #[clap(long, short)]
     policy: Option<Vec<Policy>>,
+    #[clap(long, default_value = "..")]
+    source_dir: std::path::PathBuf,
 }
 
 fn main() -> Result<()> {
-    let dir = "..";
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
-    cmd.get_command().args([
-        "--inline-elision",
-        "--external-annotations",
-        "external-annotations.toml",
-        "--target",
-        "router",
-        "--abort-after-analysis",
-        "--",
-        "--lib",
-        "-p",
-        "router",
-    ]);
+    cmd.abort_after_analysis();
+    cmd.external_annotations("external-annotations.toml");
+    cmd.get_command()
+        .args(["--target", "router", "--", "--lib"]);
     use clap::{Parser, ValueEnum};
-    let args = Args::parse();
-    cmd.run(dir)?.with_context(|ctx| {
-        for p in args.policy.as_ref().map_or(Policy::value_variants(), Vec::as_slice) {
+    let args: &'static _ = Box::leak(Box::new(Args::parse()));
+    cmd.run(&args.source_dir)?.with_context(|ctx| {
+        for p in args
+            .policy
+            .as_ref()
+            .map_or(Policy::value_variants(), Vec::as_slice)
+        {
             p.runnable()(ctx.clone())?
         }
         Ok(())
