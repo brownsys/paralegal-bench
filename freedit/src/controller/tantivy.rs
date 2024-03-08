@@ -17,11 +17,12 @@ use tantivy::{
         INDEXED, STORED, STRING,
     },
     tokenizer::{Token, TokenStream, Tokenizer},
-    Document, Index, IndexReader, IndexWriter, Term,
+    Index, IndexReader, IndexWriter, Term,
 };
 use tracing::info;
 use unicode_segmentation::UnicodeSegmentation;
 use whichlang::detect_language;
+pub use tantivy::Document;
 
 use crate::{config::CONFIG, error::AppError, DB};
 
