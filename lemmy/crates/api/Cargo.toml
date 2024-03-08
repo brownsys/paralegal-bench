@@ -256,7 +256,7 @@ all-controllers = [
 	# "comment-update",
 	"community-create", # Rustc: 2s 933ms Flowistry: 8s 52ms Conversion: 15ms 652μs Serialization: 4s 311ms
 
-	# Disabled because of "Tracking borrow behind shared reference." flowistry error
+	# Does not appear to terminate after several minutes
 	# "community-delete",
 
 	"community-list", # Rustc: 2s 875ms Flowistry: 2s 856ms Conversion: 9ms 592μs Serialization: 2s 882ms
