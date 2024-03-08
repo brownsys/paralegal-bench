@@ -124,13 +124,13 @@ use self::db_utils::{
 use self::fmt::md2html;
 use self::tantivy::{ToDoc, FIELDS};
 use crate::{controller::meta_handler::into_response, error::AppError};
-use ::tantivy::Document;
 use bincode::config::standard;
 use bincode::{Decode, Encode};
 use chrono::{Days, Utc};
 use serde::{Deserialize, Serialize};
 use sled::Db;
 use std::fmt::Display;
+use tantivy::Document;
 use validator::Validate;
 
 /// user
@@ -155,7 +155,7 @@ struct User {
     about: String,
 }
 
-#[paralegal_flow::marker(pageviews)]
+#[paralegal::marker(pageviews)]
 pub fn user_stats() -> &'static str {
     "user_stats"
 }

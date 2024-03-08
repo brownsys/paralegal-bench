@@ -7,7 +7,7 @@ use sled::{Db, IVec, Iter, Tree};
 use std::iter::Rev;
 
 #[inline(never)]
-#[paralegal_flow::marker(Im_dumb)]
+#[paralegal::marker(Im_dumb)]
 fn compare_timestamp<T: std::cmp::Ord>(one: T, other:T) -> bool {
     one < other
 }
