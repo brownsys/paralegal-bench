@@ -5,7 +5,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{
-        Annotation, CallSite, Ctrl, DataSink, DataSource, DefKind, Identifier, ObjectType,
+        DefKind, Identifier, Node, GlobalNode
     },
     Context, ControllerId, DefId, Marker,
 };
@@ -91,37 +91,16 @@ macro_rules! iterator_quantifiers {
     };
 }
 
-trait Markeable {
-    fn is_marked(&self, ctx: &Context, marker: Identifier) -> bool;
-}
-
-impl Markeable for DefId {
-    fn is_marked(&self, ctx: &Context, marker: Identifier) -> bool {
-        ctx.annotations_for(*self)
-            .iter()
-            .any(|m| matches!(m, Annotation::Marker(m) if m.marker == marker))
-    }
-}
-
-impl Markeable for CallSite {
-    fn is_marked(&self, ctx: &Context, marker: Identifier) -> bool {
-        iterator_quantifiers!(
-            any Annotation::Marker(m) = &ctx.annotations_for(self.function);
-            m.marker == marker
-                && m.refinement.on_return()
-        )
-    }
-}
 
 trait ContextExt {
     fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
-    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a>;
+    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item GlobalNode> + 'a>;
     fn annotations_for(&self, id: DefId) -> &[Annotation];
     fn marked_sources<'a>(
         &'a self,
         ctrl_id: ControllerId,
         marker: Marker,
-    ) -> Box<dyn Iterator<Item = &'a DataSource> + 'a>;
+    ) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
 }
 
 impl ContextExt for Context {
@@ -136,7 +115,7 @@ impl ContextExt for Context {
         ) as Box<_>
     }
 
-    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item = &'a DataSink> + 'a> {
+    fn arguments<'a>(&'a self, cs: GlobalNode) -> Box<dyn Iterator<Item = GlboalNode> + 'a> {
         Box::new(self.desc().all_sinks().into_iter().filter(
             move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs),
         ))
@@ -157,11 +136,7 @@ impl ContextExt for Context {
         Box::new(
             self.desc().controllers[&ctrl_id]
                 .data_sources()
-                .filter(move |s| {
-                    matches!(s,
-                        DataSource::FunctionCall(f)
-                        if f.is_marked(self, marker)
-                    )
+                .filter(move |s| { s.has_marker(marker)
                 }),
         )
     }
@@ -200,9 +175,7 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds|
-                    matches!(ds, DataSource::FunctionCall(cs)
-                                    if cs.function.is_marked(ctx.deref(), time_marker))
+                .filter(|ds| ds.has_marker(time_marker)
                 ).collect::<Vec<_>>();
             all typ = &expirable_data;
             // Another option is to say expiration must be for all data,
@@ -263,9 +236,7 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds|
-                    matches!(ds, DataSource::FunctionCall(cs)
-                                    if cs.function.is_marked(ctx.deref(), time_marker))
+                .filter(|ds| ds.has_marker(time_marker)
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
                 all typ = pageview_data.iter();
@@ -324,9 +295,7 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds|
-                    matches!(ds, DataSource::FunctionCall(cs)
-                                    if cs.function.is_marked(ctx.deref(), time_marker))
+                .filter(|ds| ds.has_marker(time_marker)
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
                 all typ = pageview_data.iter();
