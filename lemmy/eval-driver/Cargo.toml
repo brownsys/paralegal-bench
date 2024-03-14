@@ -13,5 +13,6 @@ serde-lexpr = "0.1"
 humantime = "2"
 either = "1.8"
 anyhow = "1.0"
+strum = { version = "0.26.2", features = ["derive"] }
 
 [workspace]
