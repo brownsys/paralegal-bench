@@ -5,8 +5,8 @@ extern crate paralegal_policy;
 use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning,
-    paralegal_spdg::{GlobalNode, Identifier, Node},
-    Context, Diagnostics, EdgeSelection, Marker,
+    paralegal_spdg::{GlobalNode, Identifier},
+    Context, EdgeSelection, Marker,
 };
 use std::sync::Arc;
 
