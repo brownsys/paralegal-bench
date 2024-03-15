@@ -2,24 +2,24 @@ extern crate anyhow;
 extern crate paralegal_policy;
 
 use anyhow::Result;
+use core::time;
 use paralegal_policy::{
     assert_error, assert_warning,
+    diagnostics::HasDiagnosticsBase,
     paralegal_spdg::{
-        DefKind, Identifier, Node, GlobalNode
+        CallString, DefKind, GlobalNode, Identifier, InstructionKind, Node, NodeCluster, SPDG,
     },
-    Context, ControllerId, DefId, Marker,
+    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker,
 };
-use std::{ops::Deref, sync::Arc};
+use std::{collections::HashSet, ops::Deref, sync::Arc};
 
 macro_rules! marker {
-    ($id:ident) => {
-        {
-            lazy_static::lazy_static! {
-                static ref MARKER: Marker = Marker::new_intern(stringify!($id));
-            }
-            *MARKER
+    ($id:ident) => {{
+        lazy_static::lazy_static! {
+            static ref MARKER: Marker = Marker::new_intern(stringify!($id));
         }
-    };
+        *MARKER
+    }};
 }
 
 /// Monadic quantifiers for Rust iterators.
@@ -91,79 +91,64 @@ macro_rules! iterator_quantifiers {
     };
 }
 
-
 trait ContextExt {
-    fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a>;
-    fn arguments<'a>(&'a self, cs: &'a CallSite) -> Box<dyn Iterator<Item GlobalNode> + 'a>;
-    fn annotations_for(&self, id: DefId) -> &[Annotation];
-    fn marked_sources<'a>(
+    fn call_sites_for<'a>(
         &'a self,
-        ctrl_id: ControllerId,
-        marker: Marker,
-    ) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
+        ctr: ControllerId,
+        fun: DefId,
+    ) -> Box<dyn Iterator<Item = CallString> + 'a>;
+
+    fn marked(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
 impl ContextExt for Context {
-    fn marked_type<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = DefId> + 'a> {
-        Box::new(
-            self.marked(marker)
-                .filter(|(did, _)| self.desc().def_info[did].kind == DefKind::Type)
-                .map(|(did, refinement)| {
-                    assert!(refinement.on_self());
-                    *did
-                }),
-        ) as Box<_>
-    }
-
-    fn arguments<'a>(&'a self, cs: GlobalNode) -> Box<dyn Iterator<Item = GlboalNode> + 'a> {
-        Box::new(self.desc().all_sinks().into_iter().filter(
-            move |snk| matches!(snk, DataSink::Argument { function, .. } if function == cs),
-        ))
-    }
-
-    fn annotations_for(&self, id: DefId) -> &[Annotation] {
-        self.desc()
-            .annotations
-            .get(&id)
-            .map_or(&[] as &[_], |it| it.0.as_slice())
-    }
-
-    fn marked_sources<'a>(
+    fn call_sites_for<'a>(
         &'a self,
-        ctrl_id: ControllerId,
-        marker: Marker,
-    ) -> Box<dyn Iterator<Item = &'a DataSource> + 'a> {
-        Box::new(
-            self.desc().controllers[&ctrl_id]
-                .data_sources()
-                .filter(move |s| { s.has_marker(marker)
-                }),
-        )
+        ctrl: ControllerId,
+        fun: DefId,
+    ) -> Box<dyn Iterator<Item = CallString> + 'a> {
+        let locs = self
+            .desc()
+            .instruction_info
+            .iter()
+            .filter(|(k, v)| matches!(v.kind, InstructionKind::FunctionCall(f) if f.id == fun))
+            .map(|(k, v)| k)
+            .collect::<HashSet<_>>();
+        let iter = self.desc().controllers[&ctrl]
+            .edges()
+            .map(|e| e.weight().at)
+            .filter(move |e| locs.contains(&e.leaf()));
+        Box::new(iter)
+    }
+
+    fn marked(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        let marked_types = self.marked_type(marker);
+        let iter = self
+            .marked_nodes(marker)
+            .chain(self.desc().controllers.iter().flat_map(|(&id, ctrl)| {
+                ctrl.type_assigns
+                    .iter()
+                    .filter(|(_, tys)| tys.0.iter().any(|t| marked_types.contains(t)))
+                    .map(move |(&n, _)| GlobalNode::from_local_node(id, n))
+            }));
+        Box::new(iter)
     }
 }
 
 trait CtrlExt {
-    fn data_sources<'a>(&'a self) -> Box<dyn Iterator<Item = &'a DataSource> + 'a>;
-    fn call_sites_for<'a>(&'a self, fun: DefId) -> Box<dyn Iterator<Item = &CallSite> + 'a>;
+    fn data_sources<'a>(&'a self) -> Box<dyn Iterator<Item = Node> + 'a>;
 }
 
-impl CtrlExt for Ctrl {
-    fn data_sources<'a>(&'a self) -> Box<dyn Iterator<Item = &'a DataSource> + 'a> {
-        Box::new(self.data_flow.keys())
-    }
-
-    fn call_sites_for<'a>(&'a self, fun: DefId) -> Box<dyn Iterator<Item = &CallSite> + 'a> {
-        Box::new(self.data_sources().filter_map(move |ds| match ds {
-            DataSource::FunctionCall(f) if f.function == fun => Some(f),
-            _ => None,
-        }))
+impl CtrlExt for SPDG {
+    fn data_sources<'a>(&'a self) -> Box<dyn Iterator<Item = Node> + 'a> {
+        Box::new(self.graph.node_indices())
     }
 }
 
 /// Not actually used, because it turns out the application doesn't do this. It just cleans up the database every 10min.
 fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
-    ctx.named_policy("no expired read", |ctx| {
-        let expirable_data = ctx.marked(marker!(pageviews)).map(|i| i.0).collect::<Vec<_>>();
+    ctx.named_policy(Identifier::new_intern("no expired read"), |ctx| {
+        let expirable_data = ctx.marked_nodes(marker!(pageviews)).collect::<Vec<_>>();
         let time_marker = marker!(time);
         ctx.report_marker_if_absent(time_marker);
         let db_access_marker = marker!(db_access);
@@ -175,31 +160,27 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds| ds.has_marker(time_marker)
-                ).collect::<Vec<_>>();
-            all typ = &expirable_data;
+                .map(|s| GlobalNode::from_local_node(ctx.id(), s))
+                .filter(|ds| ctx.has_marker(time_marker, *ds))
+                .collect::<Vec<_>>();
+            all type_ident = &expirable_data;
             // Another option is to say expiration must be for all data,
             // with exceptions for certain marked types.
-            all type_ident_call_site = ctx.current().call_sites_for(*typ);
-            let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
-            all type_source = ctx.marked_sources(ctx.id(), db_access_marker)
-                .filter(|s|
-                    matches!(s,
-                        DataSource::FunctionCall(f)
-                        if ctx.arguments(f)
-                            .any(|arg|
-                                ctx.flows_to(ctx.id(), &type_ident, &arg.clone().into()))
-                    )
+            all type_source = ctx.marked_nodes(db_access_marker)
+                .flat_map(|input| ctx.consuming_call_sites(input))
+                .flat_map(|f| ctx.inputs_of(f).iter_global_nodes().collect::<Vec<_>>())
+                .filter(|f|
+                    ctx.flows_to(*type_ident, *f, EdgeSelection::Data)
                 );
-            all _release@DataSink::Argument { function: release_call_site, .. } = ctx.marked_sinks(ctx.current().data_sinks(), externalizes_marker)
-                .filter(|s| ctx.flows_to(ctx.id(), type_source, &(*s).clone().into()));
+            all release_call_site = ctx.marked_nodes(externalizes_marker)
+                .filter(|s| ctx.flows_to(type_source, *s, EdgeSelection::Data));
             any time_source = &time_sources;
 
-            any check@DataSink::Argument { function, .. } = ctx.current().data_sinks();
-            require ctx.flows_to(ctx.id(), type_source, &check.clone().into());
-            require ctx.arguments(function)
-                    .any(|arg| ctx.flows_to(ctx.id(), time_source, &arg.clone().into()));
-            require ctx.current().ctrl_flow[&DataSource::FunctionCall(function.clone())].contains(release_call_site);
+            any check = ctx.current().data_sinks();
+            let check_node = GlobalNode::from_local_node(ctx.id(), check);
+            require ctx.flows_to(type_source, check_node, EdgeSelection::Data);
+            require ctx.flows_to(*time_source, check_node, EdgeSelection::Data);
+            require ctx.has_ctrl_influence(check_node, release_call_site);
             true
         )
     });
@@ -213,9 +194,9 @@ fn check(ctx: Arc<Context>) -> Result<()> {
 fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     let pageview_data = ctx
         .marked(marker!(pageviews))
-        .map(|d| d.0)
+        .map(|d| d)
         .collect::<Vec<_>>();
-    ctx.clone().named_policy("date store", |ctx| {
+    ctx.clone().named_policy(Identifier::new_intern("date store"), |ctx| {
         assert_warning!(
             ctx,
             !pageview_data.is_empty(),
@@ -228,7 +209,6 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         };
         let mut storing_controller = 0;
         ctx.controller_contexts().all(|ctx|{
-            println!("Checking {}", ctx.describe_def(ctx.id()));
             let db_store_marker = marker!(db_store);
             ctx.report_marker_if_absent(db_store_marker);
             let time_marker = marker!(time);
@@ -236,35 +216,27 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds| ds.has_marker(time_marker)
+                .filter(|ds| ctx.has_marker(time_marker, GlobalNode::from_local_node(ctx.id(), *ds) )
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
-                all typ = pageview_data.iter();
-                all type_ident_call_site = ctx.current().call_sites_for(*typ);
-                tick(1);
-                let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
-                assert_warning!(ctx, !ctx.reaching(ctx.id(), &type_ident).is_empty());
+                all type_ident = pageview_data.iter();
+                assert_warning!(ctx, !ctx.influencers(*type_ident, EdgeSelection::Both).next().is_none());
                 // This will be `sled::Tree::update_and_fetch` in `controller::db_utils::incr_id`
-                all sink = ctx.marked_sinks(ctx.current().data_sinks(), db_store_marker);
+                all ty_sink = ctx.marked_nodes(db_store_marker);
                 tick(2);
                 // The next two statements are a hack. The problem here is that for call
                 // `tree.update_and_fetch(key, increment)` the `time_source` flows into the
                 // properly marked `key`, however `type_source` flows into `tree` and I hadn't marked
                 // that because I thought they'd flow into the same argument. So
                 // here I'm just hacking it together, but this should actually be done properly via marker
-                let mut ty_sink = sink.clone();
-                match &mut ty_sink {
-                    DataSink::Argument { function: _, arg_slot } => *arg_slot = 0,
-                    _ => (),
-                };
-                let type_is_stored = ctx.flows_to(ctx.id(), &type_ident, &ty_sink.into());
+                let type_is_stored = ctx.flows_to(*type_ident, ty_sink, EdgeSelection::Data);
                 allow !type_is_stored;
                 tick(3);
                 storing_controller += 1;
                 let any_fits = time_sources
                     .iter()
                     .any(|time_source|
-                        ctx.flows_to(ctx.id(), time_source, &sink.clone().into())
+                        ctx.flows_to(GlobalNode::from_local_node(ctx.id(), *time_source), ty_sink, EdgeSelection::Data)
                     );
                 assert_error!(ctx, any_fits, "Found no local source that influences to the pageview store {sink}");
                 true
@@ -274,7 +246,7 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         assert_error!(ctx, storing_controller == 3, format!("Not as many controllers ({storing_controller} != 3) storing pageviews as expected found, policy must be wrong"));
         println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
     });
-    ctx.named_policy("expiration check", |ctx| {
+    ctx.named_policy(Identifier::new_intern("expiration check"), |ctx| {
         assert_warning!(
             ctx,
             !pageview_data.is_empty(),
@@ -289,42 +261,36 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         let db_access_marker = marker!(db_access);
         let found = ctx.controller_contexts().any(|ctx| {
             let delete_sinks = ctx
-                .marked_sinks(ctx.current().data_sinks(), marker!(deletes))
+                .marked_nodes(marker!(deletes))
                 .collect::<Vec<_>>();
             let time_marker = marker!(time);
             let time_sources = ctx
                 .current()
                 .data_sources()
-                .filter(|ds| ds.has_marker(time_marker)
+                .map(|n| GlobalNode::from_local_node(ctx.id(), n))
+                .filter(|ds| ctx.has_marker(time_marker, *ds)
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
-                all typ = pageview_data.iter();
-                any time_source = &time_sources;
+                all &type_ident = pageview_data.iter();
                 tick(1);
-                any type_ident_call_site = ctx.current().call_sites_for(*typ);
-                let type_ident = DataSource::FunctionCall(type_ident_call_site.clone());
-                tick(2);
-                any type_source@DataSource::FunctionCall(f) = ctx.marked_sources(ctx.id(), db_access_marker);
+                any type_source = ctx.marked_nodes(db_access_marker);
                 tick(4);
-                require ctx.arguments(f).any(|arg| ctx.flows_to(ctx.id(), &type_ident, &arg.clone().into()));
+                require ctx.flows_to(type_ident, type_source, EdgeSelection::Data);
                 tick(5);
-                any delete@DataSink::Argument { function: delete_call_site, .. } = &delete_sinks;
-                let ref delete = (*delete).clone().into();
+                any &delete = &delete_sinks;
                 tick(6);
-                require ctx.flows_to(ctx.id(), type_source, delete);
+                require ctx.flows_to(type_source, delete, EdgeSelection::Data);
                 tick(6);
-                any time_check = ctx.current().ctrl_flow.keys().filter_map(DataSource::as_function_call);
+                any time_check = ctx.current().all_sources().map(|n| GlobalNode::from_local_node(ctx.id(), n));
                 tick(7);
-                let arguments = ctx.arguments(time_check).collect::<Vec<_>>();
-                any time_check_time_arg = &arguments;
-                any time_check_type_arg = &arguments;
-                let type_flows_to_check = ctx.flows_to(ctx.id(), &type_source, &(*time_check_type_arg).clone().into());
+                let type_flows_to_check = ctx.flows_to(type_source, time_check, EdgeSelection::Data);
+                any &time_source = &time_sources;
                 tick(8);
                 require type_flows_to_check;
-                let time_flows_to_check = ctx.flows_to(ctx.id(), &time_source, &(*time_check_time_arg).clone().into());
+                let time_flows_to_check = ctx.flows_to(time_source, time_check, EdgeSelection::Data);
                 tick(9);
                 require time_flows_to_check;
-                let check_ctrls_delete = ctx.current().ctrl_flow[&DataSource::FunctionCall(time_check.clone())].contains(delete_call_site);
+                let check_ctrls_delete = ctx.has_ctrl_influence(time_check, delete);
                 tick(10);
                 check_ctrls_delete
             )
