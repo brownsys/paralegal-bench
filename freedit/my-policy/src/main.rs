@@ -2,16 +2,13 @@ extern crate anyhow;
 extern crate paralegal_policy;
 
 use anyhow::Result;
-use core::time;
+use clap::Parser;
 use paralegal_policy::{
     assert_error, assert_warning,
-    diagnostics::HasDiagnosticsBase,
-    paralegal_spdg::{
-        CallString, DefKind, GlobalNode, Identifier, InstructionKind, Node, NodeCluster, SPDG,
-    },
-    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker,
+    paralegal_spdg::{CallString, GlobalNode, Identifier, InstructionKind, Node, SPDG},
+    Context, ControllerId, DefId, EdgeSelection, GraphLocation, IntoIterGlobalNodes, Marker,
 };
-use std::{collections::HashSet, ops::Deref, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 
 macro_rules! marker {
     ($id:ident) => {{
@@ -145,6 +142,7 @@ impl CtrlExt for SPDG {
     }
 }
 
+#[allow(dead_code)]
 /// Not actually used, because it turns out the application doesn't do this. It just cleans up the database every 10min.
 fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("no expired read"), |ctx| {
@@ -188,7 +186,20 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
 }
 
 fn check(ctx: Arc<Context>) -> Result<()> {
-    check_date_store(ctx)
+    assert!(ctx.desc().controllers.len() > 1);
+    assert!(ctx
+        .desc()
+        .controllers
+        .values()
+        .all(|v| v.graph.node_count() > 50));
+    check_date_store(ctx.clone())?;
+    for (id, info) in &ctx.desc().def_info {
+        if info.name.as_str() == "now" {
+            println!("{}", ctx.describe_def(*id));
+        }
+    }
+
+    Ok(())
 }
 
 fn check_date_store(ctx: Arc<Context>) -> Result<()> {
@@ -301,14 +312,26 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
+#[derive(Parser)]
+struct Args {
+    #[clap(long)]
+    skip_compile: bool,
+}
+
 fn main() -> Result<()> {
     let dir = "..";
-    let mut cmd = paralegal_policy::SPDGGenCommand::global();
-    cmd.external_annotations("external-annotations.toml")
-        //.abort_after_analysis()
-        .get_command()
-        .args(["--eager-local-markers", "--inline-elision", "--", "--lib"]);
-    cmd.run(dir)?.with_context(check)?;
+    let args = Args::parse();
+    let graph_loc = if args.skip_compile {
+        GraphLocation::std(dir)
+    } else {
+        let mut cmd = paralegal_policy::SPDGGenCommand::global();
+        cmd.external_annotations("external-annotations.toml")
+            .abort_after_analysis()
+            .get_command()
+            .args(["--", "--lib"]);
+        cmd.run(dir)?
+    };
+    graph_loc.with_context(check)?;
     println!("Policy check succeeded");
     Ok(())
 }
