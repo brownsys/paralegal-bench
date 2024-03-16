@@ -2,12 +2,14 @@ extern crate anyhow;
 extern crate paralegal_policy;
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{CallString, GlobalNode, Identifier, InstructionKind, Node, SPDG},
-    Context, ControllerId, DefId, EdgeSelection, GraphLocation, IntoIterGlobalNodes, Marker,
+    Context, ControllerId, DefId, Diagnostics, EdgeSelection, GraphLocation, IntoIterGlobalNodes,
+    Marker,
 };
+use petgraph::visit::EdgeRef;
 use std::{collections::HashSet, sync::Arc};
 
 macro_rules! marker {
@@ -185,23 +187,6 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
-fn check(ctx: Arc<Context>) -> Result<()> {
-    assert!(ctx.desc().controllers.len() > 1);
-    assert!(ctx
-        .desc()
-        .controllers
-        .values()
-        .all(|v| v.graph.node_count() > 50));
-    check_date_store(ctx.clone())?;
-    for (id, info) in &ctx.desc().def_info {
-        if info.name.as_str() == "now" {
-            println!("{}", ctx.describe_def(*id));
-        }
-    }
-
-    Ok(())
-}
-
 fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     let pageview_data = ctx
         .marked(marker!(pageviews))
@@ -231,23 +216,30 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
                 all type_ident = pageview_data.iter();
+                allow type_ident.controller_id() != ctx.id();
                 assert_warning!(ctx, !ctx.influencers(*type_ident, EdgeSelection::Both).next().is_none());
                 // This will be `sled::Tree::update_and_fetch` in `controller::db_utils::incr_id`
-                all ty_sink = ctx.marked_nodes(db_store_marker);
+                all sink = ctx.marked_nodes(db_store_marker);
                 tick(2);
                 // The next two statements are a hack. The problem here is that for call
                 // `tree.update_and_fetch(key, increment)` the `time_source` flows into the
                 // properly marked `key`, however `type_source` flows into `tree` and I hadn't marked
                 // that because I thought they'd flow into the same argument. So
-                // here I'm just hacking it together, but this should actually be done properly via marker
+                // here I'm just hacking it together, but this should actually
+                // be done properly via marker.
+                //
+                // So instead for the type ident we check that it flows into the
+                // successor of the sink.
+                any ty_sink = ctx.successors(sink);
+                tick(3);
                 let type_is_stored = ctx.flows_to(*type_ident, ty_sink, EdgeSelection::Data);
                 allow !type_is_stored;
-                tick(3);
+                tick(4);
                 storing_controller += 1;
                 let any_fits = time_sources
                     .iter()
                     .any(|time_source|
-                        ctx.flows_to(GlobalNode::from_local_node(ctx.id(), *time_source), ty_sink, EdgeSelection::Data)
+                        ctx.flows_to(GlobalNode::from_local_node(ctx.id(), *time_source), sink, EdgeSelection::Data)
                     );
                 assert_error!(ctx, any_fits, "Found no local source that influences to the pageview store {sink}");
                 true
@@ -257,6 +249,14 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         assert_error!(ctx, storing_controller == 3, format!("Not as many controllers ({storing_controller} != 3) storing pageviews as expected found, policy must be wrong"));
         println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
     });
+    Ok(())
+}
+
+fn check_expiration(ctx: Arc<Context>) -> Result<()> {
+    let pageview_data = ctx
+        .marked(marker!(pageviews))
+        .map(|d| d)
+        .collect::<Vec<_>>();
     ctx.named_policy(Identifier::new_intern("expiration check"), |ctx| {
         assert_warning!(
             ctx,
@@ -271,6 +271,9 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
 
         let db_access_marker = marker!(db_access);
         let found = ctx.controller_contexts().any(|ctx| {
+            if ctx.current().name.as_str() != "user_chron_job" {
+                return false;
+            }
             let delete_sinks = ctx
                 .marked_nodes(marker!(deletes))
                 .collect::<Vec<_>>();
@@ -283,13 +286,14 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
                 ).collect::<Vec<_>>();
             iterator_quantifiers!(
                 all &type_ident = pageview_data.iter();
+                allow type_ident.controller_id() != ctx.id();
                 tick(1);
                 any type_source = ctx.marked_nodes(db_access_marker);
-                tick(4);
+                tick(2);
                 require ctx.flows_to(type_ident, type_source, EdgeSelection::Data);
-                tick(5);
+                tick(3);
                 any &delete = &delete_sinks;
-                tick(6);
+                tick(4);
                 require ctx.flows_to(type_source, delete, EdgeSelection::Data);
                 tick(6);
                 any time_check = ctx.current().all_sources().map(|n| GlobalNode::from_local_node(ctx.id(), n));
@@ -301,7 +305,8 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
                 let time_flows_to_check = ctx.flows_to(time_source, time_check, EdgeSelection::Data);
                 tick(9);
                 require time_flows_to_check;
-                let check_ctrls_delete = ctx.has_ctrl_influence(time_check, delete);
+                any delete_call_site = ctx.successors(delete);
+                let check_ctrls_delete = ctx.has_ctrl_influence(time_check, delete_call_site);
                 tick(10);
                 check_ctrls_delete
             )
@@ -312,8 +317,26 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
+#[derive(Clone, Copy, ValueEnum)]
+#[clap(rename_all = "kebab-case")]
+enum Policy {
+    DateStore,
+    Expiration,
+}
+
+impl Policy {
+    fn check(self, ctx: Arc<Context>) -> Result<()> {
+        match self {
+            Self::DateStore => check_date_store(ctx),
+            Self::Expiration => check_expiration(ctx),
+        }
+    }
+}
+
 #[derive(Parser)]
 struct Args {
+    #[clap(long, value_enum)]
+    policy: Vec<Policy>,
     #[clap(long)]
     skip_compile: bool,
 }
@@ -331,7 +354,24 @@ fn main() -> Result<()> {
             .args(["--", "--lib"]);
         cmd.run(dir)?
     };
-    graph_loc.with_context(check)?;
+    let policy = if args.policy.is_empty() {
+        Policy::value_variants()
+    } else {
+        args.policy.as_slice()
+    };
+    graph_loc.with_context(|ctx| {
+        assert!(ctx.desc().controllers.len() > 1);
+        assert!(ctx
+            .desc()
+            .controllers
+            .values()
+            .all(|v| v.graph.node_count() > 50));
+        policy
+            .iter()
+            .cloned()
+            .map(|p| p.check(ctx.clone()))
+            .collect::<Result<()>>()
+    })?;
     println!("Policy check succeeded");
     Ok(())
 }

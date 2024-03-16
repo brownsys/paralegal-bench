@@ -155,7 +155,7 @@ struct User {
     about: String,
 }
 
-#[paralegal::marker(pageviews)]
+#[paralegal::marker(pageviews, return)]
 pub fn user_stats() -> &'static str {
     "user_stats"
 }
