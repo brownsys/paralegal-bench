@@ -201,6 +201,7 @@ impl User {
             .unwrap()
             .timestamp();
         let key = format!("{expire:x}_{uid}_{stat_type}");
+        #[cfg(not(feature = "buggy"))]
         incr_id(&db.open_tree(user_stats())?, key)?;
         Ok(())
     }

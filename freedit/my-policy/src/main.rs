@@ -339,6 +339,8 @@ struct Args {
     policy: Vec<Policy>,
     #[clap(long)]
     skip_compile: bool,
+    #[clap(long)]
+    buggy: bool,
 }
 
 fn main() -> Result<()> {
@@ -352,6 +354,9 @@ fn main() -> Result<()> {
             .abort_after_analysis()
             .get_command()
             .args(["--", "--lib"]);
+        if args.buggy {
+            cmd.get_command().args(["--features", "buggy"]);
+        }
         cmd.run(dir)?
     };
     let policy = if args.policy.is_empty() {
@@ -359,7 +364,7 @@ fn main() -> Result<()> {
     } else {
         args.policy.as_slice()
     };
-    graph_loc.with_context(|ctx| {
+    let res = graph_loc.with_context(|ctx| {
         assert!(ctx.desc().controllers.len() > 1);
         assert!(ctx
             .desc()
@@ -372,6 +377,6 @@ fn main() -> Result<()> {
             .map(|p| p.check(ctx.clone()))
             .collect::<Result<()>>()
     })?;
-    println!("Policy check succeeded");
+    println!("Policy check succeeded: {}", res.stats);
     Ok(())
 }

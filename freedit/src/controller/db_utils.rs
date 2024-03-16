@@ -25,6 +25,7 @@ pub async fn clear_invalid(db: &Db, tree_name: &str) -> Result<(), AppError> {
             .and_then(|s| i64::from_str_radix(s.0, 16).ok());
         if let Some(time_stamp) = time_stamp {
             if compare_timestamp(time_stamp, Utc::now().timestamp()) {
+                #[cfg(not(feature = "buggy"))]
                 tree.remove(k)?;
             }
         }
