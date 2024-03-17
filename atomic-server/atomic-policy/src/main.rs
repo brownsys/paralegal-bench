@@ -56,22 +56,14 @@ impl ContextExt for Context {
 policy!(check_rights, ctx {
     let commits = ctx.marked_nodes(marker!(commit));
     let mut any_sink_reached = false;
-    for commit in commits {
+    let results = commits.filter_map(|commit| {
         let check_rights = marker!(check_rights);
         // If commit is stored
-        let mut stores = ctx.influencees(commit, EdgeSelection::Both)
+        let stores = ctx.influencees(commit, EdgeSelection::Both)
             .filter(|s| ctx.has_marker(marker!(sink), *s))
-            .peekable();
-
-        let mut stores = ctx
-            // .all_nodes_for_ctrl(commit.controller_id())
-            // .filter(|n| ctx.has_marker(marker!(sink), *n))
-            .marked_nodes(marker!(sink))
-            .filter(|s| ctx.flows_to(commit, *s, EdgeSelection::Both))
-            .peekable();
-
-        if stores.peek().is_none() {
-            continue;
+            .collect::<Box<[_]>>();
+        if stores.is_empty() {
+            return None;
         }
         any_sink_reached = true;
 
@@ -83,39 +75,29 @@ policy!(check_rights, ctx {
         let valid_checks = ctx.influencees(commit, EdgeSelection::Data)
             .filter(|check|
                 ctx.has_marker(check_rights, *check)
-                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeSelection::Data))
-            ).peekable();
+                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeSelection::Data)))
+            .collect::<Box<[_]>>();
 
+        Some(stores.iter().copied().map(|store| {
+            (store, valid_checks.iter().copied().find(|check| ctx.successors(store).any(|cs| ctx.has_ctrl_influence(*check, cs))))
+        }).collect::<Box<[_]>>())
+    });
 
-        let mut valid_checks = ctx.marked_nodes(check_rights)
-            .filter(|n| ctx.flows_to(commit, *n, EdgeSelection::Data))
-            .filter(|n| ctx.any_flows(&new_resources, &[*n], EdgeSelection::Data).is_none())
-            .peekable();
+    let likely_result = results.max_by_key(|checks| checks.iter().filter(|(_, v)| v.is_some()).count());
 
-        if valid_checks.peek().is_none() {
-            let mut err = ctx.struct_node_error(commit, "No valid checks found for this commit");
-            for store in stores {
-                err.with_node_warning(store, "Commit reaches this store");
+    if let Some(checks) = likely_result {
+        for (store, check) in checks.iter().copied() {
+            if let Some(check) = check {
+                let mut msg = ctx.struct_node_note(store, "This store is properly checked");
+                msg.with_node_note(check, "With this check");
+            } else {
+                ctx.node_error(store, "This store is not protected");
             }
-
-            for check in ctx.marked_nodes(check_rights) {
-                if ctx.any_flows(&new_resources, &[check], EdgeSelection::Data).is_some() {
-                    err.with_node_note(check, "This would be a valid check, but it is influenced by `new_resource`");
-                } else {
-                    err.with_node_note(check, "This would be a valid check but it is not influenced by the commit");
-                }
-            }
-            err.emit();
         }
-
-        // BELOW IS VALID POLICY CODE BUT DOESN'T WORK BC OF PARALEGAL BUG ------
-        // for store in stores {
-        //     // A valid check determines the store
-        //     let mut check_store = valid_checks.iter().filter(|c| ctx.determines_ctrl(**c, store));
-        //     assert_error!(ctx, check_store.next().is_some(), "No valid checks have control-flow influence on store {}", ctx.describe_node(store));
-        // }
+    } else {
+        ctx.error("No results at all. No controllers?")
     }
-    assert_warning!(
+    assert_error!(
         ctx,
         any_sink_reached,
         "No sink was reached across controllers, the policy may be vacuous or the markers not correctly assigned/unreachable."
