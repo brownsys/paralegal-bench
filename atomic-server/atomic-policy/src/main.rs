@@ -7,7 +7,7 @@ use clap::Parser;
 use anyhow::{bail, Result};
 use paralegal_policy::{
     assert_error, assert_warning,
-    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, Node},
+    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, Node, NodeCluster},
     Context, Diagnostics, GraphLocation, Marker,
 };
 use std::sync::Arc;
@@ -54,48 +54,67 @@ impl ContextExt for Context {
 }
 
 policy!(check_rights, ctx {
-    let commits = ctx.marked_nodes(marker!(commit));
     let mut any_sink_reached = false;
-    let results = commits.filter_map(|commit| {
-        let check_rights = marker!(check_rights);
+    let check_rights = marker!(check_rights);
+    for ctx in ctx.controller_contexts() {
+        let commit = NodeCluster::new(
+            ctx.id(),
+            ctx.marked_nodes(marker!(commit))
+                .filter(|n| n.controller_id() == ctx.id())
+                .map(|n| n.local_node()),
+        );
+
         // If commit is stored
-        let stores = ctx.influencees(commit, EdgeSelection::Both)
+        let stores = ctx
+            .influencees(&commit, EdgeSelection::Both)
             .filter(|s| ctx.has_marker(marker!(sink), *s))
             .collect::<Box<[_]>>();
         if stores.is_empty() {
-            return None;
+            continue;
         }
         any_sink_reached = true;
 
-        let new_resources = ctx.influencees(commit, EdgeSelection::Data)
+        let new_resources = ctx
+            .influencees(&commit, EdgeSelection::Data)
             .filter(|n| ctx.has_marker(marker!(new_resource), *n))
             .collect::<Box<[_]>>();
 
         // All checks that flow from the commit but not from a new_resource
-        let valid_checks = ctx.influencees(commit, EdgeSelection::Data)
-            .filter(|check|
+        let valid_checks = ctx
+            .influencees(&commit, EdgeSelection::Data)
+            .filter(|check| {
                 ctx.has_marker(check_rights, *check)
-                && new_resources.iter().all(|r| !ctx.flows_to(*r, *check, EdgeSelection::Data)))
+                    && ctx
+                        .any_flows(&new_resources, &[*check], EdgeSelection::Data)
+                        .is_none()
+            })
             .collect::<Box<[_]>>();
 
-        Some(stores.iter().copied().map(|store| {
-            (store, valid_checks.iter().copied().find(|check| ctx.successors(store).any(|cs| ctx.has_ctrl_influence(*check, cs))))
-        }).collect::<Box<[_]>>())
-    });
+        if valid_checks.is_empty() {
+            ctx.warning("No valid checks");
+        }
 
-    let likely_result = results.max_by_key(|checks| checks.iter().filter(|(_, v)| v.is_some()).count());
+        let checks = stores
+            .iter()
+            .copied()
+            .map(|store| {
+                (
+                    store,
+                    valid_checks.iter().copied().find_map(|check| {
+                        let store_cs = ctx
+                            .successors(store)
+                            .find(|cs| ctx.has_ctrl_influence(check, *cs))?;
+                        Some((check, store_cs))
+                    }),
+                )
+            })
+            .collect::<Box<[_]>>();
 
-    if let Some(checks) = likely_result {
-        for (store, check) in checks.iter().copied() {
-            if let Some(check) = check {
-                let mut msg = ctx.struct_node_note(store, "This store is properly checked");
-                msg.with_node_note(check, "With this check");
-            } else {
-                ctx.node_error(store, "This store is not protected");
+        for (store, check) in checks.iter() {
+            if check.is_none() {
+                ctx.node_error(*store, "This store is not protected");
             }
         }
-    } else {
-        ctx.error("No results at all. No controllers?")
     }
     assert_error!(
         ctx,
