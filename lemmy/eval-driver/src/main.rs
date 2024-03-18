@@ -73,7 +73,6 @@ const POST_BUG_1_BATCH_2: &'static [&'static str] = &[
     "comment-read",
     "comment-remove",
     "comment-update",
-    "comment-update correct",
 ];
 
 // used to all have "post-bug-1" prepended
@@ -126,7 +125,6 @@ const BUG_1_BATCH_1: &'static [&'static str] = &[
     "user-block",
     "user-change-password",
     "user-list-banned",
-    "user-login",
     "user-report-count",
     "user-save-settings",
 ];
@@ -185,97 +183,6 @@ const BUG_1_BATCH_3: &'static [&'static str] = &[
     "user-delete",
     "user-read",
 ];
-
-// used to all have "bug-1-code bug-1-fix" prepended
-const BUG_1_FIX_BATCH_1: &'static [&'static str] = &[
-    "comment-like",
-    "comment-mark-as-read",
-    "comment-save",
-    "comment-report-create",
-    "comment-report-list",
-    "comment-report-resolve",
-    "community-add-mod",
-    "community-ban",
-    "community-block",
-    "community-follow",
-    "community-hide",
-    "community-transfer",
-    "notification-list-mentions",
-    "notification-list-replies",
-    "notification-mark-all-read",
-    "notification-mark-mention-read",
-    "notification-unread-count",
-    "user-add-admin",
-    "user-ban-person",
-    "user-block",
-    "user-change-password",
-    "user-list-banned",
-    "user-login",
-    "user-report-count",
-    "user-save-settings",
-];
-
-// used to all have "bug-1-code bug-1-fix" prepended
-const BUG_1_FIX_BATCH_2: &'static [&'static str] = &[
-    "post-like",
-    "post-lock",
-    "post-mark-read",
-    "post-save",
-    "post-sticky",
-    "post-report-create",
-    "post-report-list",
-    "post-report-resolve",
-    "private-message-mark-read",
-    "purge-comment",
-    "purge-community",
-    "purge-person",
-    "purge-post",
-    "registration-approve",
-    "registration-list",
-    "registration-unread-counts",
-    "site-leave-admin",
-    "site-mod-log",
-    "site-resolve-object",
-    "site-search",
-    // "comment-create", times out
-    "comment-delete",
-    "comment-list",
-    "comment-read",
-    "comment-remove",
-    "comment-update",
-];
-
-// used to all have "bug-1-code bug-1-fix" prepended
-const BUG_1_FIX_BATCH_3: &'static [&'static str] = &[
-    "community-create",
-    "community-delete",
-    "community-list",
-    "community-read",
-    "community-remove",
-    "community-update",
-    "post-create",
-    "post-delete",
-    "post-list",
-    "post-read",
-    "post-remove",
-    "post-update",
-    "private-message-create",
-    "private-message-delete",
-    "private-message-read",
-    "private-message-update",
-    "site-create",
-    // "site-read", times out
-    "site-update",
-    "user-delete",
-    "user-read",
-];
-
-// fn run_batch(
-//     args: &Args,
-//     batch: &[impl AsRef<str>],
-//     props: &'static [Property],
-//     desc: &'static str,
-//     expect_failure: bool,
 
 struct BatchConfig<'a> {
     baseline_feature: &'a str,
@@ -527,8 +434,8 @@ impl std::fmt::Display for RunError {
 
 fn print_table_header<W: std::io::Write>(
     mut w: W,
-    props: & [Property],
-    desc: & str,
+    props: &[Property],
+    desc: &str,
 ) -> std::io::Result<()> {
     let leftmost_column_width = 60;
     let rest_column_width = 15;
@@ -763,7 +670,10 @@ fn main() {
         }
     } else {
         println!("INFO: Running specified controllers. The `conforms` column is meaningless here");
-        assert!(args.bug.is_empty(), "the --bug flag is ignored when --ctrlers is specified");
+        assert!(
+            args.bug.is_empty(),
+            "the --bug flag is ignored when --ctrlers is specified"
+        );
         let features: &[&str] = &[];
         run_batch(&args, &args.ctrlers, features, CONFIGURATIONS, "", true);
     }
