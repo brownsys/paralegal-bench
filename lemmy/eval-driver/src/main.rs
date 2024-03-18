@@ -40,7 +40,6 @@ const POST_BUG_1_BATCH_1: &'static [&'static str] = &[
     "user-block",
     "user-change-password",
     "user-list-banned",
-    "user-login correct",
     "user-report-count",
     "user-save-settings",
 ];
@@ -86,14 +85,11 @@ const POST_BUG_1_BATCH_3: &'static [&'static str] = &[
     "community-remove",
     "community-update",
     "post-create",
-    "post-create correct",
     "post-delete",
-    "post-delete correct",
     "post-list",
     "post-read",
     "post-remove",
     "post-update",
-    "post-update correct",
     "private-message-create",
     "private-message-delete",
     "private-message-read",
@@ -285,7 +281,7 @@ struct BatchConfig<'a> {
     baseline_feature: &'a str,
     expect_failure: bool,
     property: Property,
-    comment: Option<&'a str>,
+    description: &'a str,
     baseline_controllers: &'a [&'a [&'a str]],
     change: Option<Change<'a>>,
 }
@@ -306,7 +302,7 @@ const BUG_1_CONFIG: BatchConfig<'static> = BatchConfig {
     expect_failure: true,
     property: Property::Instance,
     baseline_controllers: &[BUG_1_BATCH_1, BUG_1_BATCH_2, BUG_1_BATCH_3],
-    comment: None,
+    description: "Bug 1 - initial missing instance delete/ban check",
     change: Some(Change {
         change_feature: "bug-1-fix",
         add_feature: true,
@@ -319,7 +315,7 @@ const BUG_2_CONFIG: BatchConfig<'static> = BatchConfig {
     expect_failure: false,
     property: Property::Instance,
     baseline_controllers: &[POST_BUG_1_BATCH_1, POST_BUG_1_BATCH_2, POST_BUG_1_BATCH_3],
-    comment: None,
+    description: "Bug 2 - Refactoring for instance ban/delete checks",
     change: Some(Change {
         change_feature: "correct",
         add_feature: false,
@@ -332,7 +328,7 @@ const BUG_3_CONFIG: BatchConfig<'static> = BatchConfig {
     expect_failure: true,
     property: Property::Community,
     baseline_controllers: &[BUG_3_BATCH],
-    comment: Some("Lemmy developers found and fixed"),
+    description: "Bug 3 - Missing community ban/delete checks that the lemmy developers fixed",
     change: Some(Change {
         change_feature: "correct",
         add_feature: true,
@@ -344,7 +340,7 @@ const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
     baseline_feature: "post-bug-1",
     expect_failure: true,
     property: Property::Community,
-    comment: Some("Paralegal found"),
+    description: "Bug 4 - Additional missing community man/delete checks that Paralegal found",
     baseline_controllers: &[BUG_4_BATCH],
     change: None,
 };
@@ -356,22 +352,15 @@ const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
 // Bug 3 the other one always fails
 // Bug 4 always fails
 
-const BUG_2_BATCH: &'static [&'static str] =
-    &["post-bug-1 user-login", "post-bug-1 user-login correct"];
-
 // used to all have "post-bug-1" prepended
 // these are the buggy controllers that the Lemmy developers found and fixed themselves
 const BUG_3_FIXED_BATCH: &'static [&'static str] = &[
     // "comment-create", times out
     // "comment-create correct", times out
     "comment-update",
-    "comment-update correct",
     "post-create",
-    "post-create correct",
     "post-delete",
-    "post-delete correct",
     "post-update",
-    "post-update correct",
 ];
 
 // used to all have "post-bug-1" prepended
@@ -725,8 +714,10 @@ impl BatchConfig<'_> {
         let props = [self.property];
         let expect_failure = self.expect_failure;
 
+        println!("### {} ###", self.description);
+
         for (batch_num, batch) in initial_batches.enumerate() {
-            let desc = format!("Initial batch {batch_num} {}", self.comment.unwrap_or(""));
+            let desc = format!("Initial batch {batch_num}");
             run_batch(args, batch, &features, &props, &desc, expect_failure);
         }
 
@@ -743,10 +734,11 @@ impl BatchConfig<'_> {
             }
 
             for (batch_num, batch) in second_batches.iter().copied().enumerate() {
-                let desc = format!("Changed batch {batch_num} {}", self.comment.unwrap_or(""));
+                let desc = format!("Changed batch {batch_num}");
                 run_batch(args, batch, &features, &props, &desc, !expect_failure);
             }
         }
+        println!();
     }
 }
 
