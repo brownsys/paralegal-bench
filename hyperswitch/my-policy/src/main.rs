@@ -141,7 +141,7 @@ fn main() -> Result<()> {
         assert_eq!(dashes, 1, "too many '--' in extra args");
     }
     cmd.get_command().arg("--lib");
-    cmd.run(&args.source_dir)?.with_context(|ctx| {
+    let result = cmd.run(&args.source_dir)?.with_context(|ctx| {
         for p in args
             .policy
             .as_ref()
@@ -151,6 +151,7 @@ fn main() -> Result<()> {
         }
         Ok(())
     })?;
-    println!("Policy successful");
+    println!("{}", result.stats);
+    assert!(result.success);
     Ok(())
 }
