@@ -1,6 +1,6 @@
 extern crate clap;
 extern crate indicatif;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use indicatif::ProgressBar;
 
@@ -15,298 +15,288 @@ const CONFIGURATIONS: &'static [Property] = &[Property::Instance, Property::Comm
 // The "correct" feature flag is for a controller that the Lemmy developers found and fixed themselves.
 // e.g. user-login is the version before the bug fix, and user-login correct is the version after.
 
+// used to all have "post-bug-1" prepended
 /// Batches to run all of the controllers for Lemmy version bugs 2-4
 const POST_BUG_1_BATCH_1: &'static [&'static str] = &[
-    "post-bug-1 comment-like",
-    "post-bug-1 comment-mark-as-read",
-    "post-bug-1 comment-save",
-    "post-bug-1 comment-report-create",
-    "post-bug-1 comment-report-list",
-    "post-bug-1 comment-report-resolve",
-    "post-bug-1 community-add-mod",
-    "post-bug-1 community-ban",
-    "post-bug-1 community-block",
-    "post-bug-1 community-follow",
-    "post-bug-1 community-hide",
-    "post-bug-1 community-transfer",
-    "post-bug-1 notification-list-mentions",
-    "post-bug-1 notification-list-replies",
-    "post-bug-1 notification-mark-all-read",
-    "post-bug-1 notification-mark-mention-read",
-    "post-bug-1 notification-unread-count",
-    "post-bug-1 user-add-admin",
-    "post-bug-1 user-ban-person",
-    "post-bug-1 user-block",
-    "post-bug-1 user-change-password",
-    "post-bug-1 user-list-banned",
-    "post-bug-1 user-login correct",
-    "post-bug-1 user-report-count",
-    "post-bug-1 user-save-settings",
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "notification-list-mentions",
+    "notification-list-replies",
+    "notification-mark-all-read",
+    "notification-mark-mention-read",
+    "notification-unread-count",
+    "user-add-admin",
+    "user-ban-person",
+    "user-block",
+    "user-change-password",
+    "user-list-banned",
+    "user-report-count",
+    "user-save-settings",
 ];
 
+// used to all have "post-bug-1" prepended
 const POST_BUG_1_BATCH_2: &'static [&'static str] = &[
-    "post-bug-1 post-like",
-    "post-bug-1 post-lock",
-    "post-bug-1 post-mark-read",
-    "post-bug-1 post-save",
-    "post-bug-1 post-sticky",
-    "post-bug-1 post-report-create",
-    "post-bug-1 post-report-list",
-    "post-bug-1 post-report-resolve",
-    "post-bug-1 private-message-mark-read",
-    "post-bug-1 purge-comment",
-    "post-bug-1 purge-community",
-    "post-bug-1 purge-person",
-    "post-bug-1 purge-post",
-    "post-bug-1 registration-approve",
-    "post-bug-1 registration-list",
-    "post-bug-1 registration-unread-counts",
-    "post-bug-1 site-leave-admin",
-    "post-bug-1 site-mod-log",
-    "post-bug-1 site-resolve-object",
-    "post-bug-1 site-search",
-    // "post-bug-1 comment-create", times out
-    // "post-bug-1 comment-create correct", times out
-    "post-bug-1 comment-delete",
-    "post-bug-1 comment-list",
-    "post-bug-1 comment-read",
-    "post-bug-1 comment-remove",
-    "post-bug-1 comment-update",
-    "post-bug-1 comment-update correct",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
+    // "comment-create", times out
+    // "comment-create correct", times out
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
 ];
 
+// used to all have "post-bug-1" prepended
 const POST_BUG_1_BATCH_3: &'static [&'static str] = &[
-    "post-bug-1 community-create",
-    "post-bug-1 community-delete",
-    "post-bug-1 community-list",
-    "post-bug-1 community-read",
-    "post-bug-1 community-remove",
-    "post-bug-1 community-update",
-    "post-bug-1 post-create",
-    "post-bug-1 post-create correct",
-    "post-bug-1 post-delete",
-    "post-bug-1 post-delete correct",
-    "post-bug-1 post-list",
-    "post-bug-1 post-read",
-    "post-bug-1 post-remove",
-    "post-bug-1 post-update",
-    "post-bug-1 post-update correct",
-    "post-bug-1 private-message-create",
-    "post-bug-1 private-message-delete",
-    "post-bug-1 private-message-read",
-    "post-bug-1 private-message-update",
-    "post-bug-1 site-create",
-    // "post-bug-1 site-read", times out
-    "post-bug-1 site-update",
-    "post-bug-1 user-delete",
-    "post-bug-1 user-read",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    // "site-read", times out
+    "site-update",
+    "user-delete",
+    "user-read",
 ];
 
+// all used to have "bug-1-code" prepended
 /// Batches for each bug
 const BUG_1_BATCH_1: &'static [&'static str] = &[
-    "bug-1-code comment-like",
-    "bug-1-code comment-mark-as-read",
-    "bug-1-code comment-save",
-    "bug-1-code comment-report-create",
-    "bug-1-code comment-report-list",
-    "bug-1-code comment-report-resolve",
-    "bug-1-code community-add-mod",
-    "bug-1-code community-ban",
-    "bug-1-code community-block",
-    "bug-1-code community-follow",
-    "bug-1-code community-hide",
-    "bug-1-code community-transfer",
-    "bug-1-code notification-list-mentions",
-    "bug-1-code notification-list-replies",
-    "bug-1-code notification-mark-all-read",
-    "bug-1-code notification-mark-mention-read",
-    "bug-1-code notification-unread-count",
-    "bug-1-code user-add-admin",
-    "bug-1-code user-ban-person",
-    "bug-1-code user-block",
-    "bug-1-code user-change-password",
-    "bug-1-code user-list-banned",
-    "bug-1-code user-login",
-    "bug-1-code user-report-count",
-    "bug-1-code user-save-settings",
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "notification-list-mentions",
+    "notification-list-replies",
+    "notification-mark-all-read",
+    "notification-mark-mention-read",
+    "notification-unread-count",
+    "user-add-admin",
+    "user-ban-person",
+    "user-block",
+    "user-change-password",
+    "user-list-banned",
+    "user-report-count",
+    "user-save-settings",
 ];
 
+// used to all have "post-bug-1" prepended
 const BUG_1_BATCH_2: &'static [&'static str] = &[
-    "bug-1-code post-like",
-    "bug-1-code post-lock",
-    "bug-1-code post-mark-read",
-    "bug-1-code post-save",
-    "bug-1-code post-sticky",
-    "bug-1-code post-report-create",
-    "bug-1-code post-report-list",
-    "bug-1-code post-report-resolve",
-    "bug-1-code private-message-mark-read",
-    "bug-1-code purge-comment",
-    "bug-1-code purge-community",
-    "bug-1-code purge-person",
-    "bug-1-code purge-post",
-    "bug-1-code registration-approve",
-    "bug-1-code registration-list",
-    "bug-1-code registration-unread-counts",
-    "bug-1-code site-leave-admin",
-    "bug-1-code site-mod-log",
-    "bug-1-code site-resolve-object",
-    "bug-1-code site-search",
-    // "bug-1-code comment-create", times out
-    "bug-1-code comment-delete",
-    "bug-1-code comment-list",
-    "bug-1-code comment-read",
-    "bug-1-code comment-remove",
-    "bug-1-code comment-update",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
+    // "comment-create", times out
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
 ];
 
+// used to all have "post-bug-1" prepended
 const BUG_1_BATCH_3: &'static [&'static str] = &[
-    "bug-1-code community-create",
-    "bug-1-code community-delete",
-    "bug-1-code community-list",
-    "bug-1-code community-read",
-    "bug-1-code community-remove",
-    "bug-1-code community-update",
-    "bug-1-code post-create",
-    "bug-1-code post-delete",
-    "bug-1-code post-list",
-    "bug-1-code post-read",
-    "bug-1-code post-remove",
-    "bug-1-code post-update",
-    "bug-1-code private-message-create",
-    "bug-1-code private-message-delete",
-    "bug-1-code private-message-read",
-    "bug-1-code private-message-update",
-    "bug-1-code site-create",
-    // "bug-1-code site-read", times out
-    "bug-1-code site-update",
-    "bug-1-code user-delete",
-    "bug-1-code user-read",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    // "site-read", times out
+    "site-update",
+    "user-delete",
+    "user-read",
 ];
 
-const BUG_1_FIX_BATCH_1: &'static [&'static str] = &[
-    "bug-1-code bug-1-fix comment-like",
-    "bug-1-code bug-1-fix comment-mark-as-read",
-    "bug-1-code bug-1-fix comment-save",
-    "bug-1-code bug-1-fix comment-report-create",
-    "bug-1-code bug-1-fix comment-report-list",
-    "bug-1-code bug-1-fix comment-report-resolve",
-    "bug-1-code bug-1-fix community-add-mod",
-    "bug-1-code bug-1-fix community-ban",
-    "bug-1-code bug-1-fix community-block",
-    "bug-1-code bug-1-fix community-follow",
-    "bug-1-code bug-1-fix community-hide",
-    "bug-1-code bug-1-fix community-transfer",
-    "bug-1-code bug-1-fix notification-list-mentions",
-    "bug-1-code bug-1-fix notification-list-replies",
-    "bug-1-code bug-1-fix notification-mark-all-read",
-    "bug-1-code bug-1-fix notification-mark-mention-read",
-    "bug-1-code bug-1-fix notification-unread-count",
-    "bug-1-code bug-1-fix user-add-admin",
-    "bug-1-code bug-1-fix user-ban-person",
-    "bug-1-code bug-1-fix user-block",
-    "bug-1-code bug-1-fix user-change-password",
-    "bug-1-code bug-1-fix user-list-banned",
-    "bug-1-code bug-1-fix user-login",
-    "bug-1-code bug-1-fix user-report-count",
-    "bug-1-code bug-1-fix user-save-settings",
-];
+struct BatchConfig<'a> {
+    baseline_feature: &'a str,
+    expect_failure: bool,
+    property: Property,
+    description: &'a str,
+    baseline_controllers: &'a [&'a [&'a str]],
+    change: Option<Change<'a>>,
+}
 
-const BUG_1_FIX_BATCH_2: &'static [&'static str] = &[
-    "bug-1-code bug-1-fix post-like",
-    "bug-1-code bug-1-fix post-lock",
-    "bug-1-code bug-1-fix post-mark-read",
-    "bug-1-code bug-1-fix post-save",
-    "bug-1-code bug-1-fix post-sticky",
-    "bug-1-code bug-1-fix post-report-create",
-    "bug-1-code bug-1-fix post-report-list",
-    "bug-1-code bug-1-fix post-report-resolve",
-    "bug-1-code bug-1-fix private-message-mark-read",
-    "bug-1-code bug-1-fix purge-comment",
-    "bug-1-code bug-1-fix purge-community",
-    "bug-1-code bug-1-fix purge-person",
-    "bug-1-code bug-1-fix purge-post",
-    "bug-1-code bug-1-fix registration-approve",
-    "bug-1-code bug-1-fix registration-list",
-    "bug-1-code bug-1-fix registration-unread-counts",
-    "bug-1-code bug-1-fix site-leave-admin",
-    "bug-1-code bug-1-fix site-mod-log",
-    "bug-1-code bug-1-fix site-resolve-object",
-    "bug-1-code bug-1-fix site-search",
-    // "bug-1-code bug-1-fix comment-create", times out
-    "bug-1-code bug-1-fix comment-delete",
-    "bug-1-code bug-1-fix comment-list",
-    "bug-1-code bug-1-fix comment-read",
-    "bug-1-code bug-1-fix comment-remove",
-    "bug-1-code bug-1-fix comment-update",
-];
+struct Change<'a> {
+    change_feature: &'a str,
+    add_feature: bool,
+    /// If this is `None`, all baseline controllers are affected.
+    ///
+    /// If this is `Some` it will contain a list of controllers that are changed with this feaure.
+    /// That list of controllers should *not* be contained in the `baseline_controllers`
+    /// field in [`BatchConfig`].
+    affected_controllers: Option<&'a [&'a str]>,
+}
 
-const BUG_1_FIX_BATCH_3: &'static [&'static str] = &[
-    "bug-1-code bug-1-fix community-create",
-    "bug-1-code bug-1-fix community-delete",
-    "bug-1-code bug-1-fix community-list",
-    "bug-1-code bug-1-fix community-read",
-    "bug-1-code bug-1-fix community-remove",
-    "bug-1-code bug-1-fix community-update",
-    "bug-1-code bug-1-fix post-create",
-    "bug-1-code bug-1-fix post-delete",
-    "bug-1-code bug-1-fix post-list",
-    "bug-1-code bug-1-fix post-read",
-    "bug-1-code bug-1-fix post-remove",
-    "bug-1-code bug-1-fix post-update",
-    "bug-1-code bug-1-fix private-message-create",
-    "bug-1-code bug-1-fix private-message-delete",
-    "bug-1-code bug-1-fix private-message-read",
-    "bug-1-code bug-1-fix private-message-update",
-    "bug-1-code bug-1-fix site-create",
-    // "bug-1-code bug-1-fix site-read", times out
-    "bug-1-code bug-1-fix site-update",
-    "bug-1-code bug-1-fix user-delete",
-    "bug-1-code bug-1-fix user-read",
-];
+const BUG_1_CONFIG: BatchConfig<'static> = BatchConfig {
+    baseline_feature: "bug-1-code",
+    expect_failure: true,
+    property: Property::Instance,
+    baseline_controllers: &[BUG_1_BATCH_1, BUG_1_BATCH_2, BUG_1_BATCH_3],
+    description: "Bug 1 - initial missing instance delete/ban check",
+    change: Some(Change {
+        change_feature: "bug-1-fix",
+        add_feature: true,
+        affected_controllers: None,
+    }),
+};
 
-const BUG_2_BATCH: &'static [&'static str] =
-    &["post-bug-1 user-login", "post-bug-1 user-login correct"];
+const BUG_2_CONFIG: BatchConfig<'static> = BatchConfig {
+    baseline_feature: "post-bug-1",
+    expect_failure: false,
+    property: Property::Instance,
+    baseline_controllers: &[POST_BUG_1_BATCH_1, POST_BUG_1_BATCH_2, POST_BUG_1_BATCH_3],
+    description: "Bug 2 - Refactoring for instance ban/delete checks",
+    change: Some(Change {
+        change_feature: "correct",
+        add_feature: false,
+        affected_controllers: Some(&["user-login"]),
+    }),
+};
 
+const BUG_3_CONFIG: BatchConfig<'static> = BatchConfig {
+    baseline_feature: "post-bug-1",
+    expect_failure: true,
+    property: Property::Community,
+    baseline_controllers: &[BUG_3_BATCH],
+    description: "Bug 3 - Missing community ban/delete checks that the lemmy developers fixed",
+    change: Some(Change {
+        change_feature: "correct",
+        add_feature: true,
+        affected_controllers: Some(BUG_3_FIXED_BATCH),
+    }),
+};
+
+const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
+    baseline_feature: "post-bug-1",
+    expect_failure: true,
+    property: Property::Community,
+    description: "Bug 4 - Additional missing community man/delete checks that Paralegal found",
+    baseline_controllers: &[BUG_4_BATCH],
+    change: None,
+};
+
+// Bug 1 all fail
+// Bug fix all pass
+// Bug 2 succeeds with "correct"
+// Bug 3 one of them succeds with "correct"
+// Bug 3 the other one always fails
+// Bug 4 always fails
+
+// used to all have "post-bug-1" prepended
 // these are the buggy controllers that the Lemmy developers found and fixed themselves
 const BUG_3_FIXED_BATCH: &'static [&'static str] = &[
-    // "post-bug-1 comment-create", times out
-    // "post-bug-1 comment-create correct", times out
-    "post-bug-1 comment-update",
-    "post-bug-1 comment-update correct",
-    "post-bug-1 post-create",
-    "post-bug-1 post-create correct",
-    "post-bug-1 post-delete",
-    "post-bug-1 post-delete correct",
-    "post-bug-1 post-update",
-    "post-bug-1 post-update correct",
+    // "comment-create", times out
+    // "comment-create correct", times out
+    "comment-update",
+    "post-create",
+    "post-delete",
+    "post-update",
 ];
 
+// used to all have "post-bug-1" prepended
 // these are the buggy controllers that Paralegal found
 const BUG_3_BATCH: &'static [&'static str] = &[
-    "post-bug-1 comment-like",
-    "post-bug-1 comment-mark-as-read",
-    "post-bug-1 comment-save",
-    "post-bug-1 comment-report-create",
-    "post-bug-1 community-block",
-    "post-bug-1 community-follow",
-    "post-bug-1 post-mark-read",
-    "post-bug-1 post-save",
-    "post-bug-1 post-report-create",
-    "post-bug-1 post-report-resolve",
-    "post-bug-1 comment-delete",
-    "post-bug-1 comment-remove",
-    "post-bug-1 community-delete",
-    "post-bug-1 community-remove",
-    "post-bug-1 community-update",
-    "post-bug-1 post-remove",
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "community-block",
+    "community-follow",
+    "post-mark-read",
+    "post-save",
+    "post-report-create",
+    "post-report-resolve",
+    "comment-delete",
+    "comment-remove",
+    "community-delete",
+    "community-remove",
+    "community-update",
+    "post-remove",
 ];
 
+// used to all have "post-bug-1" prepended
 const BUG_4_BATCH: &'static [&'static str] = &[
-    "post-bug-1 community-add-mod",
-    "post-bug-1 community-ban",
-    "post-bug-1 community-hide",
-    "post-bug-1 community-transfer",
+    "community-add-mod",
+    "community-ban",
+    "community-hide",
+    "community-transfer",
 ];
 
 /// Batch executor for the evaluation of our 2023 Eurosys paper.
@@ -324,17 +314,13 @@ struct Args {
     #[clap(long)]
     verbose_commands: bool,
 
-    /// Run all the controllers (for bugs 2-4).
-    #[clap(long)]
-    all: bool,
-
     #[clap(long)]
     /// Specific controllers to run. Valid options are those in each BATCH list (see main.rs).
     ctrlers: Vec<String>,
 
-    /// Bug(s) to verify. Options are bug1, bug1fix, bugs234. Required if neither all nor ctrlers is passed.
-    #[clap(long, required_unless_present_any(["all", "ctrlers"]), default_value="bugs234")]
-    bug: GetUserVersion,
+    /// Bug(s) to verify. Defaults to all
+    #[clap(long, value_enum)]
+    bug: Vec<GetUserVersion>,
 
     lemmy_prop_dir: std::path::PathBuf,
 }
@@ -352,14 +338,24 @@ enum Property {
     Community,
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash, strum::AsRefStr, strum::Display, strum::EnumString)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, strum::Display, clap::ValueEnum, Debug)]
+#[clap(rename_all = "kebab-case")]
 enum GetUserVersion {
-    #[strum(serialize = "bug1")]
-    PreBug1Fix,
-    #[strum(serialize = "bug1fix")]
-    PostBug1Fix,
-    #[strum(serialize = "bugs234")]
-    Bug2Onward,
+    Bug1,
+    Bug2,
+    Bug3,
+    Bug4,
+}
+
+impl GetUserVersion {
+    fn to_config(self) -> &'static BatchConfig<'static> {
+        match self {
+            GetUserVersion::Bug1 => &BUG_1_CONFIG,
+            GetUserVersion::Bug2 => &BUG_2_CONFIG,
+            GetUserVersion::Bug3 => &BUG_3_CONFIG,
+            GetUserVersion::Bug4 => &BUG_4_CONFIG,
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -367,6 +363,17 @@ struct RunResult {
     error: RunError,
     analyze_time: Duration,
     verify_time: Duration,
+    expected_outcome: bool,
+}
+
+impl RunResult {
+    fn conforms_emoji(&self) -> &'static str {
+        if self.error.conforms(self.expected_outcome) {
+            "✅"
+        } else {
+            "❌"
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -374,6 +381,15 @@ enum RunError {
     Success,
     CompilationError,
     CheckError,
+}
+
+impl RunError {
+    fn conforms(self, expected: bool) -> bool {
+        match (self, expected) {
+            (RunError::Success, true) | (RunError::CheckError, false) => true,
+            _ => false,
+        }
+    }
 }
 
 // impl From<bool> for RunResult {
@@ -418,8 +434,8 @@ impl std::fmt::Display for RunError {
 
 fn print_table_header<W: std::io::Write>(
     mut w: W,
-    props: &'static [Property],
-    desc: &'static str,
+    props: &[Property],
+    desc: &str,
 ) -> std::io::Result<()> {
     let leftmost_column_width = 60;
     let rest_column_width = 15;
@@ -434,14 +450,14 @@ fn print_table_header<W: std::io::Write>(
         write!(w, "| {:rest_column_width$} ", "atime")?;
         write!(w, "| {:rest_column_width$} ", "vtime")?;
     }
-    writeln!(w, "")?;
+    writeln!(w, "| {:rest_column_width$} ", "conforms")?;
 
     // dividing line
     write!(w, "-{:-<leftmost_column_width$}-", "")?;
     for _ in 0..(props.len() * 3) {
         write!(w, "+-{:-<rest_column_width$}-", "")?
     }
-    writeln!(w, "")?;
+    writeln!(w, "+-{:-<rest_column_width$}-", "")?;
     Ok(())
 }
 
@@ -467,6 +483,7 @@ fn print_ctrler_results<W: std::io::Write>(
             "| {:^rest_column_width$} ",
             format!("{:?}", result.verify_time)
         )?;
+        write!(w, "| {:^rest_column_width$} ", result.conforms_emoji())?;
     }
 
     // dividing line
@@ -475,7 +492,7 @@ fn print_ctrler_results<W: std::io::Write>(
     for _ in 0..(results.len() * 3) {
         write!(w, "+-{:-<rest_column_width$}-", "")?;
     }
-    writeln!(w, "")?;
+    writeln!(w, "+-{:-<rest_column_width$}-", "")?;
     Ok(())
 }
 
@@ -483,8 +500,10 @@ fn print_ctrler_results<W: std::io::Write>(
 fn run_batch(
     args: &Args,
     batch: &[impl AsRef<str>],
-    props: &'static [Property],
-    desc: &'static str,
+    features: &[impl AsRef<str>],
+    props: &[Property],
+    desc: &str,
+    expect_failure: bool,
 ) {
     use std::process::*;
 
@@ -519,6 +538,9 @@ fn run_batch(
             "--features",
             ctrler.as_ref(),
         ]);
+        for feature in features {
+            ana_cmd.args(["--features", feature.as_ref()]);
+        }
 
         if !args.verbose {
             ana_cmd.stderr(Stdio::null()).stdout(Stdio::null());
@@ -570,6 +592,7 @@ fn run_batch(
                     analyze_time,
                     verify_time,
                     error,
+                    expected_outcome: !expect_failure,
                 }
             })
             .collect::<Vec<_>>();
@@ -580,54 +603,49 @@ fn run_batch(
     progress.finish_and_clear();
 }
 
-// runs all controllers
-fn run_all(args: &Args, version: GetUserVersion) {
-    match version {
-        GetUserVersion::PreBug1Fix => {
-            run_batch(
-                args,
-                BUG_1_BATCH_1,
-                CONFIGURATIONS,
-                "Bug 1: Batch 1 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_BATCH_2,
-                CONFIGURATIONS,
-                "Bug 1: Batch 2 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_BATCH_3,
-                CONFIGURATIONS,
-                "Bug 1: Batch 3 Results",
-            );
+impl BatchConfig<'_> {
+    fn run(&self, args: &Args) {
+        let initial_batches = self.baseline_controllers.iter().cloned().chain(
+            self.change
+                .as_ref()
+                .map(|c| c.affected_controllers)
+                .flatten(),
+        );
+
+        let mut features = vec![self.baseline_feature];
+        if let Some(change) = self.change.as_ref() {
+            if !change.add_feature {
+                features.push(change.change_feature);
+            }
         }
-        GetUserVersion::PostBug1Fix => {
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_1,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 1 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_2,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 2 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_3,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 3 Results",
-            );
+        let props = [self.property];
+        let expect_failure = self.expect_failure;
+
+        println!("### {} ###", self.description);
+
+        for (batch_num, batch) in initial_batches.enumerate() {
+            let desc = format!("Initial batch {batch_num}");
+            run_batch(args, batch, &features, &props, &desc, expect_failure);
         }
-        GetUserVersion::Bug2Onward => {
-            run_batch(args, POST_BUG_1_BATCH_1, CONFIGURATIONS, "Batch 1 Results:");
-            run_batch(args, POST_BUG_1_BATCH_2, CONFIGURATIONS, "Batch 2 Results:");
-            run_batch(args, POST_BUG_1_BATCH_3, CONFIGURATIONS, "Batch 3 Results:");
+
+        if let Some(change) = self.change.as_ref() {
+            let second_batches = if change.affected_controllers.is_some() {
+                change.affected_controllers.as_slice()
+            } else {
+                self.baseline_controllers
+            };
+
+            let mut features = vec![self.baseline_feature];
+            if change.add_feature {
+                features.push(change.change_feature);
+            }
+
+            for (batch_num, batch) in second_batches.iter().copied().enumerate() {
+                let desc = format!("Changed batch {batch_num}");
+                run_batch(args, batch, &features, &props, &desc, !expect_failure);
+            }
         }
+        println!();
     }
 }
 
@@ -637,80 +655,26 @@ fn run_all(args: &Args, version: GetUserVersion) {
 // For Bug 3, this is two batches: the controllers the Lemmy developers found, and the ones Paralegal found.
 // For the controllers that the Lemmy developers found, each controller runs once before the bug fix, once after
 // For Bug 4, this is once batch: the controllers Paralegal found
-fn run_bugs(args: &Args) {
-    match args.bug {
-        GetUserVersion::PreBug1Fix => {
-            run_batch(
-                args,
-                BUG_1_BATCH_1,
-                CONFIGURATIONS,
-                "Bug 1: Batch 1 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_BATCH_2,
-                CONFIGURATIONS,
-                "Bug 1: Batch 2 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_BATCH_3,
-                CONFIGURATIONS,
-                "Bug 1: Batch 3 Results",
-            );
-        }
-        GetUserVersion::PostBug1Fix => {
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_1,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 1 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_2,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 2 Results",
-            );
-            run_batch(
-                args,
-                BUG_1_FIX_BATCH_3,
-                CONFIGURATIONS,
-                "Bug 1 Fix: Batch 3 Results",
-            );
-        }
-        GetUserVersion::Bug2Onward => {
-            run_batch(args, BUG_2_BATCH, &[Property::Instance], "Bug 2 Batch");
-            run_batch(
-                args,
-                BUG_3_FIXED_BATCH,
-                &[Property::Community],
-                "Bug 3 Batch -- Lemmy developers found and fixed",
-            );
-            run_batch(
-                args,
-                BUG_3_BATCH,
-                &[Property::Community],
-                "Bug 3 Batch -- Paralegal found",
-            );
-            run_batch(args, BUG_4_BATCH, &[Property::Community], "Bug 4 Batch");
-        }
-    }
-}
-
 fn main() {
     let args = Args::parse();
 
-    if args.all {
-        println!(
-            "INFO: Running all controllers -- note that this is the Lemmy version for bugs 2-4."
-        );
-        run_all(&args, GetUserVersion::Bug2Onward);
-    } else if args.ctrlers.is_empty() {
+    if args.ctrlers.is_empty() {
         println!("INFO: No controllers specified; running relevant controllers and properties for each bug");
-        run_bugs(&args)
+        let bugs = if !args.bug.is_empty() {
+            args.bug.clone()
+        } else {
+            GetUserVersion::value_variants().to_vec()
+        };
+        for bug in bugs {
+            bug.to_config().run(&args)
+        }
     } else {
-        println!("INFO: Running specified controllers.");
-        run_batch(&args, &args.ctrlers, CONFIGURATIONS, "");
+        println!("INFO: Running specified controllers. The `conforms` column is meaningless here");
+        assert!(
+            args.bug.is_empty(),
+            "the --bug flag is ignored when --ctrlers is specified"
+        );
+        let features: &[&str] = &[];
+        run_batch(&args, &args.ctrlers, features, CONFIGURATIONS, "", true);
     }
 }
