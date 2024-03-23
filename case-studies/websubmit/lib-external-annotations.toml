@@ -1,0 +1,39 @@
+[["alloc::vec::Vec::new"]]
+marker = "safe_source"
+on_return = true
+
+[["std::io::_print"]]
+marker = "sink"
+on_argument = [0]
+
+[["lettre::Transport::send"]]
+marker = "sink"
+on_argument = [1]
+
+[["lettre_email::EmailBuilder::to"]]
+marker = "scopes"
+on_argument = [1]
+
+[["websubmit::questions::questions_submit_internal"]]
+marker = "request_generated"
+on_argument = [0]
+
+[["websubmit::questions::forget_user"]]
+marker = "request_generated"
+on_argument = [0]
+
+[["websubmit::questions::answers"]]
+marker = "request_generated"
+on_argument = [0]
+
+[["rocket::form::form::Form"]]
+marker = "sensitive"
+
+[["rocket::state::State"]]
+marker = "server_state"
+
+# [["nonexistent_and_hacky"]]
+# marker = "safe_source_with_bless"
+# [["nonexistent_and_hacky"]]
+# marker = "bless_safe_source"
+

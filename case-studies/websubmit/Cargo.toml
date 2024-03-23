@@ -1,0 +1,59 @@
+[package]
+name = "websubmit"
+version = "0.1.0"
+authors = ["Malte Schwarzkopf <malte@cs.brown.edu>"]
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4.0", features = ["serde"] }
+clap = "2.33.0"
+lettre = "0.9.2"
+lettre_email = "0.9.2"
+mysql = "*"
+mysql_common = "0.22"
+rand = "0.8.4"
+rocket = "0.5.0-rc.1"
+rust-crypto = "0.2.36"
+slog = { version = "2.4.0", features = [
+    "max_level_trace",
+    "release_max_level_trace",
+] }
+slog-term = "2.4.0"
+toml = "0.2.1"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+cfg-if = "1.0.0"
+paralegal = { path = "../paralegal/crates/paralegal" }
+
+
+[features]
+# Edit features as listed in https://www.notion.so/justus-adam/Set-of-edits-to-websubmit-to-evaluate-b835920560584792be72a51ffda1e372
+edit-del-1-b = []
+edit-del-2-b = []
+edit-del-2-a = []
+edit-del-2-c = []
+edit-del-3-b = []
+edit-del-1-c = []
+edit-del-1-a = []
+edit-del-3-a = []
+edit-del-3-c = []
+edit-dis-1-b = []
+edit-dis-2-b = []
+edit-dis-2-a = []
+edit-dis-2-c = []
+edit-dis-3-b = []
+edit-dis-1-c = []
+edit-dis-1-a = []
+edit-dis-3-a = []
+edit-dis-3-c = []
+edit-sc-1-a = []
+edit-sc-1-b = []
+edit-sc-1-c = []
+v-ann-lib = []
+v-ann-baseline = []
+v-ann-strict = []
+
+[dependencies.rocket_dyn_templates]
+version = "0.1.0-rc.1"
+features = ["handlebars", "tera"]

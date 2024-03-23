@@ -1,0 +1,13 @@
+/target
+**/*.rs.bk
+analysis_result.frg
+
+*.gv.pdf
+*.gv
+*.ntgb.json
+*.regal
+*.mir
+*.df
+.vscode/settings.json
+/verification/
+flow-graph.json

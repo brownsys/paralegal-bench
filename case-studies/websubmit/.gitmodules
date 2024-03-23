@@ -1,0 +1,3 @@
+[submodule "dfpp-props"]
+	path = frg/dfpp-props
+	url = https://github.com/brownsys/dfpp-props.git

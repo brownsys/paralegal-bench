@@ -1,0 +1,8 @@
+[["alloc::vec::Vec::new"]]
+marker = "safe_source"
+on_return = true
+
+[["std::io::_print"]]
+marker = "sink"
+on_argument = [0]
+
