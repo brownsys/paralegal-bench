@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 use csv::Writer;
+use indicatif::ProgressBar;
 use paralegal_policy::GraphLocation;
 use paralegal_policy::{Context, SPDGGenCommand};
 use std::fs::OpenOptions;
@@ -82,18 +83,25 @@ impl Output {
 
 impl Config {
     pub fn run(&self, output: &mut Output) -> Result<()> {
+        let experiments = self.experiments().enumerate().collect::<Vec<_>>();
+        let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
+            indicatif::ProgressStyle::default_bar()
+                .template("[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}"),
+        );
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
-        for (id, mut exp) in self.experiments().enumerate() {
+        for (id, mut exp) in experiments {
+            progress.inc(1);
+            progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
                 (prepare)()
             }
             let compile_command = &mut exp.compile_cmd;
             let compile_dir = &exp.app_config.source_dir;
-            println!(
+            progress.println(format!(
                 "Running {:?} in {}",
                 compile_command.get_command(),
                 compile_dir.display(),
-            );
+            ));
             let mut stdout = OpenOptions::new()
                 .append(true)
                 .create(true)
@@ -113,6 +121,8 @@ impl Config {
                 .spawn()?;
             let cmd_stat = CmdStat::for_process(self, &mut process)?;
             let mut run_stats = RunStat::from_experiment(id as u32, &exp, cmd_stat);
+            progress.inc(1);
+            progress.set_message(format!("policy: {}", exp.policy_name));
             if process.try_wait()?.unwrap().success() {
                 let policy = exp.policy;
                 let (res, cmd_stat) = CmdStat::for_self(self, || {
@@ -133,10 +143,10 @@ impl Config {
                         .serialize(ControllerStat::from_spdg(id as u32, ctrl))?
                 }
             } else {
-                println!(
+                progress.println(format!(
                     "WARNING: Run id {} dir not successfully pass PDG construction",
                     id
-                );
+                ));
             }
             output.run_stat_out.serialize(run_stats)?;
             output.flush()?;
