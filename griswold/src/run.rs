@@ -88,6 +88,7 @@ impl Config {
             indicatif::ProgressStyle::default_bar()
                 .template("[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}"),
         );
+        progress.enable_steady_tick(500);
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
         for (id, mut exp) in experiments {
             progress.inc(1);

@@ -182,14 +182,11 @@ impl ExperimentConfig {
                     ($expectation:expr, $controllers:expr) => {
                         $controllers.iter().map(move |c| {
                             let mut compile_cmd = SPDGGenCommand::global();
-                            compile_cmd.external_annotations("external-annotation.toml");
-                            compile_cmd.get_command().args([
-                                "--target",
-                                "lemmy_api",
-                                "--",
-                                "--features",
-                                c,
-                            ]);
+                            compile_cmd
+                                .external_annotations("external-annotations.toml")
+                                .abort_after_analysis()
+                                .get_command()
+                                .args(["--target", "lemmy_api", "--", "--features", c]);
                             let mut exp = self.make_experiment(
                                 config,
                                 policy_name,
