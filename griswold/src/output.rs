@@ -242,8 +242,8 @@ impl CmdStat {
         CmdStat {
             peak_cpu,
             peak_mem,
-            avg_cpu: sum_cpu / num_samples as f32,
-            avg_mem: sum_mem / num_samples,
+            avg_cpu: sum_cpu / num_samples.max(1) as f32,
+            avg_mem: sum_mem / num_samples.max(1),
             elapsed: started.elapsed().into(),
         }
     }
