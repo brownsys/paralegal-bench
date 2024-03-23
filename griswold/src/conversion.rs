@@ -181,17 +181,17 @@ impl ExperimentConfig {
     ) -> Experiment<'a> {
         let app_config = &config.app_config[self.application.as_ref()];
         let mut compile_cmd = SPDGGenCommand::global();
-        compile_cmd
-            .get_command()
-            .args(app_config.flow_args.iter())
-            .arg("--")
-            .args(app_config.cargo_args.iter());
         if let Some(path) = app_config.external_annotations.as_ref() {
             compile_cmd.external_annotations(path);
         }
         if app_config.abort {
             compile_cmd.abort_after_analysis();
         }
+        compile_cmd
+            .get_command()
+            .args(app_config.flow_args.iter())
+            .arg("--")
+            .args(app_config.cargo_args.iter());
         Experiment {
             config: self,
             policy_name,
