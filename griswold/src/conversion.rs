@@ -7,6 +7,14 @@ use paralegal_policy::SPDGGenCommand;
 use crate::input::{Application, Config, ExperimentConfig, ExperimentType};
 use crate::run::{Experiment, PolicyFn};
 
+fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
+    if policies.is_empty() {
+        V::value_variants()
+    } else {
+        policies
+    }
+}
+
 impl Config {
     pub fn experiments(&self) -> impl Iterator<Item = Experiment<'_>> {
         self.experiments.iter().flat_map(|e| e.as_experiments(self))
@@ -21,18 +29,18 @@ impl ExperimentConfig {
         match self.r#type {
             ExperimentType::CaseStudy => match &self.application {
                 Application::Lemmy { policies } => {
-                    Box::new(self.lemmy_case_study(config, &policies))
+                    Box::new(self.lemmy_case_study(config, selection_or_all(policies)))
                         as Box<dyn Iterator<Item = _> + 'a>
                 }
                 Application::AtomicData => Box::new(self.atomic_case_study(config)),
                 Application::Freedit { policies } => {
-                    Box::new(self.freedit_case_study(config, &policies))
+                    Box::new(self.freedit_case_study(config, selection_or_all(policies)))
                 }
                 Application::Hyperswitch { policies } => {
-                    Box::new(self.hyperwitch_case_study(config, &policies))
+                    Box::new(self.hyperwitch_case_study(config, selection_or_all(policies)))
                 }
                 Application::WebSubmit { policies } => {
-                    Box::new(self.websubmit_case_study(config, &policies))
+                    Box::new(self.websubmit_case_study(config, selection_or_all(policies)))
                 }
                 Application::Plume => Box::new(self.plume_case_study(config)),
             },

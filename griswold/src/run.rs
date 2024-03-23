@@ -1,14 +1,16 @@
 //! Types that describe experiment runs and functions to execute them
 
+use anyhow::Result;
 use csv::Writer;
+use paralegal_policy::GraphLocation;
 use paralegal_policy::{Context, SPDGGenCommand};
-use std::fs::File;
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::SystemTime;
+use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
-use crate::input::{ApplicationConfig, ExperimentConfig};
-use crate::output::SysStat;
+use crate::Arguments;
+use crate::{
+    input::{ApplicationConfig, Config, ExperimentConfig},
+    output::{CmdStat, ControllerStat, RunStat, SysStat},
+};
 
 pub struct Experiment<'c> {
     pub config: &'c ExperimentConfig,
@@ -40,12 +42,15 @@ pub struct Output {
 }
 
 impl Output {
-    pub fn init() -> std::io::Result<Self> {
+    pub fn init(args: &Arguments) -> std::io::Result<Self> {
         let t = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        let general_output_dir: PathBuf = format!("run-{t}").into();
+        let mut general_output_dir = args.result_path.clone();
+        general_output_dir.push(format!("run-{t}"));
+        assert!(!general_output_dir.exists());
+        std::fs::create_dir_all(&general_output_dir)?;
         let sys_stat = SysStat::new();
         let mut sys_stat_file = File::create(general_output_dir.join("sys.toml"))?;
         use std::io::Write;
@@ -64,5 +69,56 @@ impl Output {
     pub fn flush(&mut self) -> std::io::Result<()> {
         self.controller_stat_out.flush()?;
         self.run_stat_out.flush()
+    }
+}
+
+impl Config {
+    pub fn run(&self, output: &mut Output) -> Result<()> {
+        for (id, mut exp) in self.experiments().enumerate() {
+            if let Some(prepare) = exp.prepare.as_ref() {
+                (prepare)()
+            }
+            let compile_command = &mut exp.compile_cmd;
+            let compile_dir = &exp.app_config.source_dir;
+            println!(
+                "Running {:?} in {}",
+                compile_command.get_command(),
+                compile_dir.display()
+            );
+            let mut process = compile_command
+                .get_command()
+                .current_dir(&compile_dir)
+                .spawn()?;
+            let cmd_stat = CmdStat::for_process(self, &mut process)?;
+            let mut run_stats = RunStat::from_experiment(id as u32, &exp, cmd_stat);
+            if process.try_wait()?.unwrap().success() {
+                let policy = exp.policy;
+                let (res, cmd_stat) = CmdStat::for_self(self, || {
+                    let ctx = Arc::new(
+                        GraphLocation::std(compile_dir)
+                            .build_context(paralegal_policy::Config::default())?,
+                    );
+                    let policy_start = Instant::now();
+                    (policy)(ctx.clone())?;
+                    let success = ctx.emit_diagnostics(std::io::stdout())?;
+                    anyhow::Ok((ctx, success, policy_start.elapsed()))
+                });
+                let (ctx, success, traversal_time) = res?;
+                run_stats.add_policy_stat(cmd_stat, ctx.as_ref(), success, traversal_time);
+                for ctrl in ctx.desc().controllers.values() {
+                    output
+                        .controller_stat_out
+                        .serialize(ControllerStat::from_spdg(id as u32, ctrl))?
+                }
+            } else {
+                println!(
+                    "WARNING: Run id {} dir not successfully pass PDG construction",
+                    id
+                );
+            }
+            output.run_stat_out.serialize(run_stats)?;
+            output.flush()?;
+        }
+        Ok(())
     }
 }

@@ -1,1 +1,35 @@
-stat_refresh_interval = "500ms"
+stat-refresh-interval = "500ms"
+
+[app-config.lemmy]
+source-dir = "../case-studies/lemmy"
+
+[app-config.plume]
+source-dir = "../case-studies/plume"
+
+[app-config.websubmit]
+source-dir = "../case-studies/websubmit"
+
+[app-config.freedit]
+source-dir = "../case-studies/freedit"
+
+[app-config.atomic-data]
+source-dir = "../case-studies/atomic-server"
+
+[app-config.hyperswitch]
+source-dir = "../case-studies/hyperswitch"
+
+[[experiments]]
+type = "case-study"
+application = "lemmy"
+
+[[experiments]]
+type = "case-study"
+application = "plume"
+
+[[experiments]]
+type = "case-study"
+application = "freedit"
+
+[[experiments]]
+type = "case-study"
+application = "atomic-data"

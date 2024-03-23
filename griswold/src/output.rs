@@ -4,12 +4,21 @@ use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
 use paralegal_policy::Context;
 use serde::{Deserialize, Serialize};
 use std::process::Child;
-use std::sync::{self};
+use std::sync;
 use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::input::Config;
 use crate::run::Experiment;
+
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
+struct TimeMeasurement(u128);
+
+impl From<Duration> for TimeMeasurement {
+    fn from(value: Duration) -> Self {
+        Self(value.as_micros())
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct RunStat {
@@ -18,12 +27,12 @@ pub struct RunStat {
     policy: String,
     expectation: bool,
     result: Option<bool>,
-    pdg_time: Duration,
-    rustc_time: Option<Duration>,
-    policy_time: Option<Duration>,
-    deserialization_time: Option<Duration>,
-    precomputation_time: Option<Duration>,
-    traversal_time: Option<Duration>,
+    pdg_time: TimeMeasurement,
+    rustc_time: Option<TimeMeasurement>,
+    policy_time: Option<TimeMeasurement>,
+    deserialization_time: Option<TimeMeasurement>,
+    precomputation_time: Option<TimeMeasurement>,
+    traversal_time: Option<TimeMeasurement>,
     num_controllers: Option<u16>,
     peak_mem_usage_pdg: u64,
     avg_mem_usage_pdg: u64,
@@ -49,7 +58,7 @@ impl RunStat {
             policy,
             expectation,
             result: None,
-            pdg_time: pdg_stat.elapsed,
+            pdg_time: pdg_stat.elapsed.into(),
             rustc_time: None,
             policy_time: None,
             deserialization_time: None,
@@ -91,15 +100,18 @@ impl RunStat {
         }
         set!(avg_cpu_usage_policy, cmd_stat.avg_cpu);
         set!(peak_mem_usage_policy, cmd_stat.peak_mem);
-        set!(precomputation_time, ctx.context_stats().precomputation);
+        set!(
+            precomputation_time,
+            ctx.context_stats().precomputation.into()
+        );
         set!(result, success);
         set!(
             deserialization_time,
-            ctx.context_stats().deserialization.unwrap()
+            ctx.context_stats().deserialization.unwrap().into()
         );
-        set!(traversal_time, traversal_time);
+        set!(traversal_time, traversal_time.into());
         set!(num_controllers, ctx.desc().controllers.len() as u16);
-        set!(rustc_time, ctx.desc().rustc_time);
+        set!(rustc_time, ctx.desc().rustc_time.into());
     }
 }
 
@@ -179,7 +191,7 @@ pub struct CmdStat {
     avg_cpu: f32,
     peak_mem: u64,
     avg_mem: u64,
-    elapsed: Duration,
+    elapsed: TimeMeasurement,
 }
 
 impl CmdStat {
@@ -237,7 +249,7 @@ impl CmdStat {
             peak_mem,
             avg_cpu: sum_cpu / num_samples as f32,
             avg_mem: sum_mem / num_samples,
-            elapsed: started.elapsed(),
+            elapsed: started.elapsed().into(),
         }
     }
 }
