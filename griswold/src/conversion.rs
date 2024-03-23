@@ -190,6 +190,7 @@ impl ExperimentConfig {
         compile_cmd
             .get_command()
             .args(app_config.flow_args.iter())
+            .arg("--adaptive-depth")
             .arg("--")
             .args(app_config.cargo_args.iter());
         Experiment {
