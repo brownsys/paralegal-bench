@@ -1,7 +1,10 @@
 use clap::Parser;
 use input::Config;
 use run::Output;
-use std::path::PathBuf;
+use std::{
+    path::{Path, PathBuf},
+    process,
+};
 
 pub mod conversion;
 pub mod input;
@@ -42,6 +45,14 @@ fn main() {
     let mut output = Output::init(args).unwrap();
     let config_file = std::fs::read_to_string(&args.config_path).unwrap();
     let config: Config = toml::from_str(&config_file).unwrap();
+
+    let compile_stat = process::Command::new("cargo")
+        .args(["install", "--release", "--locked", "--path"])
+        .arg(Path::new("crates").join("paralegal-flow"))
+        .current_dir(&config.paralegal_home_dir)
+        .status()
+        .unwrap();
+    assert!(compile_stat.success());
 
     config.run(&mut output).unwrap()
 }

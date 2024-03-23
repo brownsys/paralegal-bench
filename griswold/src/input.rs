@@ -10,6 +10,7 @@ use std::time::Duration;
 pub struct Config {
     #[serde(with = "humantime_serde")]
     pub stat_refresh_interval: Duration,
+    pub paralegal_home_dir: PathBuf,
     pub app_config: HashMap<String, ApplicationConfig>,
     pub experiments: Box<[ExperimentConfig]>,
 }

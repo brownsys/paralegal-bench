@@ -1,4 +1,5 @@
 stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy"
