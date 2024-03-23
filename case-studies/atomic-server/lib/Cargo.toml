@@ -27,7 +27,7 @@ urlencoding = "1.3.3"
 time = "=0.3.10"
 time-macros = "=0.2.4"
 winnow = "=0.4.0"
-paralegal = { path = "../../../paralegal/crates/paralegal" }
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 
 [dev-dependencies]
 ntest = "0.7.3"

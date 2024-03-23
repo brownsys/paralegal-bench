@@ -83,7 +83,7 @@ impl Config {
             println!(
                 "Running {:?} in {}",
                 compile_command.get_command(),
-                compile_dir.display()
+                compile_dir.display(),
             );
             let mut process = compile_command
                 .get_command()

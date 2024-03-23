@@ -1,22 +1,22 @@
 stat-refresh-interval = "500ms"
 
 [app-config.lemmy]
-source-dir = "../case-studies/lemmy"
+source-dir = "case-studies/lemmy"
 
 [app-config.plume]
-source-dir = "../case-studies/plume"
+source-dir = "case-studies/plume"
 
 [app-config.websubmit]
-source-dir = "../case-studies/websubmit"
+source-dir = "case-studies/websubmit"
 
 [app-config.freedit]
-source-dir = "../case-studies/freedit"
+source-dir = "case-studies/freedit"
 
 [app-config.atomic-data]
-source-dir = "../case-studies/atomic-server"
+source-dir = "case-studies/atomic-server"
 
 [app-config.hyperswitch]
-source-dir = "../case-studies/hyperswitch"
+source-dir = "case-studies/hyperswitch"
 
 [[experiments]]
 type = "case-study"

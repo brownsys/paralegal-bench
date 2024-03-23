@@ -75,7 +75,7 @@ encoding = { version = "0.2.33" }
 webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
 deser-hjson = "1.0.2"
 webmention = "0.4.0"
-paralegal = { path = "../../../../paralegal/crates/paralegal" }
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 
 [build-dependencies]
 rosetta-build = "0.1.2"
