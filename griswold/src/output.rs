@@ -196,15 +196,10 @@ pub struct CmdStat {
 
 impl CmdStat {
     pub fn for_self<R>(config: &Config, f: impl FnOnce() -> R) -> (R, Self) {
+        let sync = sync::OnceLock::new();
         thread::scope(|scope| {
-            let sync = sync::OnceLock::new();
-
-            let sync_clone = sync.clone();
-            let handle = scope.spawn(|| {
-                Self::collect(config, std::process::id(), move || {
-                    sync_clone.get().is_some()
-                })
-            });
+            let handle =
+                scope.spawn(|| Self::collect(config, std::process::id(), || sync.get().is_some()));
 
             let result = f();
             sync.set(()).unwrap();
