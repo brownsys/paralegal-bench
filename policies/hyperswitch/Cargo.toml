@@ -9,10 +9,7 @@ name = "my-policy"
 
 
 [dependencies]
-anyhow = "1"
-paralegal-policy = { path = "../../../paralegal/crates/paralegal-policy" }
+anyhow = { workspace = true }
+paralegal-policy = { workspace = true }
 lazy_static = "1"
-clap = { version = "4", features = ["derive"] }
-
-
-[workspace]
+clap = { workspace = true }
