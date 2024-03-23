@@ -55,28 +55,10 @@ impl ExperimentConfig {
         ]
         .into_iter()
         .map(|(expectation, extra_args)| {
-            let mut compile_cmd = SPDGGenCommand::global();
-            compile_cmd
-                .abort_after_analysis()
-                .external_annotations("external-annotations.toml")
-                .get_command()
-                .args([
-                    "--target",
-                    "plume-models",
-                    "--",
-                    "--no-default-features",
-                    "--features",
-                    "postgres",
-                ])
-                .args(extra_args);
-
-            self.make_experiment(
-                config,
-                "plume",
-                Box::new(plume::check),
-                expectation,
-                compile_cmd,
-            )
+            let mut exp =
+                self.make_experiment(config, "plume", Box::new(plume::check), expectation);
+            exp.compile_cmd.get_command().args(extra_args);
+            exp
         })
     }
 
@@ -99,18 +81,11 @@ impl ExperimentConfig {
             [(true, &[] as &[&str])]
                 .into_iter()
                 .map(move |(expectation, _)| {
-                    let mut compile_cmd = SPDGGenCommand::global();
-                    compile_cmd
-                        .external_annotations("external-annotations.toml")
-                        .abort_after_analysis()
-                        .get_command()
-                        .args(["--target", "router", "--", "--lib"]);
                     self.make_experiment(
                         config,
                         policy.as_ref(),
                         Box::new(policy.runnable()),
                         expectation,
-                        compile_cmd,
                     )
                 })
         })
@@ -125,21 +100,14 @@ impl ExperimentConfig {
             [(true, &[] as &[_]), (false, &["--features", "buggy"])]
                 .into_iter()
                 .map(move |(expectation, extra_args)| {
-                    let mut compile_cmd = SPDGGenCommand::global();
-                    compile_cmd
-                        .external_annotations("external-annotations.toml")
-                        .abort_after_analysis()
-                        .get_command()
-                        .args(["--target", "atomic_lib", "--lib", "--features", "db"])
-                        .args(extra_args);
-
-                    self.make_experiment(
+                    let mut exp = self.make_experiment(
                         config,
                         policy.as_ref(),
                         Box::new(move |ctx| policy.check(ctx)),
                         expectation,
-                        compile_cmd,
-                    )
+                    );
+                    exp.compile_cmd.get_command().args(extra_args);
+                    exp
                 })
         })
     }
@@ -148,21 +116,14 @@ impl ExperimentConfig {
         [(true, &["--features", "bug-fix"] as &[_]), (false, &[])]
             .into_iter()
             .map(|(expectation, extra_args)| {
-                let mut compile_cmd = SPDGGenCommand::global();
-                compile_cmd
-                    .external_annotations("external-annotations.toml")
-                    .abort_after_analysis()
-                    .get_command()
-                    .args(["--target", "atomic_lib", "--lib", "--features", "db"])
-                    .args(extra_args);
-
-                self.make_experiment(
+                let mut exp = self.make_experiment(
                     config,
                     "atomic",
                     Box::new(atomic::check_rights),
                     expectation,
-                    compile_cmd,
-                )
+                );
+                exp.compile_cmd.get_command().args(extra_args);
+                exp
             })
     }
 
@@ -181,18 +142,11 @@ impl ExperimentConfig {
                 macro_rules! mk_batch_exps {
                     ($expectation:expr, $controllers:expr) => {
                         $controllers.iter().map(move |c| {
-                            let mut compile_cmd = SPDGGenCommand::global();
-                            compile_cmd
-                                .external_annotations("external-annotations.toml")
-                                .abort_after_analysis()
-                                .get_command()
-                                .args(["--target", "lemmy_api", "--", "--features", c]);
                             let mut exp = self.make_experiment(
                                 config,
                                 policy_name,
                                 Box::new(policy),
                                 $expectation,
-                                compile_cmd,
                             );
                             exp.comment = Some(c);
                             exp
@@ -224,12 +178,24 @@ impl ExperimentConfig {
         policy_name: &'a str,
         policy: PolicyFn<'a>,
         expectation: bool,
-        compile_cmd: SPDGGenCommand,
     ) -> Experiment<'a> {
+        let app_config = &config.app_config[self.application.as_ref()];
+        let mut compile_cmd = SPDGGenCommand::global();
+        compile_cmd
+            .get_command()
+            .args(app_config.flow_args.iter())
+            .arg("--")
+            .args(app_config.cargo_args.iter());
+        if let Some(path) = app_config.external_annotations.as_ref() {
+            compile_cmd.external_annotations(path);
+        }
+        if app_config.abort {
+            compile_cmd.abort_after_analysis();
+        }
         Experiment {
             config: self,
-            app_config: &config.app_config[self.application.as_ref()],
             policy_name,
+            app_config,
             policy,
             expectation,
             compile_cmd,

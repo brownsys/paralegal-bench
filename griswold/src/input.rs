@@ -27,6 +27,17 @@ pub struct ExperimentConfig {
 #[serde(rename_all = "kebab-case")]
 pub struct ApplicationConfig {
     pub source_dir: PathBuf,
+    #[serde(default)]
+    pub cargo_args: Box<[String]>,
+    #[serde(default = "const_true")]
+    pub abort: bool,
+    #[serde(default)]
+    pub flow_args: Box<[String]>,
+    pub external_annotations: Option<PathBuf>,
+}
+
+fn const_true() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize, strum::AsRefStr)]

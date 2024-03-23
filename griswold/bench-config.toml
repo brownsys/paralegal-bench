@@ -3,21 +3,34 @@ paralegal-home-dir = "../paralegal"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy"
+flow-args = ["--target", "lemmy_api"]
+external-annotations = "external-annotations.toml"
 
 [app-config.plume]
 source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
 
 [app-config.atomic-data]
 source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib"]
+cargo-args = ["--lib", "--features", "db"]
 
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "--router"]
+cargo-args = ["--lib"]
 
 [[experiments]]
 type = "case-study"
