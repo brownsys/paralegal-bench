@@ -7,6 +7,7 @@ use std::process::Child;
 use std::sync;
 use std::thread;
 use std::time::{Duration, Instant};
+use toml::value::Time;
 
 use crate::input::Config;
 use crate::run::Experiment;
@@ -163,24 +164,44 @@ pub struct ControllerStat {
     run_id: u32,
     name: Identifier,
     num_nodes: u32,
-    #[serde(flatten)]
-    statistics: SPDGStats,
     max_inlining_depth: u16,
     avg_inlining_depth: f32,
     num_edges: u32,
+    unique_locs: u32,
+    unique_functions: u32,
+    analyzed_locs: u32,
+    analyzed_functions: u32,
+    inlinings_performed: u32,
+    construction_time: TimeMeasurement,
+    conversion_time: TimeMeasurement,
 }
 
 impl ControllerStat {
     pub fn from_spdg(run_id: u32, spdg: &SPDG) -> Self {
         let inlining_sum = spdg.graph.node_weights().map(|w| w.at.len()).sum::<usize>();
+        let SPDGStats {
+            unique_locs,
+            unique_functions,
+            analyzed_locs,
+            analyzed_functions,
+            inlinings_performed,
+            construction_time,
+            conversion_time,
+        } = spdg.statistics.clone();
         Self {
             run_id,
             name: spdg.name,
             num_nodes: spdg.graph.node_count() as u32,
-            statistics: spdg.statistics.clone(),
             max_inlining_depth: spdg.graph.node_weights().map(|w| w.at.len()).max().unwrap() as u16,
             avg_inlining_depth: inlining_sum as f32 / spdg.graph.node_count() as f32,
             num_edges: spdg.graph.edge_count() as u32,
+            unique_locs,
+            unique_functions,
+            analyzed_locs,
+            analyzed_functions,
+            inlinings_performed,
+            construction_time: construction_time.into(),
+            conversion_time: conversion_time.into(),
         }
     }
 }

@@ -149,6 +149,7 @@ impl ExperimentConfig {
                                 $expectation,
                             );
                             exp.comment = Some(c);
+                            exp.compile_cmd.get_command().args(["--features", c]);
                             exp
                         })
                     };
