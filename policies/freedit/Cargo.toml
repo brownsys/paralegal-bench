@@ -12,3 +12,5 @@ lazy_static = "1"
 clap = { workspace = true }
 anyhow = { workspace = true }
 petgraph = { workspace = true }
+serde = { workspace = true }
+strum = { workspace = true }

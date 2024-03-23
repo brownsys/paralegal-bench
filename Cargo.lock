@@ -360,6 +360,8 @@ dependencies = [
  "lazy_static",
  "paralegal-policy",
  "petgraph",
+ "serde",
+ "strum 0.24.1",
 ]
 
 [[package]]
@@ -399,15 +401,22 @@ name = "griswold"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "atomic",
+ "clap",
  "csv",
+ "freedit",
  "humantime",
  "humantime-serde",
+ "hyperswitch",
  "indicatif",
+ "lemmy",
  "paralegal-policy",
+ "plume",
  "serde",
  "strum 0.24.1",
  "sysinfo",
  "toml",
+ "websubmit",
 ]
 
 [[package]]
@@ -460,6 +469,18 @@ checksum = "57a3db5ea5923d99402c94e9feb261dc5ee9b4efa158b0315f788cf549cc200c"
 dependencies = [
  "humantime",
  "serde",
+]
+
+[[package]]
+name = "hyperswitch"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "lazy_static",
+ "paralegal-policy",
+ "serde",
+ "strum 0.24.1",
 ]
 
 [[package]]
@@ -563,6 +584,8 @@ dependencies = [
  "clap",
  "humantime",
  "paralegal-policy",
+ "serde",
+ "strum 0.24.1",
 ]
 
 [[package]]
@@ -600,16 +623,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d811f3e15f28568be3407c8e7fdb6514c1cda3cb30683f15b6a1a1dc4ea14a7"
 dependencies = [
  "adler",
-]
-
-[[package]]
-name = "my-policy"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "lazy_static",
- "paralegal-policy",
 ]
 
 [[package]]
@@ -1117,6 +1130,8 @@ dependencies = [
  "anyhow",
  "clap",
  "paralegal-policy",
+ "serde",
+ "strum 0.24.1",
 ]
 
 [[package]]

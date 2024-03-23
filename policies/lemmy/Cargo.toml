@@ -3,8 +3,12 @@ name = "lemmy"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+
 [dependencies]
 paralegal-policy = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
 humantime = "2.1.0"
+strum = { workspace = true }
+serde = { workspace = true }

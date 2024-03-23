@@ -1,0 +1,235 @@
+//! Conversion from input types to run configurations / run preparation
+
+use clap::ValueEnum;
+use lemmy::eval_driver::GetUserVersion;
+use paralegal_policy::SPDGGenCommand;
+
+use crate::input::{Application, Config, ExperimentConfig, ExperimentType};
+use crate::run::{Experiment, PolicyFn};
+
+impl Config {
+    pub fn experiments(&self) -> impl Iterator<Item = Experiment<'_>> {
+        self.experiments.iter().flat_map(|e| e.as_experiments(self))
+    }
+}
+
+impl ExperimentConfig {
+    pub fn as_experiments<'a>(
+        &'a self,
+        config: &'a Config,
+    ) -> Box<dyn Iterator<Item = Experiment<'a>> + 'a> {
+        match self.r#type {
+            ExperimentType::CaseStudy => match &self.application {
+                Application::Lemmy { policies } => {
+                    Box::new(self.lemmy_case_study(config, &policies))
+                        as Box<dyn Iterator<Item = _> + 'a>
+                }
+                Application::AtomicData => Box::new(self.atomic_case_study(config)),
+                Application::Freedit { policies } => {
+                    Box::new(self.freedit_case_study(config, &policies))
+                }
+                Application::Hyperswitch { policies } => {
+                    Box::new(self.hyperwitch_case_study(config, &policies))
+                }
+                Application::WebSubmit { policies } => {
+                    Box::new(self.websubmit_case_study(config, &policies))
+                }
+                Application::Plume => Box::new(self.plume_case_study(config)),
+            },
+            _ => unimplemented!(),
+        }
+    }
+
+    fn plume_case_study<'a>(&'a self, config: &'a Config) -> impl Iterator<Item = Experiment<'a>> {
+        [
+            (false, &[] as &[&str]),
+            (true, &["--features", "delete-comments"]),
+        ]
+        .into_iter()
+        .map(|(expectation, extra_args)| {
+            let mut compile_cmd = SPDGGenCommand::global();
+            compile_cmd
+                .abort_after_analysis()
+                .external_annotations("external-annotations.toml")
+                .get_command()
+                .args([
+                    "--target",
+                    "plume-models",
+                    "--",
+                    "--no-default-features",
+                    "--features",
+                    "postgres",
+                ])
+                .args(extra_args);
+
+            self.make_experiment(
+                config,
+                "plume",
+                Box::new(plume::check),
+                expectation,
+                compile_cmd,
+            )
+        })
+    }
+
+    fn websubmit_case_study<'a>(
+        &'a self,
+        config: &'a Config,
+        policies: &'a [websubmit::Policy],
+    ) -> impl Iterator<Item = Experiment<'a>> {
+        unimplemented!() as std::vec::IntoIter<_>
+    }
+
+    fn hyperwitch_case_study<'a>(
+        &'a self,
+        config: &'a Config,
+        policies: &'a [hyperswitch::Policy],
+    ) -> impl Iterator<Item = Experiment<'a>> {
+        policies.into_iter().flat_map(move |policy| {
+            // Does not have a buggy version but I'm keeping this loop if we
+            // want to add one
+            [(true, &[] as &[&str])]
+                .into_iter()
+                .map(move |(expectation, _)| {
+                    let mut compile_cmd = SPDGGenCommand::global();
+                    compile_cmd
+                        .external_annotations("external-annotations.toml")
+                        .abort_after_analysis()
+                        .get_command()
+                        .args(["--target", "router", "--", "--lib"]);
+                    self.make_experiment(
+                        config,
+                        policy.as_ref(),
+                        Box::new(policy.runnable()),
+                        expectation,
+                        compile_cmd,
+                    )
+                })
+        })
+    }
+
+    fn freedit_case_study<'a>(
+        &'a self,
+        config: &'a Config,
+        policies: &'a [freedit::Policy],
+    ) -> impl Iterator<Item = Experiment<'a>> {
+        policies.into_iter().flat_map(move |policy| {
+            [(true, &[] as &[_]), (false, &["--features", "buggy"])]
+                .into_iter()
+                .map(move |(expectation, extra_args)| {
+                    let mut compile_cmd = SPDGGenCommand::global();
+                    compile_cmd
+                        .external_annotations("external-annotations.toml")
+                        .abort_after_analysis()
+                        .get_command()
+                        .args(["--target", "atomic_lib", "--lib", "--features", "db"])
+                        .args(extra_args);
+
+                    self.make_experiment(
+                        config,
+                        policy.as_ref(),
+                        Box::new(move |ctx| policy.check(ctx)),
+                        expectation,
+                        compile_cmd,
+                    )
+                })
+        })
+    }
+
+    fn atomic_case_study<'a>(&'a self, config: &'a Config) -> impl Iterator<Item = Experiment<'a>> {
+        [(true, &["--features", "bug-fix"] as &[_]), (false, &[])]
+            .into_iter()
+            .map(|(expectation, extra_args)| {
+                let mut compile_cmd = SPDGGenCommand::global();
+                compile_cmd
+                    .external_annotations("external-annotations.toml")
+                    .abort_after_analysis()
+                    .get_command()
+                    .args(["--target", "atomic_lib", "--lib", "--features", "db"])
+                    .args(extra_args);
+
+                self.make_experiment(
+                    config,
+                    "atomic",
+                    Box::new(atomic::check_rights),
+                    expectation,
+                    compile_cmd,
+                )
+            })
+    }
+
+    fn lemmy_case_study<'a>(
+        &'a self,
+        config: &'a Config,
+        policies: &'a [lemmy::Prop],
+    ) -> impl Iterator<Item = Experiment<'a>> {
+        GetUserVersion::value_variants()
+            .iter()
+            .map(|v| v.to_config())
+            .filter(|c| policies.contains(&c.property.into()))
+            .flat_map(move |batch_config| {
+                let policy = |ctx| batch_config.property.run(ctx);
+                let policy_name = batch_config.property.as_ref();
+                macro_rules! mk_batch_exps {
+                    ($expectation:expr, $controllers:expr) => {
+                        $controllers.iter().map(move |c| {
+                            let mut compile_cmd = SPDGGenCommand::global();
+                            compile_cmd.external_annotations("external-annotation.toml");
+                            compile_cmd.get_command().args([
+                                "--target",
+                                "lemmy_api",
+                                "--",
+                                "--features",
+                                c,
+                            ]);
+                            let mut exp = self.make_experiment(
+                                config,
+                                policy_name,
+                                Box::new(policy),
+                                $expectation,
+                                compile_cmd,
+                            );
+                            exp.comment = Some(c);
+                            exp
+                        })
+                    };
+                }
+                batch_config
+                    .baseline_controllers
+                    .iter()
+                    .flat_map(move |ctrl| mk_batch_exps!(!batch_config.expect_failure, ctrl))
+                    .chain(batch_config.change.iter().flat_map(move |change| {
+                        change
+                            .affected_controllers
+                            .into_iter()
+                            .flat_map(move |c| mk_batch_exps!(!batch_config.expect_failure, c))
+                    }))
+                    .chain(batch_config.change.iter().flat_map(move |change| {
+                        change
+                            .affected_controllers
+                            .iter()
+                            .flat_map(move |c| mk_batch_exps!(batch_config.expect_failure, c))
+                    }))
+            })
+    }
+
+    fn make_experiment<'a>(
+        &'a self,
+        config: &'a Config,
+        policy_name: &'a str,
+        policy: PolicyFn<'a>,
+        expectation: bool,
+        compile_cmd: SPDGGenCommand,
+    ) -> Experiment<'a> {
+        Experiment {
+            config: self,
+            app_config: &config.app_config[self.application.as_ref()],
+            policy_name,
+            policy,
+            expectation,
+            compile_cmd,
+            prepare: None,
+            comment: None,
+        }
+    }
+}

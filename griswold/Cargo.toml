@@ -12,8 +12,16 @@ anyhow = { workspace = true }
 sysinfo = "0.30"
 humantime = "2"
 indicatif = "0.16"
-serde = { version = "1", features = ["derive"] }
 csv = "1"
 humantime-serde = "1"
 toml = { version = "0.8", features = ["preserve_order"] }
-strum = { version = "0.24", features = ["derive"] }
+clap = { workspace = true }
+serde = { workspace = true }
+strum = { workspace = true }
+
+atomic = { path = "../policies/atomic" }
+freedit = { path = "../policies/freedit" }
+hyperswitch = { path = "../policies/hyperswitch" }
+lemmy = { path = "../policies/lemmy" }
+plume = { path = "../policies/plume" }
+websubmit = { path = "../policies/websubmit" }
