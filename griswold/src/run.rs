@@ -4,6 +4,8 @@ use anyhow::Result;
 use csv::Writer;
 use paralegal_policy::GraphLocation;
 use paralegal_policy::{Context, SPDGGenCommand};
+use std::fs::OpenOptions;
+use std::path::Path;
 use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
 use crate::Arguments;
@@ -37,6 +39,7 @@ impl Experiment<'_> {
 pub type PolicyFn<'c> = Box<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
+    general_output_dir: PathBuf,
     pub controller_stat_out: Writer<File>,
     pub run_stat_out: Writer<File>,
 }
@@ -63,6 +66,7 @@ impl Output {
         Ok(Self {
             controller_stat_out: Writer::from_path(general_output_dir.join("controllers.csv"))?,
             run_stat_out: Writer::from_path(general_output_dir.join("results.csv"))?,
+            general_output_dir,
         })
     }
 
@@ -70,10 +74,15 @@ impl Output {
         self.controller_stat_out.flush()?;
         self.run_stat_out.flush()
     }
+
+    pub fn path(&self, p: impl AsRef<Path>) -> PathBuf {
+        self.general_output_dir.join(p)
+    }
 }
 
 impl Config {
     pub fn run(&self, output: &mut Output) -> Result<()> {
+        let mut policy_out = File::create(output.path("policy.out.txt"))?;
         for (id, mut exp) in self.experiments().enumerate() {
             if let Some(prepare) = exp.prepare.as_ref() {
                 (prepare)()
@@ -85,9 +94,22 @@ impl Config {
                 compile_command.get_command(),
                 compile_dir.display(),
             );
+            let mut stdout = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(output.path("compile.stdout.txt"))?;
+            let mut stderr = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(output.path("compile.stderr.txt"))?;
+            use std::io::Write;
+            writeln!(stdout, "{:?}", compile_command)?;
+            writeln!(stderr, "{:?}", compile_command)?;
             let mut process = compile_command
                 .get_command()
                 .current_dir(&compile_dir)
+                .stderr(stderr)
+                .stdout(stdout)
                 .spawn()?;
             let cmd_stat = CmdStat::for_process(self, &mut process)?;
             let mut run_stats = RunStat::from_experiment(id as u32, &exp, cmd_stat);
@@ -100,7 +122,7 @@ impl Config {
                     );
                     let policy_start = Instant::now();
                     (policy)(ctx.clone())?;
-                    let success = ctx.emit_diagnostics(std::io::stdout())?;
+                    let success = ctx.emit_diagnostics(&mut policy_out)?;
                     anyhow::Ok((ctx, success, policy_start.elapsed()))
                 });
                 let (ctx, success, traversal_time) = res?;
