@@ -33,10 +33,10 @@ pub mod run;
 #[derive(clap::Parser)]
 pub struct Arguments {
     /// Where to find the configuration file for this run
-    #[clap(default_value = "bench-config.toml")]
+    #[clap(long, default_value = "bench-config.toml")]
     config_path: PathBuf,
     /// Umbrella folder into which results should be written
-    #[clap(default_value = "results")]
+    #[clap(long, default_value = "results")]
     result_path: PathBuf,
 }
 
@@ -47,7 +47,7 @@ fn main() {
     let config: Config = toml::from_str(&config_file).unwrap();
 
     let compile_stat = process::Command::new("cargo")
-        .args(["install", "--release", "--locked", "--path"])
+        .args(["install", "--locked", "--path"])
         .arg(Path::new("crates").join("paralegal-flow"))
         .current_dir(&config.paralegal_home_dir)
         .status()
