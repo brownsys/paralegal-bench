@@ -46,13 +46,15 @@ fn main() {
     let config_file = std::fs::read_to_string(&args.config_path).unwrap();
     let config: Config = toml::from_str(&config_file).unwrap();
 
+    let current_dir = std::env::current_dir().unwrap();
+    std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
     let compile_stat = process::Command::new("cargo")
         .args(["install", "--locked", "--path"])
         .arg(Path::new("crates").join("paralegal-flow"))
-        .current_dir(&config.paralegal_home_dir)
         .status()
         .unwrap();
     assert!(compile_stat.success());
+    std::env::set_current_dir(current_dir).unwrap();
 
     config.run(&mut output).unwrap()
 }
