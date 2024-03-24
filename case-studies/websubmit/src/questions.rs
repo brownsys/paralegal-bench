@@ -167,8 +167,8 @@ fn get_answers(bg: &mut MySqlBackend, key: Either<u64, &str>) -> Vec<LectureAnsw
         .collect()
 }
 
-#[cfg_attr(feature = "edit-dis-3-a", dfpp::analyze)]
-#[cfg_attr(feature = "edit-dis-3-c", dfpp::analyze)]
+#[cfg_attr(feature = "edit-dis-3-a", paralegal::analyze)]
+#[cfg_attr(feature = "edit-dis-3-c", paralegal::analyze)]
 #[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
 #[get("/<num>")]
 pub(crate) fn answers(
