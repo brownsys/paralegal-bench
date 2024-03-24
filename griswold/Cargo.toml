@@ -18,6 +18,7 @@ toml = { version = "0.8", features = ["preserve_order"] }
 clap = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
+indexmap = { version = "2", features = ["serde"] }
 
 atomic = { path = "../policies/atomic" }
 freedit = { path = "../policies/freedit" }

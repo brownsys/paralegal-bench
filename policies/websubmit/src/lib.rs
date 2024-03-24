@@ -33,7 +33,7 @@ impl DeletionProp {
         DeletionProp { cx }
     }
 
-    pub fn check(self) -> Result<bool> {
+    pub fn check(self) -> Result<()> {
         // All types marked "sensitive"
         let types_to_check = self
             .cx
@@ -86,11 +86,11 @@ impl DeletionProp {
             )
         }
 
-        Ok(found_deleter)
+        Ok(())
     }
 }
 
-pub fn run_del_policy(ctx: Arc<Context>) -> Result<bool> {
+pub fn run_del_policy(ctx: Arc<Context>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("Deletion"), |ctx| {
         DeletionProp::new(ctx).check()
     })
@@ -114,7 +114,7 @@ impl ScopedStorageProp {
         ScopedStorageProp { cx }
     }
 
-    pub fn check(self) -> Result<bool> {
+    pub fn check(self) -> Result<()> {
         let mut found_local_witnesses = true;
         for cx in self.cx.clone().controller_contexts() {
             let c_id = cx.id();
@@ -202,14 +202,13 @@ impl ScopedStorageProp {
                         self.note(format!("{}", &cx.desc().type_info[&t].rendering))
                     }
                 }
-                return Ok(false);
             }
         }
-        Ok(true)
+        Ok(())
     }
 }
 
-pub fn run_sc_policy(ctx: Arc<Context>) -> Result<bool> {
+pub fn run_sc_policy(ctx: Arc<Context>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("Scoped Storage"), |ctx| {
         ScopedStorageProp::new(ctx).check()
     })
@@ -232,7 +231,7 @@ impl AuthDisclosureProp {
         AuthDisclosureProp { cx }
     }
 
-    pub fn check(self) -> Result<bool> {
+    pub fn check(self) -> Result<()> {
         for c_id in self.cx.desc().controllers.keys() {
             // All srcs that have no influencers
             let roots = self
@@ -322,14 +321,13 @@ impl AuthDisclosureProp {
 
                     err.emit();
                 }
-                return Ok(false);
             }
         }
-        Ok(true)
+        Ok(())
     }
 }
 
-pub fn run_dis_policy(ctx: Arc<Context>) -> Result<bool> {
+pub fn run_dis_policy(ctx: Arc<Context>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("Authorized Disclosure"), |ctx| {
         AuthDisclosureProp::new(ctx).check()
     })
@@ -345,7 +343,7 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<Context>) -> Result<bool> {
+    pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
         match self {
             Self::ScopedStorage => run_sc_policy,
             Self::AuthorizedDisclosure => run_dis_policy,

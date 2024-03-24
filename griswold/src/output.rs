@@ -7,9 +7,8 @@ use std::process::Child;
 use std::sync;
 use std::thread;
 use std::time::{Duration, Instant};
-use toml::value::Time;
 
-use crate::input::EvaluationConfig;
+use crate::input::{EvaluationConfig, Expectation};
 use crate::run::Run;
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,8 +24,9 @@ impl From<Duration> for TimeMeasurement {
 pub struct RunMeasurements {
     id: u32,
     experiment: String,
+    run: String,
     policy: String,
-    expectation: bool,
+    expectation: Expectation,
     adaptive_depth: bool,
     result: Option<bool>,
     pdg_time: TimeMeasurement,
@@ -50,14 +50,16 @@ impl RunMeasurements {
     pub fn new(
         id: u32,
         experiment: String,
+        run: String,
         policy: String,
-        expectation: bool,
+        expectation: Expectation,
         adaptive_depth: bool,
         pdg_stat: CommandMeasurement,
     ) -> Self {
         Self {
             id,
             experiment,
+            run,
             policy,
             expectation,
             result: None,
@@ -83,6 +85,7 @@ impl RunMeasurements {
     pub fn from_experiment(id: u32, exp: &Run, pdg_stat: CommandMeasurement) -> Self {
         Self::new(
             id,
+            exp.experiment_name.to_owned(),
             exp.name(),
             exp.policy_name.to_owned(),
             exp.expectation,

@@ -3,28 +3,32 @@
 use anyhow::Result;
 use csv::Writer;
 use indicatif::ProgressBar;
+use paralegal_policy::Context;
 use paralegal_policy::GraphLocation;
-use paralegal_policy::{Context, SPDGGenCommand};
 use std::fs::OpenOptions;
 use std::path::Path;
+use std::rc::Rc;
 use std::time::Duration;
 use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
+use crate::input::Expectation;
 use crate::Arguments;
 use crate::{
     input::{ApplicationConfig, EvaluationConfig, ExperimentConfig},
     output::{CommandMeasurement, ControllerMeasurement, RunMeasurements, SystemParameters},
 };
 
+#[derive(Clone)]
 pub struct Run<'c> {
+    pub experiment_name: &'c str,
     pub config: &'c ExperimentConfig,
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
     pub comment: Option<&'c str>,
-    pub expectation: bool,
-    pub prepare: Option<Box<dyn Fn()>>,
+    pub expectation: Expectation,
+    pub prepare: Option<Rc<dyn Fn()>>,
     pub policy: PolicyFn<'c>,
-    pub compile_cmd: SPDGGenCommand,
+    pub extra_cargo_args: Vec<&'c str>,
 }
 
 impl Run<'_> {
@@ -38,7 +42,7 @@ impl Run<'_> {
     }
 }
 
-pub type PolicyFn<'c> = Box<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
+pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
     general_output_dir: PathBuf,
@@ -98,7 +102,7 @@ impl EvaluationConfig {
             if let Some(prepare) = exp.prepare.as_ref() {
                 (prepare)()
             }
-            let compile_command = &mut exp.compile_cmd;
+            let compile_command = &mut exp.compile_cmd();
             let compile_dir = &exp.app_config.source_dir;
             progress.println(format!(
                 "Running {:?} in {}",

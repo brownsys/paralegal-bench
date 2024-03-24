@@ -33,24 +33,63 @@ flow-args = ["--target", "--router"]
 cargo-args = ["--lib"]
 
 # Disabled because it worked
-# [[experiments]]
-# type = "case-study"
-# application = "lemmy"
+[[experiment]]
+mode = "case-study"
+application = "lemmy"
 
-[[experiments]]
-type = "case-study"
+[[experiment.case-studies]]
+mode = "case-study"
+application = "plume"
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "freedit"
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "websubmit"
+
+# Does not work on AL2
+# [[experiment]]
+# mode = "case-study"
+# application = "atomic-data"
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
 application = "lemmy"
 adaptive-depth = false
 
-[[experiments]]
-type = "case-study"
-application = "plume"
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policy = "deletion"
 
-[[experiments]]
-type = "case-study"
-application = "freedit"
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policy = "scoped-storage"
 
-# Does not work on AL2
-# [[experiments]]
-# type = "case-study"
-# application = "atomic-data"
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policy = "authorized-disclosure"
