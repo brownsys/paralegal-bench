@@ -6,9 +6,9 @@ use std::{
     process,
 };
 
-pub mod conversion;
 pub mod input;
 pub mod output;
+pub mod preparation;
 pub mod run;
 
 /// Run benchmarks for the 2024 SOSP Paralegal paper.
