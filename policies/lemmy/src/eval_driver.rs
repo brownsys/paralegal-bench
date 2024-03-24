@@ -60,8 +60,7 @@ const POST_BUG_1_BATCH_2: &'static [&'static str] = &[
     "site-mod-log",
     "site-resolve-object",
     "site-search",
-    // "comment-create", times out
-    // "comment-create correct", times out
+    "comment-create",
     "comment-delete",
     "comment-list",
     "comment-read",
@@ -88,7 +87,7 @@ const POST_BUG_1_BATCH_3: &'static [&'static str] = &[
     "private-message-read",
     "private-message-update",
     "site-create",
-    // "site-read", times out
+    "site-read",
     "site-update",
     "user-delete",
     "user-read",
@@ -145,7 +144,7 @@ const BUG_1_BATCH_2: &'static [&'static str] = &[
     "site-mod-log",
     "site-resolve-object",
     "site-search",
-    // "comment-create", times out
+    "comment-create",
     "comment-delete",
     "comment-list",
     "comment-read",
@@ -172,7 +171,7 @@ const BUG_1_BATCH_3: &'static [&'static str] = &[
     "private-message-read",
     "private-message-update",
     "site-create",
-    // "site-read", times out
+    "site-read",
     "site-update",
     "user-delete",
     "user-read",
@@ -256,8 +255,7 @@ const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
 // used to all have "post-bug-1" prepended
 // these are the buggy controllers that the Lemmy developers found and fixed themselves
 const BUG_3_FIXED_BATCH: &'static [&'static str] = &[
-    // "comment-create", times out
-    // "comment-create correct", times out
+    "comment-create",
     "comment-update",
     "post-create",
     "post-delete",
