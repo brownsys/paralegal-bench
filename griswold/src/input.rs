@@ -7,7 +7,7 @@ use std::time::Duration;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Config {
+pub struct EvaluationConfig {
     #[serde(with = "humantime_serde")]
     pub stat_refresh_interval: Duration,
     pub paralegal_home_dir: PathBuf,
@@ -18,7 +18,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ExperimentConfig {
-    pub r#type: ExperimentType,
+    pub r#type: ExperimentMode,
     #[serde(flatten)]
     pub application: Application,
 }
@@ -43,7 +43,7 @@ fn const_true() -> bool {
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
-pub enum ExperimentType {
+pub enum ExperimentMode {
     RollForward,
     Ablation,
     CaseStudy,

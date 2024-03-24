@@ -12,11 +12,11 @@ use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
 use crate::Arguments;
 use crate::{
-    input::{ApplicationConfig, Config, ExperimentConfig},
-    output::{CmdStat, ControllerStat, RunStat, SysStat},
+    input::{ApplicationConfig, EvaluationConfig, ExperimentConfig},
+    output::{CommandMeasurement, ControllerMeasurement, RunMeasurements, SystemParameters},
 };
 
-pub struct Experiment<'c> {
+pub struct Run<'c> {
     pub config: &'c ExperimentConfig,
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
@@ -27,7 +27,7 @@ pub struct Experiment<'c> {
     pub compile_cmd: SPDGGenCommand,
 }
 
-impl Experiment<'_> {
+impl Run<'_> {
     pub fn name(&self) -> String {
         let mut result = format!("{}-{}", self.config.application.as_ref(), self.policy_name);
         if let Some(comment) = self.comment {
@@ -56,7 +56,7 @@ impl Output {
         general_output_dir.push(format!("run-{t}"));
         assert!(!general_output_dir.exists());
         std::fs::create_dir_all(&general_output_dir)?;
-        let sys_stat = SysStat::new();
+        let sys_stat = SystemParameters::new();
         let mut sys_stat_file = File::create(general_output_dir.join("sys.toml"))?;
         use std::io::Write;
         write!(
@@ -82,7 +82,7 @@ impl Output {
     }
 }
 
-impl Config {
+impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
         let experiments = self.experiments().enumerate().collect::<Vec<_>>();
         let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
@@ -122,13 +122,13 @@ impl Config {
                 .stderr(stderr)
                 .stdout(stdout)
                 .spawn()?;
-            let cmd_stat = CmdStat::for_process(self, &mut process)?;
-            let mut run_stats = RunStat::from_experiment(id as u32, &exp, cmd_stat);
+            let cmd_stat = CommandMeasurement::for_process(self, &mut process)?;
+            let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
             progress.inc(1);
             progress.set_message(format!("policy: {}", exp.policy_name));
             if process.try_wait()?.unwrap().success() {
                 let policy = exp.policy;
-                let (res, cmd_stat) = CmdStat::for_self(self, || {
+                let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
                     let ctx = Arc::new(
                         GraphLocation::std(compile_dir)
                             .build_context(paralegal_policy::Config::default())?,
@@ -143,7 +143,7 @@ impl Config {
                 for ctrl in ctx.desc().controllers.values() {
                     output
                         .controller_stat_out
-                        .serialize(ControllerStat::from_spdg(id as u32, ctrl))?
+                        .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
                 }
             } else {
                 progress.println(format!(

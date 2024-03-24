@@ -4,8 +4,8 @@ use clap::ValueEnum;
 use lemmy::eval_driver::GetUserVersion;
 use paralegal_policy::SPDGGenCommand;
 
-use crate::input::{Application, Config, ExperimentConfig, ExperimentType};
-use crate::run::{Experiment, PolicyFn};
+use crate::input::{Application, EvaluationConfig, ExperimentConfig, ExperimentMode};
+use crate::run::{PolicyFn, Run};
 
 fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
     if policies.is_empty() {
@@ -15,8 +15,8 @@ fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
     }
 }
 
-impl Config {
-    pub fn experiments(&self) -> impl Iterator<Item = Experiment<'_>> {
+impl EvaluationConfig {
+    pub fn experiments(&self) -> impl Iterator<Item = Run<'_>> {
         self.experiments.iter().flat_map(|e| e.as_experiments(self))
     }
 }
@@ -24,10 +24,10 @@ impl Config {
 impl ExperimentConfig {
     pub fn as_experiments<'a>(
         &'a self,
-        config: &'a Config,
-    ) -> Box<dyn Iterator<Item = Experiment<'a>> + 'a> {
+        config: &'a EvaluationConfig,
+    ) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
         match self.r#type {
-            ExperimentType::CaseStudy => match &self.application {
+            ExperimentMode::CaseStudy => match &self.application {
                 Application::Lemmy { policies } => {
                     Box::new(self.lemmy_case_study(config, selection_or_all(policies)))
                         as Box<dyn Iterator<Item = _> + 'a>
@@ -48,7 +48,10 @@ impl ExperimentConfig {
         }
     }
 
-    fn plume_case_study<'a>(&'a self, config: &'a Config) -> impl Iterator<Item = Experiment<'a>> {
+    fn plume_case_study<'a>(
+        &'a self,
+        config: &'a EvaluationConfig,
+    ) -> impl Iterator<Item = Run<'a>> {
         [
             (false, &[] as &[&str]),
             (true, &["--features", "plume-models/delete-comments"]),
@@ -64,17 +67,17 @@ impl ExperimentConfig {
 
     fn websubmit_case_study<'a>(
         &'a self,
-        config: &'a Config,
+        config: &'a EvaluationConfig,
         policies: &'a [websubmit::Policy],
-    ) -> impl Iterator<Item = Experiment<'a>> {
+    ) -> impl Iterator<Item = Run<'a>> {
         unimplemented!() as std::vec::IntoIter<_>
     }
 
     fn hyperwitch_case_study<'a>(
         &'a self,
-        config: &'a Config,
+        config: &'a EvaluationConfig,
         policies: &'a [hyperswitch::Policy],
-    ) -> impl Iterator<Item = Experiment<'a>> {
+    ) -> impl Iterator<Item = Run<'a>> {
         policies.into_iter().flat_map(move |policy| {
             // Does not have a buggy version but I'm keeping this loop if we
             // want to add one
@@ -93,9 +96,9 @@ impl ExperimentConfig {
 
     fn freedit_case_study<'a>(
         &'a self,
-        config: &'a Config,
+        config: &'a EvaluationConfig,
         policies: &'a [freedit::Policy],
-    ) -> impl Iterator<Item = Experiment<'a>> {
+    ) -> impl Iterator<Item = Run<'a>> {
         policies.into_iter().flat_map(move |policy| {
             [(true, &[] as &[_]), (false, &["--features", "buggy"])]
                 .into_iter()
@@ -112,7 +115,10 @@ impl ExperimentConfig {
         })
     }
 
-    fn atomic_case_study<'a>(&'a self, config: &'a Config) -> impl Iterator<Item = Experiment<'a>> {
+    fn atomic_case_study<'a>(
+        &'a self,
+        config: &'a EvaluationConfig,
+    ) -> impl Iterator<Item = Run<'a>> {
         [(true, &["--features", "bug-fix"] as &[_]), (false, &[])]
             .into_iter()
             .map(|(expectation, extra_args)| {
@@ -129,9 +135,9 @@ impl ExperimentConfig {
 
     fn lemmy_case_study<'a>(
         &'a self,
-        config: &'a Config,
+        config: &'a EvaluationConfig,
         policies: &'a [lemmy::Prop],
-    ) -> impl Iterator<Item = Experiment<'a>> {
+    ) -> impl Iterator<Item = Run<'a>> {
         GetUserVersion::value_variants()
             .iter()
             .map(|v| v.to_config())
@@ -175,11 +181,11 @@ impl ExperimentConfig {
 
     fn make_experiment<'a>(
         &'a self,
-        config: &'a Config,
+        config: &'a EvaluationConfig,
         policy_name: &'a str,
         policy: PolicyFn<'a>,
         expectation: bool,
-    ) -> Experiment<'a> {
+    ) -> Run<'a> {
         let app_config = &config.app_config[self.application.as_ref()];
         let mut compile_cmd = SPDGGenCommand::global();
         if let Some(path) = app_config.external_annotations.as_ref() {
@@ -194,7 +200,7 @@ impl ExperimentConfig {
             .arg("--adaptive-depth")
             .arg("--")
             .args(app_config.cargo_args.iter());
-        Experiment {
+        Run {
             config: self,
             policy_name,
             app_config,

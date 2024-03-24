@@ -1,5 +1,5 @@
 use clap::Parser;
-use input::Config;
+use input::EvaluationConfig;
 use run::Output;
 use std::{
     path::{Path, PathBuf},
@@ -44,7 +44,7 @@ fn main() {
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
     let mut output = Output::init(args).unwrap();
     let config_file = std::fs::read_to_string(&args.config_path).unwrap();
-    let config: Config = toml::from_str(&config_file).unwrap();
+    let config: EvaluationConfig = toml::from_str(&config_file).unwrap();
 
     let current_dir = std::env::current_dir().unwrap();
     std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
