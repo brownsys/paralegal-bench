@@ -39,6 +39,11 @@ cargo-args = ["--lib"]
 
 [[experiments]]
 type = "case-study"
+application = "lemmy"
+adaptive-depth = false
+
+[[experiments]]
+type = "case-study"
 application = "plume"
 
 [[experiments]]

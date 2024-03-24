@@ -58,8 +58,7 @@ impl ExperimentConfig {
         ]
         .into_iter()
         .map(|(expectation, extra_args)| {
-            let mut exp =
-                self.make_experiment(config, "plume", Box::new(plume::check), expectation);
+            let mut exp = self.case_study_run(config, "plume", Box::new(plume::check), expectation);
             exp.compile_cmd.get_command().args(extra_args);
             exp
         })
@@ -84,7 +83,7 @@ impl ExperimentConfig {
             [(true, &[] as &[&str])]
                 .into_iter()
                 .map(move |(expectation, _)| {
-                    self.make_experiment(
+                    self.case_study_run(
                         config,
                         policy.as_ref(),
                         Box::new(policy.runnable()),
@@ -103,7 +102,7 @@ impl ExperimentConfig {
             [(true, &[] as &[_]), (false, &["--features", "buggy"])]
                 .into_iter()
                 .map(move |(expectation, extra_args)| {
-                    let mut exp = self.make_experiment(
+                    let mut exp = self.case_study_run(
                         config,
                         policy.as_ref(),
                         Box::new(move |ctx| policy.check(ctx)),
@@ -122,7 +121,7 @@ impl ExperimentConfig {
         [(true, &["--features", "bug-fix"] as &[_]), (false, &[])]
             .into_iter()
             .map(|(expectation, extra_args)| {
-                let mut exp = self.make_experiment(
+                let mut exp = self.case_study_run(
                     config,
                     "atomic",
                     Box::new(atomic::check_rights),
@@ -148,7 +147,7 @@ impl ExperimentConfig {
                 macro_rules! mk_batch_exps {
                     ($expectation:expr, $controllers:expr) => {
                         $controllers.iter().map(move |c| {
-                            let mut exp = self.make_experiment(
+                            let mut exp = self.case_study_run(
                                 config,
                                 policy_name,
                                 Box::new(policy),
@@ -179,7 +178,7 @@ impl ExperimentConfig {
             })
     }
 
-    fn make_experiment<'a>(
+    fn case_study_run<'a>(
         &'a self,
         config: &'a EvaluationConfig,
         policy_name: &'a str,
@@ -194,10 +193,12 @@ impl ExperimentConfig {
         if app_config.abort {
             compile_cmd.abort_after_analysis();
         }
+        if self.adaptive_depth {
+            compile_cmd.get_command().arg("--adaptive-depth");
+        }
         compile_cmd
             .get_command()
             .args(app_config.flow_args.iter())
-            .arg("--adaptive-depth")
             .arg("--")
             .args(app_config.cargo_args.iter());
         Run {

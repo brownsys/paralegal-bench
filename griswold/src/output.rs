@@ -27,6 +27,7 @@ pub struct RunMeasurements {
     experiment: String,
     policy: String,
     expectation: bool,
+    adaptive_depth: bool,
     result: Option<bool>,
     pdg_time: TimeMeasurement,
     rustc_time: Option<TimeMeasurement>,
@@ -51,6 +52,7 @@ impl RunMeasurements {
         experiment: String,
         policy: String,
         expectation: bool,
+        adaptive_depth: bool,
         pdg_stat: CommandMeasurement,
     ) -> Self {
         Self {
@@ -60,6 +62,7 @@ impl RunMeasurements {
             expectation,
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
+            adaptive_depth,
             rustc_time: None,
             policy_time: None,
             deserialization_time: None,
@@ -83,6 +86,7 @@ impl RunMeasurements {
             exp.name(),
             exp.policy_name.to_owned(),
             exp.expectation,
+            exp.config.adaptive_depth,
             pdg_stat,
         )
     }

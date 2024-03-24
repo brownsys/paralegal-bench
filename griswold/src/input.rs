@@ -19,6 +19,8 @@ pub struct EvaluationConfig {
 #[serde(rename_all = "kebab-case")]
 pub struct ExperimentConfig {
     pub r#type: ExperimentMode,
+    #[serde(default = "const_true")]
+    pub adaptive_depth: bool,
     #[serde(flatten)]
     pub application: Application,
 }
@@ -47,7 +49,6 @@ pub enum ExperimentMode {
     RollForward,
     Ablation,
     CaseStudy,
-    AdaptiveInlining,
 }
 
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
