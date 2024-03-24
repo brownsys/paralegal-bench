@@ -19,6 +19,7 @@ clap = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
 indexmap = { version = "2", features = ["serde"] }
+cargo = "0.78.0"
 
 atomic = { path = "../policies/atomic" }
 freedit = { path = "../policies/freedit" }
@@ -26,4 +27,4 @@ hyperswitch = { path = "../policies/hyperswitch" }
 lemmy = { path = "../policies/lemmy" }
 plume = { path = "../policies/plume" }
 websubmit = { path = "../policies/websubmit" }
-cargo = "0.78.0"
+semver = { version = "1.0.22", features = ["serde"] }

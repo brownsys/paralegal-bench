@@ -1,6 +1,7 @@
 //! Types describing data the runner ingests
 
 use indexmap::IndexMap;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -62,6 +63,7 @@ pub struct ApplicationConfig {
     pub external_annotations: Option<PathBuf>,
     /// Overwrites will be enacted in the same order that they are specified
     /// here.
+    #[serde(default)]
     pub version_override: IndexMap<String, CrateOverride>,
 }
 
@@ -115,6 +117,7 @@ pub enum Application {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct CrateOverride {
-    replacement: String,
-    originals: Box<[String]>,
+    pub replacement: Version,
+    // The order in which these are overridden is not guaranteed
+    pub originals: Box<[Version]>,
 }

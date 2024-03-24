@@ -1,6 +1,10 @@
 //! Types that describe experiment runs and functions to execute them
 
 use anyhow::Result;
+use cargo::core::Workspace;
+use cargo::ops::resolve_ws;
+use cargo::ops::UpdateOptions;
+use cargo::util::important_paths::find_root_manifest_for_wd;
 use csv::Writer;
 use indicatif::ProgressBar;
 use paralegal_policy::Context;
@@ -28,7 +32,9 @@ pub struct Run<'c> {
     pub policy_name: &'c str,
     pub comment: Option<&'c str>,
     pub expectation: Expectation,
-    pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
+    /// The first function is called before the analyzer, the second after the
+    /// policy finishes.
+    pub prepare: Option<(Rc<dyn Fn(Stdio, Stdio)>, Rc<dyn Fn(Stdio, Stdio)>)>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -101,8 +107,32 @@ fn log_for(output: &Output, prefix: &str) -> std::io::Result<(File, File)> {
 }
 
 impl CrateOverride {
+    /// Assumes we are in the directory of the crate we want to make changes to
     fn enact(&self, name: &str) -> Result<()> {
-        unimplemented!()
+        let mut cargo_cfg = cargo::Config::default()?;
+        cargo_cfg.configure(0, true, None, false, false, false, &None, &[], &[])?;
+        let current_dir = std::env::current_dir()?;
+        let ws = Workspace::new(&find_root_manifest_for_wd(&current_dir)?, &cargo_cfg)?;
+        // Might have to change this, use a specific config and enable/disable certain features
+        let (_package_set, graph) = resolve_ws(&ws)?;
+        let interned_name: cargo::util::interning::InternedString = name.into();
+        for p in graph.iter() {
+            let summary = graph.summary(p);
+            if summary.name() == interned_name && self.originals.contains(summary.version()) {
+                cargo::ops::update_lockfile(
+                    &ws,
+                    &UpdateOptions {
+                        config: &cargo_cfg,
+                        to_update: vec![format!("{name}@{}", summary.version())],
+                        precise: Some(&self.replacement.to_string()),
+                        recursive: false,
+                        dry_run: false,
+                        workspace: false,
+                    },
+                )?
+            }
+        }
+        Ok(())
     }
 }
 
@@ -123,7 +153,7 @@ impl EvaluationConfig {
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
                 let (stdout, stderr) = log_for(&output, "prepare")?;
-                (prepare)(stdout.into(), stderr.into())
+                (prepare.0)(stdout.into(), stderr.into())
             }
             for (package, overrides) in &exp.app_config.version_override {
                 overrides.enact(package)?;
@@ -170,6 +200,10 @@ impl EvaluationConfig {
             }
             output.run_stat_out.serialize(run_stats)?;
             output.flush()?;
+            if let Some(prepare) = exp.prepare.as_ref() {
+                let (stdout, stderr) = log_for(&output, "prepare")?;
+                (prepare.1)(stdout.into(), stderr.into())
+            }
             std::env::set_current_dir(&starting_dir)?;
         }
         Ok(())

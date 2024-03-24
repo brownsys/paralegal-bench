@@ -1809,6 +1809,7 @@ dependencies = [
  "lemmy",
  "paralegal-policy",
  "plume",
+ "semver",
  "serde",
  "strum 0.24.1",
  "sysinfo",

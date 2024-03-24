@@ -55,7 +55,7 @@ flow-args = [
 ]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
-[app-config.original-plume.crate-override.proc-macro2]
+[app-config.original-plume.version-override.proc-macro2]
 replacement = "1.0.78"
 originals = ["1.0.49"]
 

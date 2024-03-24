@@ -107,7 +107,7 @@ impl<'a> RunBuilder<'a> {
                         move |(policy_name, policy)| {
                             let mut run =
                                 self.case_study_run(policy_name, policy, current_expectation);
-                            run.prepare = Some(Rc::new(checkout(&c)));
+                            run.prepare = Some((Rc::new(checkout(&c)), Rc::new(checkout("."))));
                             run
                         },
                     )
