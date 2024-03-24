@@ -57,7 +57,7 @@ impl Output {
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        let mut general_output_dir = args.result_path.clone();
+        let mut general_output_dir = args.result_path.clone().canonicalize()?;
         general_output_dir.push(format!("run-{t}"));
         assert!(!general_output_dir.exists());
         std::fs::create_dir_all(&general_output_dir)?;
@@ -109,7 +109,9 @@ impl EvaluationConfig {
         );
         progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
+        let starting_dir = std::env::current_dir()?;
         for (id, exp) in experiments {
+            std::env::set_current_dir(&exp.app_config.source_dir)?;
             progress.inc(1);
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
@@ -117,19 +119,13 @@ impl EvaluationConfig {
                 (prepare)(stdout.into(), stderr.into())
             }
             let compile_command = &mut exp.compile_cmd();
-            let compile_dir = &exp.app_config.source_dir;
-            progress.println(format!(
-                "Running {:?} in {}",
-                compile_command.get_command(),
-                compile_dir.display(),
-            ));
+            //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
             let (mut stdout, mut stderr) = log_for(&output, "compile")?;
             use std::io::Write;
             writeln!(stdout, "{:?}", compile_command)?;
             writeln!(stderr, "{:?}", compile_command)?;
             let mut process = compile_command
                 .get_command()
-                .current_dir(&compile_dir)
                 .stderr(stderr)
                 .stdout(stdout)
                 .spawn()?;
@@ -141,7 +137,7 @@ impl EvaluationConfig {
                 let policy = exp.policy;
                 let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
                     let ctx = Arc::new(
-                        GraphLocation::std(compile_dir)
+                        GraphLocation::std(".")
                             .build_context(paralegal_policy::Config::default())?,
                     );
                     let policy_start = Instant::now();
@@ -164,6 +160,7 @@ impl EvaluationConfig {
             }
             output.run_stat_out.serialize(run_stats)?;
             output.flush()?;
+            std::env::set_current_dir(&starting_dir)?;
         }
         Ok(())
     }

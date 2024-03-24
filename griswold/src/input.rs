@@ -75,6 +75,7 @@ pub enum ExperimentMode {
         pass_threshold: Box<[String]>,
         fail_threshold: Box<[String]>,
         starting_expectation: Expectation,
+        limit: Option<usize>,
     },
     #[serde(rename_all = "kebab-case")]
     Ablation {

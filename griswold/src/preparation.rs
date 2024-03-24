@@ -70,13 +70,13 @@ impl<'a> RunBuilder<'a> {
                         .map(move |feature| {
                             let mut run =
                                 self.case_study_run(name, policy.clone(), Expectation::Pass);
-                            run.extra_cargo_args.push(&feature);
+                            run.extra_cargo_args.extend(["--features", &feature]);
                             run
                         })
                         .chain(feature_space_fail.iter().map(move |feature| {
                             let mut run =
                                 self.case_study_run(name, policy_clone.clone(), Expectation::Fail);
-                            run.extra_cargo_args.push(&feature);
+                            run.extra_cargo_args.extend(["--features", &feature]);
                             run
                         }))
                 },
@@ -85,33 +85,33 @@ impl<'a> RunBuilder<'a> {
                 pass_threshold,
                 fail_threshold,
                 starting_expectation,
+                limit,
             } => {
                 let mut expectation = *starting_expectation;
-                Box::new(
-                    get_all_commits(
-                        &self.evaluation_config.app_config
-                            [self.experiment_config.app_config_name()]
+                let mut commits = get_all_commits(
+                    &self.evaluation_config.app_config[self.experiment_config.app_config_name()]
                         .source_dir,
+                );
+                if let Some(limit) = limit {
+                    commits.truncate(*limit);
+                }
+                Box::new(commits.into_iter().flat_map(move |c| {
+                    let current_expectation = expectation;
+                    if fail_threshold.contains(&c) {
+                        expectation = Expectation::Pass;
+                    }
+                    if pass_threshold.contains(&c) {
+                        expectation = Expectation::Fail;
+                    }
+                    self.experiment_config.application.policies().map(
+                        move |(policy_name, policy)| {
+                            let mut run =
+                                self.case_study_run(policy_name, policy, current_expectation);
+                            run.prepare = Some(Rc::new(checkout(&c)));
+                            run
+                        },
                     )
-                    .into_iter()
-                    .flat_map(move |c| {
-                        let current_expectation = expectation;
-                        if fail_threshold.contains(&c) {
-                            expectation = Expectation::Pass;
-                        }
-                        if pass_threshold.contains(&c) {
-                            expectation = Expectation::Fail;
-                        }
-                        self.experiment_config.application.policies().map(
-                            move |(policy_name, policy)| {
-                                let mut run =
-                                    self.case_study_run(policy_name, policy, current_expectation);
-                                run.prepare = Some(Rc::new(checkout(&c)));
-                                run
-                            },
-                        )
-                    }),
-                )
+                }))
             }
         }
     }
@@ -223,7 +223,7 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
 
 fn get_all_commits(path: impl AsRef<Path>) -> Vec<String> {
     let output = Command::new("git")
-        .args(["log", "--oneline"])
+        .args(["log", "--format=%H"])
         .current_dir(path)
         .output()
         .unwrap();
@@ -231,7 +231,6 @@ fn get_all_commits(path: impl AsRef<Path>) -> Vec<String> {
     String::from_utf8(output.stdout)
         .unwrap()
         .lines()
-        .map(|l| l.split_once(' ').unwrap().0)
         .map(str::to_owned)
         .collect()
 }

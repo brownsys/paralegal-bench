@@ -15,17 +15,17 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
-cargo-args = ["v-ann-baseline"]
+cargo-args = ["--features", "v-ann-baseline"]
 
 [app-config.websubmit-lib]
 source-dir = "case-studies/websubmit"
 external-annotations = "lib-external-annotations.toml"
-cargo-args = ["v-ann-lib"]
+cargo-args = ["--features", "v-ann-lib"]
 
 [app-config.websubmit-strict]
 source-dir = "case-studies/websubmit"
 external-annotations = "strict-external-annotations.toml"
-cargo-args = ["v-ann-strict"]
+cargo-args = ["--features", "v-ann-strict"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
@@ -45,152 +45,159 @@ flow-args = ["--target", "--router"]
 cargo-args = ["--lib"]
 
 [app-config.original-plume]
-source-dir = "case-studies/plume"
-external-annotations = "external-annotations.toml"
-flow-args = ["--target", "plume-models"]
+source-dir = "../../clones/Plume"
+external-annotations = "../research/dfpp-verification/case-studies/plume/external-annotations.toml"
+flow-args = [
+    "--target",
+    "plume-models",
+    "--analyze",
+    "crate::users::User::delete",
+]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
 # Disabled because it worked
-[[experiment.case-studies]]
-mode = "case-study"
-application = "lemmy"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "lemmy"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "plume"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "plume"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "freedit"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "freedit"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "websubmit"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "websubmit"
 
 # Does not work on AL2
 # [[experiment]]
 # mode = "case-study"
 # application = "atomic-data"
 
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "lemmy"
-adaptive-depth = false
+# [[experiment.adaptive-depth]]
+# mode = "case-study"
+# application = "lemmy"
+# adaptive-depth = false
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+# feature-space-fail = [
+#     "edit-del-1-b",
+#     "edit-del-1-c",
+#     "edit-del-2-b",
+#     "edit-del-2-c",
+#     "edit-del-3-b",
+#     "edit-del-3-c",
+# ]
+# policies = ["deletion"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-lib"
+# feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+# feature-space-fail = [
+#     "edit-del-1-b",
+#     "edit-del-1-c",
+#     "edit-del-2-b",
+#     "edit-del-2-c",
+#     "edit-del-3-b",
+#     "edit-del-3-c",
+# ]
+# policies = ["deletion"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-strict"
+# feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+# feature-space-fail = [
+#     "edit-del-1-b",
+#     "edit-del-1-c",
+#     "edit-del-2-b",
+#     "edit-del-2-c",
+#     "edit-del-3-b",
+#     "edit-del-3-c",
+# ]
+# policies = ["deletion"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# feature-space-success = ["edit-sc-1-a"]
+# feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+# policies = ["scoped-storage"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-lib"
+# feature-space-success = ["edit-sc-1-a"]
+# feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+# policies = ["scoped-storage"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-strict"
+# feature-space-success = ["edit-sc-1-a"]
+# feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+# policies = ["scoped-storage"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+# feature-space-fail = [
+#     "edit-dis-1-b",
+#     "edit-dis-1-c",
+#     "edit-dis-2-b",
+#     "edit-dis-2-c",
+#     "edit-dis-3-b",
+#     "edit-dis-3-c",
+# ]
+# policies = ["authorized-disclosure"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-lib"
+# feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+# feature-space-fail = [
+#     "edit-dis-1-b",
+#     "edit-dis-1-c",
+#     "edit-dis-2-b",
+#     "edit-dis-2-c",
+#     "edit-dis-3-b",
+#     "edit-dis-3-c",
+# ]
+# policies = ["authorized-disclosure"]
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-app-config-override = "webusbmit-strict"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
+# [[experiment.ablation]]
+# mode = "ablation"
+# application = "websubmit"
+# app-config-override = "websubmit-strict"
+# feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+# feature-space-fail = [
+#     "edit-dis-1-b",
+#     "edit-dis-1-c",
+#     "edit-dis-2-b",
+#     "edit-dis-2-c",
+#     "edit-dis-3-b",
+#     "edit-dis-3-c",
+# ]
+# policies = ["authorized-disclosure"]
 
 [[experiment.plume-roll-forward]]
 mode = "roll-forward"
 application = "plume"
-pass-threshold = ["19f184"]
+pass-threshold = ["19f18421bcd9cb9d1654de24f9a04747691036b7"]
 fail-threshold = []
 app-config-override = "original-plume"
+starting-expectation = "pass"
+limit = 100

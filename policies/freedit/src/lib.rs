@@ -243,7 +243,7 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         });
         // We expect this to happen in `edit_post_post`, `comment_post` and `solo_post`
         assert_error!(ctx, storing_controller == 3, format!("Not as many controllers ({storing_controller} != 3) storing pageviews as expected found, policy must be wrong"));
-        println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
+        //println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
     });
     Ok(())
 }
@@ -307,7 +307,7 @@ fn check_expiration(ctx: Arc<Context>) -> Result<()> {
                 check_ctrls_delete
             )
         });
-        println!("Last seen {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
+        //println!("Last seen {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
         assert_error!(ctx, found, "Could not find an expiration deletion for pageview data.")
     });
     Ok(())

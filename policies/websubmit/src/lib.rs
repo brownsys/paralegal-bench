@@ -335,6 +335,7 @@ pub fn run_dis_policy(ctx: Arc<Context>) -> Result<()> {
 
 #[derive(Copy, Clone, clap::ValueEnum, strum::AsRefStr, Serialize, Deserialize)]
 #[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Policy {
     ScopedStorage,
     Deletion,
