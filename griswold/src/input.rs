@@ -37,6 +37,7 @@ pub struct EvaluationConfig {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ExperimentConfig {
+    #[serde(flatten)]
     pub mode: ExperimentMode,
     #[serde(default = "const_true")]
     pub adaptive_depth: bool,
@@ -64,10 +65,11 @@ fn const_true() -> bool {
 }
 
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
-#[serde(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case", tag = "mode")]
 #[strum(serialize_all = "kebab-case")]
 pub enum ExperimentMode {
     RollForward,
+    #[serde(rename_all = "kebab-case")]
     Ablation {
         feature_space_success: Box<[String]>,
         feature_space_fail: Box<[String]>,
