@@ -86,11 +86,13 @@ impl<'a> RunBuilder<'a> {
                 fail_threshold,
                 starting_expectation,
                 limit,
+                start_commit: starting_commit,
             } => {
                 let mut expectation = *starting_expectation;
                 let mut commits = get_all_commits(
                     &self.evaluation_config.app_config[self.experiment_config.app_config_name()]
                         .source_dir,
+                    &starting_commit,
                 );
                 if let Some(limit) = limit {
                     commits.truncate(*limit);
@@ -107,7 +109,7 @@ impl<'a> RunBuilder<'a> {
                         move |(policy_name, policy)| {
                             let mut run =
                                 self.case_study_run(policy_name, policy, current_expectation);
-                            run.prepare = Some((Rc::new(checkout(&c)), Rc::new(checkout("."))));
+                            run.prepare = Some(Rc::new(checkout(&c)));
                             run
                         },
                     )
@@ -212,7 +214,7 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
     let s = s.to_owned();
     move |stdout, stderr| {
         assert!(Command::new("git")
-            .args(["checkout", &s])
+            .args(["checkout", "--force", &s])
             .stdout(stdout)
             .stderr(stderr)
             .status()
@@ -221,9 +223,9 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
     }
 }
 
-fn get_all_commits(path: impl AsRef<Path>) -> Vec<String> {
+fn get_all_commits(path: impl AsRef<Path>, start: &str) -> Vec<String> {
     let output = Command::new("git")
-        .args(["log", "--format=%H"])
+        .args(["log", "--format=%H", start])
         .current_dir(path)
         .output()
         .unwrap();

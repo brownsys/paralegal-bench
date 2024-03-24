@@ -1,11 +1,9 @@
 //! Types describing data the runner ingests
 
 use indexmap::IndexMap;
-use semver::Version;
+use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::Duration;
+use std::{collections::HashMap, path::PathBuf, time::Duration};
 
 #[derive(Clone, Copy, PartialEq, Eq, strum::AsRefStr, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -80,6 +78,7 @@ pub enum ExperimentMode {
         pass_threshold: Box<[String]>,
         fail_threshold: Box<[String]>,
         starting_expectation: Expectation,
+        start_commit: String,
         limit: Option<usize>,
     },
     #[serde(rename_all = "kebab-case")]
@@ -119,5 +118,5 @@ pub enum Application {
 pub struct CrateOverride {
     pub replacement: Version,
     // The order in which these are overridden is not guaranteed
-    pub originals: Box<[Version]>,
+    pub original: VersionReq,
 }

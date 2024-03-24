@@ -1,27 +1,27 @@
 //! Types that describe experiment runs and functions to execute them
 
 use anyhow::Result;
-use cargo::core::Workspace;
-use cargo::ops::resolve_ws;
-use cargo::ops::UpdateOptions;
-use cargo::util::important_paths::find_root_manifest_for_wd;
+use cargo::{
+    core::Workspace,
+    ops::{resolve_ws, UpdateOptions},
+    util::important_paths::find_root_manifest_for_wd,
+};
 use csv::Writer;
 use indicatif::ProgressBar;
-use paralegal_policy::Context;
-use paralegal_policy::GraphLocation;
-use std::fs::OpenOptions;
-use std::path::Path;
-use std::process::Stdio;
-use std::rc::Rc;
-use std::time::Duration;
-use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
+use paralegal_policy::{Context, GraphLocation};
+use std::{
+    fs::{File, OpenOptions},
+    path::{Path, PathBuf},
+    process::Stdio,
+    rc::Rc,
+    sync::Arc,
+    time::{Duration, Instant, SystemTime},
+};
 
-use crate::input::CrateOverride;
-use crate::input::Expectation;
-use crate::Arguments;
 use crate::{
-    input::{ApplicationConfig, EvaluationConfig, ExperimentConfig},
+    input::{ApplicationConfig, CrateOverride, EvaluationConfig, Expectation, ExperimentConfig},
     output::{CommandMeasurement, ControllerMeasurement, RunMeasurements, SystemParameters},
+    Arguments,
 };
 
 #[derive(Clone)]
@@ -34,7 +34,7 @@ pub struct Run<'c> {
     pub expectation: Expectation,
     /// The first function is called before the analyzer, the second after the
     /// policy finishes.
-    pub prepare: Option<(Rc<dyn Fn(Stdio, Stdio)>, Rc<dyn Fn(Stdio, Stdio)>)>,
+    pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -108,9 +108,12 @@ fn log_for(output: &Output, prefix: &str) -> std::io::Result<(File, File)> {
 
 impl CrateOverride {
     /// Assumes we are in the directory of the crate we want to make changes to
-    fn enact(&self, name: &str) -> Result<()> {
-        let mut cargo_cfg = cargo::Config::default()?;
-        cargo_cfg.configure(0, true, None, false, false, false, &None, &[], &[])?;
+    fn enact(&self, name: &str, stdout: Box<dyn std::io::Write>) -> Result<()> {
+        let cargo_cfg = cargo::Config::default()?;
+        let mut shell = cargo::core::Shell::from_write(stdout);
+        shell.set_verbosity(cargo::core::Verbosity::Quiet);
+        *cargo_cfg.shell() = shell;
+        //cargo_cfg.configure(0, true, None, false, false, false, &None, &[], &[])?;
         let current_dir = std::env::current_dir()?;
         let ws = Workspace::new(&find_root_manifest_for_wd(&current_dir)?, &cargo_cfg)?;
         // Might have to change this, use a specific config and enable/disable certain features
@@ -118,7 +121,7 @@ impl CrateOverride {
         let interned_name: cargo::util::interning::InternedString = name.into();
         for p in graph.iter() {
             let summary = graph.summary(p);
-            if summary.name() == interned_name && self.originals.contains(summary.version()) {
+            if summary.name() == interned_name && self.original.matches(summary.version()) {
                 cargo::ops::update_lockfile(
                     &ws,
                     &UpdateOptions {
@@ -153,10 +156,11 @@ impl EvaluationConfig {
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
                 let (stdout, stderr) = log_for(&output, "prepare")?;
-                (prepare.0)(stdout.into(), stderr.into())
+                (prepare)(stdout.into(), stderr.into())
             }
             for (package, overrides) in &exp.app_config.version_override {
-                overrides.enact(package)?;
+                let (stdout, _stderr) = log_for(&output, "prepare")?;
+                overrides.enact(package, Box::new(stdout))?;
             }
             let compile_command = &mut exp.compile_cmd();
             //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
@@ -200,10 +204,6 @@ impl EvaluationConfig {
             }
             output.run_stat_out.serialize(run_stats)?;
             output.flush()?;
-            if let Some(prepare) = exp.prepare.as_ref() {
-                let (stdout, stderr) = log_for(&output, "prepare")?;
-                (prepare.1)(stdout.into(), stderr.into())
-            }
             std::env::set_current_dir(&starting_dir)?;
         }
         Ok(())

@@ -57,7 +57,7 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.original-plume.version-override.proc-macro2]
 replacement = "1.0.78"
-originals = ["1.0.49"]
+original = "1"
 
 # Disabled because it worked
 # [[experiment.case-studies]]
@@ -198,6 +198,7 @@ originals = ["1.0.49"]
 # policies = ["authorized-disclosure"]
 
 [[experiment.plume-roll-forward]]
+start-commit = "304fb740d8ba3aaae64b3eb67ecfe476841b87c4"
 mode = "roll-forward"
 application = "plume"
 pass-threshold = ["19f18421bcd9cb9d1654de24f9a04747691036b7"]
