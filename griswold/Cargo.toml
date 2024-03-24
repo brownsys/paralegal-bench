@@ -26,3 +26,4 @@ hyperswitch = { path = "../policies/hyperswitch" }
 lemmy = { path = "../policies/lemmy" }
 plume = { path = "../policies/plume" }
 websubmit = { path = "../policies/websubmit" }
+cargo = "0.78.0"

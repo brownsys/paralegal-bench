@@ -60,6 +60,9 @@ pub struct ApplicationConfig {
     #[serde(default)]
     pub flow_args: Box<[String]>,
     pub external_annotations: Option<PathBuf>,
+    /// Overwrites will be enacted in the same order that they are specified
+    /// here.
+    pub version_override: IndexMap<String, CrateOverride>,
 }
 
 fn const_true() -> bool {
@@ -107,4 +110,11 @@ pub enum Application {
         #[serde(default)]
         policies: Box<[freedit::Policy]>,
     },
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct CrateOverride {
+    replacement: String,
+    originals: Box<[String]>,
 }

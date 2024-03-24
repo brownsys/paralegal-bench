@@ -12,6 +12,7 @@ use std::rc::Rc;
 use std::time::Duration;
 use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
+use crate::input::CrateOverride;
 use crate::input::Expectation;
 use crate::Arguments;
 use crate::{
@@ -99,6 +100,12 @@ fn log_for(output: &Output, prefix: &str) -> std::io::Result<(File, File)> {
     Ok((stdout, stderr))
 }
 
+impl CrateOverride {
+    fn enact(&self, name: &str) -> Result<()> {
+        unimplemented!()
+    }
+}
+
 impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
         let experiments = self.experiments().enumerate().collect::<Vec<_>>();
@@ -117,6 +124,9 @@ impl EvaluationConfig {
             if let Some(prepare) = exp.prepare.as_ref() {
                 let (stdout, stderr) = log_for(&output, "prepare")?;
                 (prepare)(stdout.into(), stderr.into())
+            }
+            for (package, overrides) in &exp.app_config.version_override {
+                overrides.enact(package)?;
             }
             let compile_command = &mut exp.compile_cmd();
             //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
