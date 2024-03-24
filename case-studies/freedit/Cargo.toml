@@ -89,3 +89,5 @@ panic = "abort"
 
 [features]
 buggy = []
+
+[workspace]

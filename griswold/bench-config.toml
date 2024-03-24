@@ -32,9 +32,10 @@ external-annotations = "external-annotations.toml"
 flow-args = ["--target", "--router"]
 cargo-args = ["--lib"]
 
-[[experiments]]
-type = "case-study"
-application = "lemmy"
+# Disabled because it worked
+# [[experiments]]
+# type = "case-study"
+# application = "lemmy"
 
 [[experiments]]
 type = "case-study"
@@ -44,6 +45,7 @@ application = "plume"
 type = "case-study"
 application = "freedit"
 
-[[experiments]]
-type = "case-study"
-application = "atomic-data"
+# Does not work on AL2
+# [[experiments]]
+# type = "case-study"
+# application = "atomic-data"

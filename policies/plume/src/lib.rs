@@ -45,15 +45,6 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
     if found.is_none() {
         ctx.error("Could not find a function deleting all types");
     }
-    if let Some((found, _)) = found {
-        println!(
-            "Found {} deletes all user data types",
-            ctx.desc().controllers[&found].name
-        );
-        for t in user_data_types {
-            println!("Found user data {}", ctx.describe_def(*t));
-        }
-    }
     Ok(())
 }
 

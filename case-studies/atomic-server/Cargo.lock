@@ -413,6 +413,7 @@ checksum = "c8e54fb37480ffa01a9af93f991ba229b3091f2e6ac84c8f6df2c509356cc473"
 [[package]]
 name = "paralegal"
 version = "0.1.0"
+source = "git+https://github.com/brownsys/paralegal?rev=1f16ce2#1f16ce232370401efd58e3923cf3584db4d357f7"
 dependencies = [
  "cfg-if",
  "proc-macro2",

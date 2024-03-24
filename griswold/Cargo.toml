@@ -11,7 +11,7 @@ paralegal-policy = { workspace = true }
 anyhow = { workspace = true }
 sysinfo = "0.30"
 humantime = "2"
-indicatif = "0.16"
+indicatif = "0.17"
 csv = "1"
 humantime-serde = "1"
 toml = { version = "0.8", features = ["preserve_order"] }

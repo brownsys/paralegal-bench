@@ -51,7 +51,7 @@ impl ExperimentConfig {
     fn plume_case_study<'a>(&'a self, config: &'a Config) -> impl Iterator<Item = Experiment<'a>> {
         [
             (false, &[] as &[&str]),
-            (true, &["--features", "delete-comments"]),
+            (true, &["--features", "plume-models/delete-comments"]),
         ]
         .into_iter()
         .map(|(expectation, extra_args)| {

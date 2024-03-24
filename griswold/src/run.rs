@@ -7,6 +7,7 @@ use paralegal_policy::GraphLocation;
 use paralegal_policy::{Context, SPDGGenCommand};
 use std::fs::OpenOptions;
 use std::path::Path;
+use std::time::Duration;
 use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
 
 use crate::Arguments;
@@ -85,10 +86,11 @@ impl Config {
     pub fn run(&self, output: &mut Output) -> Result<()> {
         let experiments = self.experiments().enumerate().collect::<Vec<_>>();
         let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
-            indicatif::ProgressStyle::default_bar()
-                .template("[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}"),
+            indicatif::ProgressStyle::with_template(
+                "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
+            )?,
         );
-        progress.enable_steady_tick(500);
+        progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
         for (id, mut exp) in experiments {
             progress.inc(1);
