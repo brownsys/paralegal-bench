@@ -7,6 +7,7 @@ use paralegal_policy::Context;
 use paralegal_policy::GraphLocation;
 use std::fs::OpenOptions;
 use std::path::Path;
+use std::process::Stdio;
 use std::rc::Rc;
 use std::time::Duration;
 use std::{fs::File, path::PathBuf, sync::Arc, time::Instant, time::SystemTime};
@@ -26,7 +27,7 @@ pub struct Run<'c> {
     pub policy_name: &'c str,
     pub comment: Option<&'c str>,
     pub expectation: Expectation,
-    pub prepare: Option<Rc<dyn Fn()>>,
+    pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -86,6 +87,18 @@ impl Output {
     }
 }
 
+fn log_for(output: &Output, prefix: &str) -> std::io::Result<(File, File)> {
+    let stdout = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(output.path(format!("{prefix}.stdout.txt")))?;
+    let stderr = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(output.path(format!("{prefix}.stderr.txt")))?;
+    Ok((stdout, stderr))
+}
+
 impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
         let experiments = self.experiments().enumerate().collect::<Vec<_>>();
@@ -100,7 +113,8 @@ impl EvaluationConfig {
             progress.inc(1);
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
-                (prepare)()
+                let (stdout, stderr) = log_for(&output, "prepare")?;
+                (prepare)(stdout.into(), stderr.into())
             }
             let compile_command = &mut exp.compile_cmd();
             let compile_dir = &exp.app_config.source_dir;
@@ -109,14 +123,7 @@ impl EvaluationConfig {
                 compile_command.get_command(),
                 compile_dir.display(),
             ));
-            let mut stdout = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(output.path("compile.stdout.txt"))?;
-            let mut stderr = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(output.path("compile.stderr.txt"))?;
+            let (mut stdout, mut stderr) = log_for(&output, "compile")?;
             use std::io::Write;
             writeln!(stdout, "{:?}", compile_command)?;
             writeln!(stderr, "{:?}", compile_command)?;

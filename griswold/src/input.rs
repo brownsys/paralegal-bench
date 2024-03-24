@@ -45,6 +45,8 @@ pub struct ExperimentConfig {
     pub application: Application,
     #[serde(default)]
     pub cargo_args: Box<[String]>,
+    /// Default to the application name
+    pub app_config_override: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -68,7 +70,12 @@ fn const_true() -> bool {
 #[serde(rename_all = "kebab-case", tag = "mode")]
 #[strum(serialize_all = "kebab-case")]
 pub enum ExperimentMode {
-    RollForward,
+    #[serde(rename_all = "kebab-case")]
+    RollForward {
+        pass_threshold: Box<[String]>,
+        fail_threshold: Box<[String]>,
+        starting_expectation: Expectation,
+    },
     #[serde(rename_all = "kebab-case")]
     Ablation {
         feature_space_success: Box<[String]>,

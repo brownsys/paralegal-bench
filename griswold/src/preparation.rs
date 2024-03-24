@@ -1,5 +1,7 @@
 //! Conversion from input types to run configurations / run preparation
 
+use std::path::Path;
+use std::process::{Command, Stdio};
 use std::rc::Rc;
 
 use clap::ValueEnum;
@@ -21,183 +23,125 @@ impl EvaluationConfig {
     pub fn experiments(&self) -> impl Iterator<Item = Run<'_>> {
         self.experiment
             .iter()
-            .flat_map(move |(name, es)| es.iter().flat_map(move |e| e.as_experiments(&name, self)))
+            .flat_map(move |(experiment_name, es)| {
+                es.iter().flat_map(move |experiment_config| {
+                    RunBuilder {
+                        experiment_config,
+                        experiment_name,
+                        evaluation_config: self,
+                    }
+                    .into_experiments()
+                })
+            })
     }
 }
 
 impl ExperimentConfig {
-    pub fn as_experiments<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-    ) -> impl Iterator<Item = Run<'a>> + 'a {
-        match &self.mode {
-            ExperimentMode::CaseStudy => Box::new(self.case_study_runs(name, config))
-                as Box<dyn Iterator<Item = Run<'a>> + 'a>,
+    pub fn app_config_name(&self) -> &str {
+        if let Some(name) = self.app_config_override.as_ref() {
+            name.as_str()
+        } else {
+            self.application.as_ref()
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct RunBuilder<'a> {
+    experiment_name: &'a str,
+    experiment_config: &'a ExperimentConfig,
+    evaluation_config: &'a EvaluationConfig,
+}
+
+impl<'a> RunBuilder<'a> {
+    pub fn into_experiments(self) -> impl Iterator<Item = Run<'a>> + 'a {
+        match &self.experiment_config.mode {
+            ExperimentMode::CaseStudy => {
+                Box::new(self.case_study_runs()) as Box<dyn Iterator<Item = Run<'a>> + 'a>
+            }
             ExperimentMode::Ablation {
                 feature_space_success,
                 feature_space_fail,
-            } => Box::new(self.case_study_runs(name, config).flat_map(move |run| {
-                let run_clone_1 = run.clone();
-                feature_space_success
-                    .iter()
-                    .map(move |feature| {
-                        let mut run_clone = run_clone_1.clone();
-                        run_clone.extra_cargo_args.extend(["--features", feature]);
-                        run_clone.expectation = Expectation::Pass;
-                        run_clone
-                    })
-                    .chain(feature_space_fail.iter().map(move |feature| {
-                        let mut run_clone = run.clone();
-                        run_clone.expectation = Expectation::Fail;
-                        run_clone.extra_cargo_args.extend(["--features", feature]);
-                        run_clone
-                    }))
-            })),
-            _ => unimplemented!(),
+            } => Box::new(self.experiment_config.application.policies().flat_map(
+                move |(name, policy)| {
+                    let policy_clone = policy.clone();
+                    feature_space_success
+                        .iter()
+                        .map(move |feature| {
+                            let mut run =
+                                self.case_study_run(name, policy.clone(), Expectation::Pass);
+                            run.extra_cargo_args.push(&feature);
+                            run
+                        })
+                        .chain(feature_space_fail.iter().map(move |feature| {
+                            let mut run =
+                                self.case_study_run(name, policy_clone.clone(), Expectation::Fail);
+                            run.extra_cargo_args.push(&feature);
+                            run
+                        }))
+                },
+            )),
+            ExperimentMode::RollForward {
+                pass_threshold,
+                fail_threshold,
+                starting_expectation,
+            } => {
+                let mut expectation = *starting_expectation;
+                Box::new(
+                    get_all_commits(
+                        &self.evaluation_config.app_config
+                            [self.experiment_config.app_config_name()]
+                        .source_dir,
+                    )
+                    .into_iter()
+                    .flat_map(move |c| {
+                        let current_expectation = expectation;
+                        if fail_threshold.contains(&c) {
+                            expectation = Expectation::Pass;
+                        }
+                        if pass_threshold.contains(&c) {
+                            expectation = Expectation::Fail;
+                        }
+                        self.experiment_config.application.policies().map(
+                            move |(policy_name, policy)| {
+                                let mut run =
+                                    self.case_study_run(policy_name, policy, current_expectation);
+                                run.prepare = Some(Rc::new(checkout(&c)));
+                                run
+                            },
+                        )
+                    }),
+                )
+            }
         }
     }
 
-    fn case_study_runs<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-    ) -> impl Iterator<Item = Run<'a>> {
-        match &self.application {
+    fn case_study_runs(self) -> impl Iterator<Item = Run<'a>> {
+        match &self.experiment_config.application {
             Application::Lemmy { policies } => {
-                Box::new(self.lemmy_case_study(name, config, selection_or_all(policies)))
+                Box::new(self.lemmy_case_study(selection_or_all(policies)))
                     as Box<dyn Iterator<Item = _> + 'a>
             }
-            Application::AtomicData => Box::new(self.atomic_case_study(name, config)),
-            Application::Freedit { policies } => {
-                Box::new(self.freedit_case_study(name, config, selection_or_all(policies)))
-            }
-            Application::Hyperswitch { policies } => {
-                Box::new(self.hyperwitch_case_study(name, config, selection_or_all(policies)))
-            }
-            Application::Websubmit { policies } => {
-                Box::new(self.websubmit_case_study(name, config, selection_or_all(policies)))
-            }
-            Application::Plume => Box::new(self.plume_case_study(name, config)),
+            _ => Box::new(
+                self.experiment_config
+                    .application
+                    .expectations()
+                    .iter()
+                    .copied()
+                    .flat_map(move |(expectation, cargo_args)| {
+                        self.experiment_config.application.policies().map(
+                            move |(name, policy_fn)| {
+                                let mut run = self.case_study_run(name, policy_fn, expectation);
+                                run.extra_cargo_args.extend(cargo_args);
+                                run
+                            },
+                        )
+                    }),
+            ),
         }
     }
 
-    fn plume_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-    ) -> impl Iterator<Item = Run<'a>> {
-        [
-            (Expectation::Fail, vec![]),
-            (
-                Expectation::Pass,
-                vec!["--features", "plume-models/delete-comments"],
-            ),
-        ]
-        .into_iter()
-        .map(|(expectation, extra_args)| {
-            let mut exp =
-                self.case_study_run(name, config, "plume", Rc::new(plume::check), expectation);
-            exp.extra_cargo_args = extra_args;
-            exp
-        })
-    }
-
-    fn websubmit_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-        policies: &'a [websubmit::Policy],
-    ) -> impl Iterator<Item = Run<'a>> {
-        policies.iter().map(|p| {
-            self.case_study_run(
-                name,
-                config,
-                p.as_ref(),
-                Rc::new(p.runnable()),
-                Expectation::Pass,
-            )
-        })
-    }
-
-    fn hyperwitch_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-        policies: &'a [hyperswitch::Policy],
-    ) -> impl Iterator<Item = Run<'a>> {
-        policies.into_iter().flat_map(move |policy| {
-            // Does not have a buggy version but I'm keeping this loop if we
-            // want to add one
-            [(Expectation::Pass, &[] as &[&str])]
-                .into_iter()
-                .map(move |(expectation, _)| {
-                    self.case_study_run(
-                        name,
-                        config,
-                        policy.as_ref(),
-                        Rc::new(policy.runnable()),
-                        expectation,
-                    )
-                })
-        })
-    }
-
-    fn freedit_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-        policies: &'a [freedit::Policy],
-    ) -> impl Iterator<Item = Run<'a>> {
-        policies.into_iter().flat_map(move |policy| {
-            [
-                (Expectation::Pass, vec![]),
-                (Expectation::Fail, vec!["--features", "buggy"]),
-            ]
-            .into_iter()
-            .map(move |(expectation, extra_args)| {
-                let mut exp = self.case_study_run(
-                    name,
-                    config,
-                    policy.as_ref(),
-                    Rc::new(move |ctx| policy.check(ctx)),
-                    expectation,
-                );
-                exp.extra_cargo_args = extra_args;
-                exp
-            })
-        })
-    }
-
-    fn atomic_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-    ) -> impl Iterator<Item = Run<'a>> {
-        [
-            (Expectation::Pass, vec!["--features", "bug-fix"]),
-            (Expectation::Fail, vec![]),
-        ]
-        .into_iter()
-        .map(|(expectation, extra_args)| {
-            let mut exp = self.case_study_run(
-                name,
-                config,
-                "atomic",
-                Rc::new(atomic::check_rights),
-                expectation,
-            );
-            exp.extra_cargo_args = extra_args;
-            exp
-        })
-    }
-
-    fn lemmy_case_study<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
-        policies: &'a [lemmy::Prop],
-    ) -> impl Iterator<Item = Run<'a>> {
+    fn lemmy_case_study(self, policies: &'a [lemmy::Prop]) -> impl Iterator<Item = Run<'a>> {
         GetUserVersion::value_variants()
             .iter()
             .map(|v| v.to_config())
@@ -209,8 +153,6 @@ impl ExperimentConfig {
                     ($expect_fail:expr, $controllers:expr) => {
                         $controllers.iter().map(move |c| {
                             let mut exp = self.case_study_run(
-                                name,
-                                config,
                                 policy_name,
                                 Rc::new(policy),
                                 if $expect_fail {
@@ -244,18 +186,17 @@ impl ExperimentConfig {
             })
     }
 
-    fn case_study_run<'a>(
-        &'a self,
-        name: &'a str,
-        config: &'a EvaluationConfig,
+    fn case_study_run(
+        self,
         policy_name: &'a str,
         policy: PolicyFn<'a>,
         expectation: Expectation,
     ) -> Run<'a> {
-        let app_config = &config.app_config[self.application.as_ref()];
+        let app_config =
+            &self.evaluation_config.app_config[self.experiment_config.app_config_name()];
         Run {
-            experiment_name: name,
-            config: self,
+            experiment_name: self.experiment_name,
+            config: self.experiment_config,
             policy_name,
             app_config,
             policy,
@@ -263,6 +204,95 @@ impl ExperimentConfig {
             prepare: None,
             comment: None,
             extra_cargo_args: vec![],
+        }
+    }
+}
+
+fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
+    let s = s.to_owned();
+    move |stdout, stderr| {
+        assert!(Command::new("git")
+            .args(["checkout", &s])
+            .stdout(stdout)
+            .stderr(stderr)
+            .status()
+            .unwrap()
+            .success())
+    }
+}
+
+fn get_all_commits(path: impl AsRef<Path>) -> Vec<String> {
+    let output = Command::new("git")
+        .args(["log", "--oneline"])
+        .current_dir(path)
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| l.split_once(' ').unwrap().0)
+        .map(str::to_owned)
+        .collect()
+}
+
+impl Application {
+    /// Default expectations for each application used in the "case-study"
+    /// experiment mode.
+    fn expectations(&self) -> &'static [(Expectation, &'static [&'static str])] {
+        match self {
+            Application::AtomicData => &[
+                (Expectation::Pass, &["--features", "bug-fix"]),
+                (Expectation::Fail, &[]),
+            ],
+            Application::Lemmy { .. } => unimplemented!("Lemmy requires special handling"),
+            Application::Freedit { .. } => &[
+                (Expectation::Pass, &[]),
+                (Expectation::Fail, &["--features", "buggy"]),
+            ],
+            Application::Hyperswitch { .. } => &[(Expectation::Pass, &[])],
+            Application::Plume => &[
+                (Expectation::Fail, &[]),
+                (
+                    Expectation::Pass,
+                    &["--features", "plume-models/delete-comments"],
+                ),
+            ],
+            Application::Websubmit { .. } => &[(Expectation::Pass, &[])],
+        }
+    }
+
+    fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
+        match self {
+            Application::AtomicData => Box::new(std::iter::once((
+                "atomic",
+                Rc::new(atomic::check_rights) as PolicyFn<'a>,
+            )))
+                as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>)>>,
+            Application::Freedit { policies } => Box::new(
+                selection_or_all(policies)
+                    .iter()
+                    .map(|p| (p.as_ref(), Rc::new(move |ctx| p.check(ctx)) as PolicyFn<'a>)),
+            ),
+            Application::Hyperswitch { policies } => Box::new(
+                selection_or_all(policies)
+                    .iter()
+                    .map(|p| (p.as_ref(), Rc::new(p.runnable()) as PolicyFn<'a>)),
+            ),
+            Application::Lemmy { policies } => Box::new(
+                selection_or_all(policies)
+                    .iter()
+                    .map(|p| (p.as_ref(), Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>)),
+            ),
+            Application::Plume => Box::new(std::iter::once((
+                "plume",
+                Rc::new(plume::check) as PolicyFn<'a>,
+            ))),
+            Application::Websubmit { policies } => Box::new(
+                selection_or_all(policies)
+                    .iter()
+                    .map(|p| (p.as_ref(), Rc::new(p.runnable()) as PolicyFn<'a>)),
+            ),
         }
     }
 }

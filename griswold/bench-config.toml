@@ -32,6 +32,12 @@ external-annotations = "external-annotations.toml"
 flow-args = ["--target", "--router"]
 cargo-args = ["--lib"]
 
+[app-config.original-plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
 # Disabled because it worked
 [[experiment.case-studies]]
 mode = "case-study"
@@ -71,14 +77,14 @@ feature-space-fail = [
     "edit-del-3-b",
     "edit-del-3-c",
 ]
-policy = "deletion"
+policies = ["deletion"]
 
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
 feature-space-success = ["edit-sc-1-a"]
 feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policy = "scoped-storage"
+policies = ["scoped-storage"]
 
 [[experiment.ablation]]
 mode = "ablation"
@@ -92,4 +98,11 @@ feature-space-fail = [
     "edit-dis-3-b",
     "edit-dis-3-c",
 ]
-policy = "authorized-disclosure"
+policies = ["authorized-disclosure"]
+
+[[experiment.plume-roll-forward]]
+mode = "roll-forward"
+application = "plume"
+pass-threshold = ["19f184"]
+fail-threshold = []
+app-config-override = "original-plume"
