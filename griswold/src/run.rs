@@ -19,7 +19,7 @@ use std::{
 };
 
 use crate::{
-    input::{ApplicationConfig, CrateOverride, EvaluationConfig, Expectation, ExperimentConfig},
+    input::{ApplicationConfig, CrateOverride, EvaluationConfig, ExperimentConfig, PolicyResult},
     output::{CommandMeasurement, ControllerMeasurement, RunMeasurements, SystemParameters},
     Arguments,
 };
@@ -31,7 +31,7 @@ pub struct Run<'c> {
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
     pub comment: Option<&'c str>,
-    pub expectation: Expectation,
+    pub expectation: PolicyResult,
     /// The first function is called before the analyzer, the second after the
     /// policy finishes.
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
@@ -64,10 +64,15 @@ impl Output {
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        let mut general_output_dir = args.result_path.clone().canonicalize()?;
+        std::fs::create_dir_all(&args.result_path)?;
+        let mut general_output_dir = args.result_path.canonicalize()?;
         general_output_dir.push(format!("run-{t}"));
         assert!(!general_output_dir.exists());
-        std::fs::create_dir_all(&general_output_dir)?;
+        std::fs::create_dir(&general_output_dir)?;
+        std::fs::copy(
+            &args.config_path,
+            general_output_dir.join("bench-config.toml"),
+        )?;
         let sys_stat = SystemParameters::new();
         let mut sys_stat_file = File::create(general_output_dir.join("sys.toml"))?;
         use std::io::Write;
@@ -166,14 +171,14 @@ impl EvaluationConfig {
             //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
             let (mut stdout, mut stderr) = log_for(&output, "compile")?;
             use std::io::Write;
-            writeln!(stdout, "{:?}", compile_command)?;
-            writeln!(stderr, "{:?}", compile_command)?;
+            writeln!(stdout, "Run {id}: {:?}", compile_command)?;
+            writeln!(stderr, "Run {id}: {:?}", compile_command)?;
             let mut process = compile_command
                 .get_command()
                 .stderr(stderr)
                 .stdout(stdout)
                 .spawn()?;
-            let cmd_stat = CommandMeasurement::for_process(self, &mut process)?;
+            let cmd_stat = CommandMeasurement::for_process(self, self.pdg_timeout, &mut process)?;
             let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
             progress.inc(1);
             progress.set_message(format!("policy: {}", exp.policy_name));
@@ -190,7 +195,16 @@ impl EvaluationConfig {
                     anyhow::Ok((ctx, success, policy_start.elapsed()))
                 });
                 let (ctx, success, traversal_time) = res?;
-                run_stats.add_policy_stat(cmd_stat, ctx.as_ref(), success, traversal_time);
+                run_stats.add_policy_stat(
+                    cmd_stat,
+                    ctx.as_ref(),
+                    if success {
+                        PolicyResult::Pass
+                    } else {
+                        PolicyResult::Fail
+                    },
+                    traversal_time,
+                );
                 for ctrl in ctx.desc().controllers.values() {
                     output
                         .controller_stat_out

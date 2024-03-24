@@ -8,7 +8,7 @@ use clap::ValueEnum;
 use lemmy::eval_driver::GetUserVersion;
 use paralegal_policy::SPDGGenCommand;
 
-use crate::input::{Application, EvaluationConfig, Expectation, ExperimentConfig, ExperimentMode};
+use crate::input::{Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyResult};
 use crate::run::{PolicyFn, Run};
 
 fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
@@ -69,14 +69,16 @@ impl<'a> RunBuilder<'a> {
                         .iter()
                         .map(move |feature| {
                             let mut run =
-                                self.case_study_run(name, policy.clone(), Expectation::Pass);
+                                self.case_study_run(name, policy.clone(), PolicyResult::Pass);
                             run.extra_cargo_args.extend(["--features", &feature]);
+                            run.comment = Some(&feature);
                             run
                         })
                         .chain(feature_space_fail.iter().map(move |feature| {
                             let mut run =
-                                self.case_study_run(name, policy_clone.clone(), Expectation::Fail);
+                                self.case_study_run(name, policy_clone.clone(), PolicyResult::Fail);
                             run.extra_cargo_args.extend(["--features", &feature]);
+                            run.comment = Some(&feature);
                             run
                         }))
                 },
@@ -100,10 +102,10 @@ impl<'a> RunBuilder<'a> {
                 Box::new(commits.into_iter().flat_map(move |c| {
                     let current_expectation = expectation;
                     if fail_threshold.contains(&c) {
-                        expectation = Expectation::Pass;
+                        expectation = PolicyResult::Pass;
                     }
                     if pass_threshold.contains(&c) {
-                        expectation = Expectation::Fail;
+                        expectation = PolicyResult::Fail;
                     }
                     self.experiment_config.application.policies().map(
                         move |(policy_name, policy)| {
@@ -152,38 +154,51 @@ impl<'a> RunBuilder<'a> {
                 let policy = |ctx| batch_config.property.run(ctx);
                 let policy_name = batch_config.property.as_ref();
                 macro_rules! mk_batch_exps {
-                    ($expect_fail:expr, $controllers:expr) => {
+                    ($expect_fail:expr, $controllers:expr, $extra_feature:expr) => {
                         $controllers.iter().map(move |c| {
                             let mut exp = self.case_study_run(
                                 policy_name,
                                 Rc::new(policy),
                                 if $expect_fail {
-                                    Expectation::Fail
+                                    PolicyResult::Fail
                                 } else {
-                                    Expectation::Pass
+                                    PolicyResult::Pass
                                 },
                             );
                             exp.comment = Some(c);
                             exp.extra_cargo_args = vec!["--features", c];
+                            if let Some(f) = $extra_feature {
+                                exp.extra_cargo_args.extend(["--features", &f])
+                            }
                             exp
                         })
                     };
                 }
+                let (initial_extra_feature, changed_extra_feature) =
+                    if let Some(change) = batch_config.change.as_ref() {
+                        if change.add_feature {
+                            (None, Some(change.change_feature))
+                        } else {
+                            (Some(change.change_feature), None)
+                        }
+                    } else {
+                        (None, None)
+                    };
                 batch_config
                     .baseline_controllers
                     .iter()
-                    .flat_map(move |ctrl| mk_batch_exps!(batch_config.expect_failure, ctrl))
+                    .flat_map(move |ctrl| {
+                        mk_batch_exps!(batch_config.expect_failure, ctrl, initial_extra_feature)
+                    })
                     .chain(batch_config.change.iter().flat_map(move |change| {
-                        change
-                            .affected_controllers
-                            .into_iter()
-                            .flat_map(move |c| mk_batch_exps!(batch_config.expect_failure, c))
+                        change.affected_controllers.into_iter().flat_map(move |c| {
+                            mk_batch_exps!(batch_config.expect_failure, c, initial_extra_feature)
+                        })
                     }))
                     .chain(batch_config.change.iter().flat_map(move |change| {
-                        change
-                            .affected_controllers
-                            .iter()
-                            .flat_map(move |c| mk_batch_exps!(!batch_config.expect_failure, c))
+                        change.affected_controllers.iter().flat_map(move |c| {
+                            mk_batch_exps!(!batch_config.expect_failure, c, changed_extra_feature)
+                        })
                     }))
             })
     }
@@ -192,7 +207,7 @@ impl<'a> RunBuilder<'a> {
         self,
         policy_name: &'a str,
         policy: PolicyFn<'a>,
-        expectation: Expectation,
+        expectation: PolicyResult,
     ) -> Run<'a> {
         let app_config =
             &self.evaluation_config.app_config[self.experiment_config.app_config_name()];
@@ -240,26 +255,26 @@ fn get_all_commits(path: impl AsRef<Path>, start: &str) -> Vec<String> {
 impl Application {
     /// Default expectations for each application used in the "case-study"
     /// experiment mode.
-    fn expectations(&self) -> &'static [(Expectation, &'static [&'static str])] {
+    fn expectations(&self) -> &'static [(PolicyResult, &'static [&'static str])] {
         match self {
             Application::AtomicData => &[
-                (Expectation::Pass, &["--features", "bug-fix"]),
-                (Expectation::Fail, &[]),
+                (PolicyResult::Pass, &["--features", "bug-fix"]),
+                (PolicyResult::Fail, &[]),
             ],
             Application::Lemmy { .. } => unimplemented!("Lemmy requires special handling"),
             Application::Freedit { .. } => &[
-                (Expectation::Pass, &[]),
-                (Expectation::Fail, &["--features", "buggy"]),
+                (PolicyResult::Pass, &[]),
+                (PolicyResult::Fail, &["--features", "buggy"]),
             ],
-            Application::Hyperswitch { .. } => &[(Expectation::Pass, &[])],
+            Application::Hyperswitch { .. } => &[(PolicyResult::Pass, &[])],
             Application::Plume => &[
-                (Expectation::Fail, &[]),
+                (PolicyResult::Fail, &[]),
                 (
-                    Expectation::Pass,
+                    PolicyResult::Pass,
                     &["--features", "plume-models/delete-comments"],
                 ),
             ],
-            Application::Websubmit { .. } => &[(Expectation::Pass, &[])],
+            Application::Websubmit { .. } => &[(PolicyResult::Pass, &[])],
         }
     }
 

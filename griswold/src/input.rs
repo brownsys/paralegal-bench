@@ -8,12 +8,12 @@ use std::{collections::HashMap, path::PathBuf, time::Duration};
 #[derive(Clone, Copy, PartialEq, Eq, strum::AsRefStr, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
-pub enum Expectation {
+pub enum PolicyResult {
     Pass,
     Fail,
 }
 
-impl std::ops::Not for Expectation {
+impl std::ops::Not for PolicyResult {
     type Output = Self;
     fn not(self) -> Self::Output {
         match self {
@@ -31,6 +31,8 @@ pub struct EvaluationConfig {
     pub paralegal_home_dir: PathBuf,
     pub app_config: HashMap<String, ApplicationConfig>,
     pub experiment: IndexMap<String, Box<[ExperimentConfig]>>,
+    #[serde(with = "humantime_serde")]
+    pub pdg_timeout: Option<Duration>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -77,7 +79,7 @@ pub enum ExperimentMode {
     RollForward {
         pass_threshold: Box<[String]>,
         fail_threshold: Box<[String]>,
-        starting_expectation: Expectation,
+        starting_expectation: PolicyResult,
         start_commit: String,
         limit: Option<usize>,
     },
