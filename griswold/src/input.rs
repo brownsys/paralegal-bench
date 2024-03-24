@@ -88,7 +88,7 @@ pub enum Application {
         #[serde(default)]
         policies: Box<[hyperswitch::Policy]>,
     },
-    WebSubmit {
+    Websubmit {
         #[serde(default)]
         policies: Box<[websubmit::Policy]>,
     },

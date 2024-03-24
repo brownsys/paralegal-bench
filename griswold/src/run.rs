@@ -96,7 +96,7 @@ impl EvaluationConfig {
         );
         progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
-        for (id, mut exp) in experiments {
+        for (id, exp) in experiments {
             progress.inc(1);
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {

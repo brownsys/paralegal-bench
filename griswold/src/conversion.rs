@@ -75,7 +75,7 @@ impl ExperimentConfig {
             Application::Hyperswitch { policies } => {
                 Box::new(self.hyperwitch_case_study(name, config, selection_or_all(policies)))
             }
-            Application::WebSubmit { policies } => {
+            Application::Websubmit { policies } => {
                 Box::new(self.websubmit_case_study(name, config, selection_or_all(policies)))
             }
             Application::Plume => Box::new(self.plume_case_study(name, config)),

@@ -1,9 +1,7 @@
 extern crate anyhow;
-use std::sync::Arc;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
-use paralegal_policy::Context;
 
 use websubmit::*;
 

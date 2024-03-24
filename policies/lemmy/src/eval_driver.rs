@@ -1,6 +1,3 @@
-extern crate clap;
-extern crate strum;
-
 use std::fmt::Write;
 use std::path::Path;
 use std::time::{Duration, SystemTime};
@@ -464,10 +461,6 @@ fn run_batch(
     expect_failure: bool,
 ) {
     use std::process::*;
-
-    // for each ctrler, run dfpp (1) and test each property (props.len)
-    let num_tasks = batch.len() * (1 + props.len());
-
     let mut w = std::io::stdout();
 
     print_table_header(&mut w, props, desc).unwrap();

@@ -1,6 +1,3 @@
-extern crate anyhow;
-extern crate paralegal_policy;
-
 use anyhow::Result;
 use clap::ValueEnum;
 use paralegal_policy::{

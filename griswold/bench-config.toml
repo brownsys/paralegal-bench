@@ -33,7 +33,7 @@ flow-args = ["--target", "--router"]
 cargo-args = ["--lib"]
 
 # Disabled because it worked
-[[experiment]]
+[[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
 
