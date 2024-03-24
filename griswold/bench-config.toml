@@ -14,6 +14,18 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+cargo-args = ["v-ann-baseline"]
+
+[app-config.websubmit-lib]
+source-dir = "case-studies/websubmit"
+external-annotations = "lib-external-annotations.toml"
+cargo-args = ["v-ann-lib"]
+
+[app-config.websubmit-strict]
+source-dir = "case-studies/websubmit"
+external-annotations = "strict-external-annotations.toml"
+cargo-args = ["v-ann-strict"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
@@ -82,6 +94,36 @@ policies = ["deletion"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policies = ["deletion"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+app-config-override = "websubmit-strict"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policies = ["deletion"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
 feature-space-success = ["edit-sc-1-a"]
 feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
 policies = ["scoped-storage"]
@@ -89,6 +131,52 @@ policies = ["scoped-storage"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policies = ["scoped-storage"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+app-config-override = "websubmit-strict"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policies = ["scoped-storage"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policies = ["authorized-disclosure"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policies = ["authorized-disclosure"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+app-config-override = "webusbmit-strict"
 feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
 feature-space-fail = [
     "edit-dis-1-b",
