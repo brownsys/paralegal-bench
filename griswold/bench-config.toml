@@ -39,6 +39,10 @@ external-annotations = "external-annotations.toml"
 flow-args = ["--target", "atomic_lib"]
 cargo-args = ["--lib", "--features", "db"]
 
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
@@ -76,10 +80,14 @@ application = "freedit"
 mode = "case-study"
 application = "websubmit"
 
-# Does not work on AL2
-# [[experiment]]
+[[experiment.case-studies]]
+mode = "case-study"
+application = "atomic-data"
+
+# Need to debug the policy/app
+# [[experiment.case-studies]]
 # mode = "case-study"
-# application = "atomic-data"
+# application = "hyperswitch"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
