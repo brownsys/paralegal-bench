@@ -13,3 +13,4 @@ anyhow = { workspace = true }
 paralegal-policy = { workspace = true }
 lazy_static = "1"
 clap = { workspace = true }
+petgraph = { workspace = true }

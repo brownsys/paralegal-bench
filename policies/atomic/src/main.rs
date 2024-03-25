@@ -13,15 +13,13 @@ struct Arguments {
     buggy: bool,
     #[clap(long)]
     skip_compile: bool,
-    #[clap(long, default_value = "..")]
     directory: std::path::PathBuf,
 }
 
 fn main() -> Result<()> {
-    let dir = "../";
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
     let graph_loc = if args.skip_compile {
-        GraphLocation::std(dir)
+        GraphLocation::std(&args.directory)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml")
@@ -33,7 +31,7 @@ fn main() -> Result<()> {
         if !args.buggy {
             cmd.get_command().args(["--features", "bug-fix"]);
         }
-        cmd.run(dir)?
+        cmd.run(&args.directory)?
     };
 
     let result = graph_loc.with_context(atomic::check_rights)?;

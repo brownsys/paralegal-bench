@@ -1,10 +1,11 @@
 use anyhow::Result;
 use paralegal_policy::{
     assert_error,
-    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster},
+    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
     Context, Diagnostics, Marker,
 };
-use std::sync::Arc;
+use petgraph::{visit::EdgeRef, Direction::Outgoing};
+use std::{collections::HashSet, sync::Arc};
 
 macro_rules! marker {
     ($name:ident) => {{
@@ -21,6 +22,12 @@ macro_rules! policy {
             ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
+}
+
+trait NodeExt: Sized {
+    fn siblings(self, ctx: &Context) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
+
+    fn is_argument(self, ctx: &Context, num: u8) -> bool;
 }
 
 trait ContextExt {
@@ -47,6 +54,25 @@ impl ContextExt for Context {
     }
 }
 
+impl NodeExt for GlobalNode {
+    fn siblings(self, ctx: &Context) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        let mut set: HashSet<_> = ctx
+            .predecessors(self)
+            .flat_map(|n| ctx.successors(n))
+            .chain(ctx.successors(self).flat_map(|n| ctx.predecessors(n)))
+            .collect();
+        set.remove(&self);
+        Box::new(set.into_iter())
+    }
+
+    fn is_argument(self, ctx: &Context, num: u8) -> bool {
+        ctx.desc().controllers[&self.controller_id()]
+            .graph
+            .edges_directed(self.local_node(), Outgoing)
+            .any(|e| matches!(e.weight().source_use, SourceUse::Argument(n) if n == num))
+    }
+}
+
 policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     let check_rights = marker!(check_rights);
@@ -68,14 +94,30 @@ policy!(check_rights, ctx {
         }
         any_sink_reached = true;
 
-        let new_resources = ctx
-            .influencees(&commit, EdgeSelection::Data)
+        let commit_influencees = ctx.influencees(&commit, EdgeSelection::Data).collect::<HashSet<_>>();
+
+        let new_resources = commit_influencees
+            .iter()
+            .copied()
             .filter(|n| ctx.has_marker(marker!(new_resource), *n))
+            .filter(|n| {
+                // Hackery
+                //
+                // On one hand this is hacky beacuse we're selecting a specific
+                // argument. This shold probably be done cleanly via markers. On
+                // the other hand we're just checking that the first argument is
+                // not form the commit (e.g. user-specified), which is not bad,
+                // but really I think this should be a whitelisted source, such
+                // as `urls::PARENT`, *but* we can't annotate constants so this
+                // has to do.
+                !n.siblings(&ctx)
+                    .filter(|n| n.is_argument(&ctx, 1))
+                    .all(|n| !commit_influencees.contains(&n))
+            })
             .collect::<Box<[_]>>();
 
         // All checks that flow from the commit but not from a new_resource
-        let valid_checks = ctx
-            .influencees(&commit, EdgeSelection::Data)
+        let valid_checks = commit_influencees.iter().copied()
             .filter(|check| {
                 ctx.has_marker(check_rights, *check)
                     && ctx

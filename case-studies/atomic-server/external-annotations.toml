@@ -10,10 +10,6 @@ on_return = true
 marker = "resource"
 on_return = true
 
-[["atomic_lib::commit::Commit::modify_parent"]]
-marker = "safe"
-on_return = true
-
 [["atomic_lib::hierarchy::check_write"]]
 marker = "check_rights"
 on_argument = [1]
