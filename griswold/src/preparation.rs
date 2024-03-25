@@ -284,7 +284,7 @@ impl Application {
     fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
         match self {
             Application::AtomicData => Box::new(std::iter::once((
-                "atomic",
+                "check-writes",
                 Rc::new(atomic::check_rights) as PolicyFn<'a>,
             )))
                 as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>)>>,
@@ -304,7 +304,7 @@ impl Application {
                     .map(|p| (p.as_ref(), Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>)),
             ),
             Application::Plume => Box::new(std::iter::once((
-                "plume",
+                "data-deletion",
                 Rc::new(plume::check) as PolicyFn<'a>,
             ))),
             Application::Websubmit { policies } => Box::new(

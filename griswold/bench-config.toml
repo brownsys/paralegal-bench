@@ -60,7 +60,6 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 replacement = "1.0.78"
 original = "1"
 
-# Disabled because it worked
 [[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
