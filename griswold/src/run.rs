@@ -10,6 +10,7 @@ use csv::Writer;
 use indicatif::ProgressBar;
 use paralegal_policy::{Context, GraphLocation};
 use std::{
+    borrow::Cow,
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
     process::Stdio,
@@ -30,7 +31,7 @@ pub struct Run<'c> {
     pub config: &'c ExperimentConfig,
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
-    pub comment: Option<&'c str>,
+    pub comment: Option<Cow<'c, str>>,
     pub expectation: PolicyResult,
     /// The first function is called before the analyzer, the second after the
     /// policy finishes.
@@ -42,9 +43,9 @@ pub struct Run<'c> {
 impl Run<'_> {
     pub fn name(&self) -> String {
         let mut result = format!("{}-{}", self.config.application.as_ref(), self.policy_name);
-        if let Some(comment) = self.comment {
+        if let Some(comment) = self.comment.as_ref() {
             result.push('-');
-            result.push_str(comment);
+            result.push_str(comment.as_ref());
         }
         result
     }

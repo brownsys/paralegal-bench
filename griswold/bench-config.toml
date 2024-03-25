@@ -47,7 +47,7 @@ cargo-args = ["--lib"]
 
 [app-config.original-plume]
 source-dir = "../../clones/Plume"
-external-annotations = "../../research/dfpp-verification/case-studies/plume/external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/misc/original-plume-external-annotations.toml"
 flow-args = [
     "--target",
     "plume-models",

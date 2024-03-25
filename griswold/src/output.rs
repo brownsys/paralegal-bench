@@ -3,6 +3,7 @@
 use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
 use paralegal_policy::Context;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::process::Child;
 use std::sync;
 use std::thread;
@@ -26,6 +27,7 @@ pub struct RunMeasurements {
     experiment: String,
     mode: String,
     application: String,
+    comment: Option<String>,
     run: String,
     policy: String,
     expectation: PolicyResult,
@@ -56,6 +58,7 @@ impl RunMeasurements {
         mode: String,
         application: String,
         run: String,
+        comment: Option<String>,
         policy: String,
         expectation: PolicyResult,
         adaptive_depth: bool,
@@ -69,6 +72,7 @@ impl RunMeasurements {
             run,
             policy,
             expectation,
+            comment,
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth,
@@ -97,6 +101,7 @@ impl RunMeasurements {
             exp.config.mode.as_ref().to_owned(),
             exp.config.app_config_name().to_owned(),
             exp.name(),
+            exp.comment.as_ref().map(Cow::to_string),
             exp.policy_name.to_owned(),
             exp.expectation,
             exp.config.adaptive_depth,

@@ -71,14 +71,14 @@ impl<'a> RunBuilder<'a> {
                             let mut run =
                                 self.case_study_run(name, policy.clone(), PolicyResult::Pass);
                             run.extra_cargo_args.extend(["--features", &feature]);
-                            run.comment = Some(&feature);
+                            run.comment = Some(feature.as_str().into());
                             run
                         })
                         .chain(feature_space_fail.iter().map(move |feature| {
                             let mut run =
                                 self.case_study_run(name, policy_clone.clone(), PolicyResult::Fail);
                             run.extra_cargo_args.extend(["--features", &feature]);
-                            run.comment = Some(&feature);
+                            run.comment = Some(feature.as_str().into());
                             run
                         }))
                 },
@@ -112,6 +112,7 @@ impl<'a> RunBuilder<'a> {
                             let mut run =
                                 self.case_study_run(policy_name, policy, current_expectation);
                             run.prepare = Some(Rc::new(checkout(&c)));
+                            run.comment = Some(c.clone().into());
                             run
                         },
                     )
@@ -149,10 +150,11 @@ impl<'a> RunBuilder<'a> {
         GetUserVersion::value_variants()
             .iter()
             .map(|v| v.to_config())
-            .filter(|c| policies.contains(&c.property.into()))
+            .filter(|c| policies.contains(&c.property))
             .flat_map(move |batch_config| {
                 let policy = |ctx| batch_config.property.run(ctx);
                 let policy_name = batch_config.property.as_ref();
+                let base_feature = batch_config.baseline_feature;
                 macro_rules! mk_batch_exps {
                     ($expect_fail:expr, $controllers:expr, $extra_feature:expr) => {
                         $controllers.iter().map(move |c| {
@@ -165,8 +167,9 @@ impl<'a> RunBuilder<'a> {
                                     PolicyResult::Pass
                                 },
                             );
-                            exp.comment = Some(c);
-                            exp.extra_cargo_args = vec!["--features", c];
+                            exp.comment = Some((*c).into());
+                            exp.extra_cargo_args =
+                                vec!["--features", c, "--features", base_feature];
                             if let Some(f) = $extra_feature {
                                 exp.extra_cargo_args.extend(["--features", &f])
                             }

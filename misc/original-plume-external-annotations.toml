@@ -1,0 +1,22 @@
+[["diesel::delete"]]
+marker = "to_delete"
+on_argument = [0]
+
+[["activitystreams::activity::Delete::new"]]
+marker = "to_delete"
+on_argument = [0, 1]
+
+[["crate::blogs::Blog"]]
+marker = "user_data"
+
+[["crate::comments::Comment"]]
+marker = "user_data"
+
+[["crate::notifications::Notification"]]
+marker = "user_data"
+
+[["crate::posts::Post"]]
+marker = "user_data"
+
+[["crate::users::User"]]
+marker = "user_data"

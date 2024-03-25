@@ -90,6 +90,7 @@ impl InstanceProp {
 #[derive(
     ValueEnum, Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash, strum::AsRefStr,
 )]
+#[strum(serialize_all = "kebab-case")]
 pub enum Prop {
     Community,
     Instance,
