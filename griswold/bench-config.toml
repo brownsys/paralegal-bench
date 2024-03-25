@@ -60,7 +60,23 @@ flow-args = [
 ]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
+
 [app-config.original-plume.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.original-atomic-data]
+source-dir = "../../clones/atomic-server"
+external-annotations = "../../research/dfpp-verification/misc/original-atomic-external-annotations.toml"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.original-atomic-data.version-override.proc-macro2]
 replacement = "1.0.78"
 original = "1"
 
@@ -215,3 +231,12 @@ app-config-override = "original-plume"
 starting-expectation = "pass"
 # From this one onwards compilation fails because the rustc versions are too different.
 limit = 93
+
+# [[experiment.atomic-roll-forward]]
+# starting-commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
+# mode = "roll-forward"
+# application = "atomic-data"
+# pass-threshold = ["46a503adbfc52678c97e52f6e8cfaf541aa6492d"]
+# app-config-override = "original-atomic-data"
+# starting-expectation = "pass"
+# limit = 100
