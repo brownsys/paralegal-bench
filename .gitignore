@@ -23,3 +23,7 @@ explore
 flow-graph.json
 
 /results/
+
+/roll-log.txt
+/fix-log.txt
+/out.txt
