@@ -77,13 +77,9 @@ fn const_true() -> bool {
 pub enum ExperimentMode {
     #[serde(rename_all = "kebab-case")]
     RollForward {
-        #[serde(default)]
-        pass_threshold: Box<[String]>,
-        #[serde(default)]
-        fail_threshold: Box<[String]>,
-        starting_expectation: PolicyResult,
-        start_commit: String,
-        limit: Option<usize>,
+        expectation: PolicyResult,
+        start: String,
+        end: String,
     },
     #[serde(rename_all = "kebab-case")]
     Ablation {

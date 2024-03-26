@@ -84,33 +84,20 @@ impl<'a> RunBuilder<'a> {
                 },
             )),
             ExperimentMode::RollForward {
-                pass_threshold,
-                fail_threshold,
-                starting_expectation,
-                limit,
-                start_commit: starting_commit,
+                start,
+                end,
+                expectation,
             } => {
-                let mut expectation = *starting_expectation;
-                let mut commits = get_all_commits(
+                let commits = get_all_commits(
                     &self.evaluation_config.app_config[self.experiment_config.app_config_name()]
                         .source_dir,
-                    &starting_commit,
+                    start,
+                    end,
                 );
-                if let Some(limit) = limit {
-                    commits.truncate(*limit);
-                }
                 Box::new(commits.into_iter().flat_map(move |c| {
-                    let current_expectation = expectation;
-                    if fail_threshold.contains(&c) {
-                        expectation = PolicyResult::Pass;
-                    }
-                    if pass_threshold.contains(&c) {
-                        expectation = PolicyResult::Fail;
-                    }
                     self.experiment_config.application.policies().map(
                         move |(policy_name, policy)| {
-                            let mut run =
-                                self.case_study_run(policy_name, policy, current_expectation);
+                            let mut run = self.case_study_run(policy_name, policy, *expectation);
                             run.prepare = Some(Rc::new(checkout(&c)));
                             run.comment = Some(c.clone().into());
                             run
@@ -241,9 +228,9 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
     }
 }
 
-fn get_all_commits(path: impl AsRef<Path>, start: &str) -> Vec<String> {
+fn get_all_commits(path: impl AsRef<Path>, start: &str, end: &str) -> Vec<String> {
     let output = Command::new("git")
-        .args(["log", "--format=%H", start])
+        .args(["log", &format!("{start}..{end}"), "--format=%H"])
         .current_dir(path)
         .output()
         .unwrap();
