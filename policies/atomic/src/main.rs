@@ -2,6 +2,11 @@ extern crate anyhow;
 extern crate clap;
 extern crate paralegal_policy;
 
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+};
+
 use clap::Parser;
 
 use anyhow::Result;
@@ -13,7 +18,11 @@ struct Arguments {
     buggy: bool,
     #[clap(long)]
     skip_compile: bool,
-    directory: std::path::PathBuf,
+    directory: PathBuf,
+    #[clap(long, default_value = "external-annotations.toml")]
+    annotations: PathBuf,
+    #[clap(last = true)]
+    extra_args: Vec<OsString>,
 }
 
 fn main() -> Result<()> {
@@ -22,11 +31,16 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.directory)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
-        cmd.external_annotations("external-annotations.toml")
+        cmd.external_annotations(&args.annotations)
             .abort_after_analysis();
 
         cmd.get_command()
-            .args(["--target", "atomic_lib", "--", "--lib", "--features", "db"]);
+            .args(["--target", "atomic_lib"])
+            .args(args.extra_args.iter());
+        if !args.extra_args.contains(&"--".into()) {
+            cmd.get_command().arg("--");
+        }
+        cmd.get_command().args(["--lib", "--features", "db"]);
 
         if !args.buggy {
             cmd.get_command().args(["--features", "bug-fix"]);

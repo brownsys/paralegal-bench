@@ -56,10 +56,12 @@ impl ContextExt for Context {
 
 impl NodeExt for GlobalNode {
     fn siblings(self, ctx: &Context) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        let self_at = ctx.node_info(self).at;
         let mut set: HashSet<_> = ctx
             .predecessors(self)
             .flat_map(|n| ctx.successors(n))
             .chain(ctx.successors(self).flat_map(|n| ctx.predecessors(n)))
+            .filter(|n| ctx.node_info(*n).at == self_at)
             .collect();
         set.remove(&self);
         Box::new(set.into_iter())
@@ -110,9 +112,20 @@ policy!(check_rights, ctx {
                 // but really I think this should be a whitelisted source, such
                 // as `urls::PARENT`, *but* we can't annotate constants so this
                 // has to do.
-                !n.siblings(&ctx)
+                let argument_siblings = n.siblings(&ctx)
                     .filter(|n| n.is_argument(&ctx, 1))
-                    .all(|n| !commit_influencees.contains(&n))
+                    .collect::<Box<[_]>>();
+
+                let valid = argument_siblings.iter().copied().any(|n| {
+                        commit_influencees.contains(&n)
+                    });
+                // let mut msg = ctx.struct_node_help(*n, format!("This is a new resource, it has {} argument 1 siblings. It is {}problematic", argument_siblings.len(), if valid { "" } else {"un"}));
+                // for sibling in argument_siblings.iter().copied() {
+                //     msg.with_node_note(sibling, "This is an argument 1 sibling");
+                // }
+                // msg.emit();
+                valid
+
             })
             .collect::<Box<[_]>>();
 
@@ -120,9 +133,15 @@ policy!(check_rights, ctx {
         let valid_checks = commit_influencees.iter().copied()
             .filter(|check| {
                 ctx.has_marker(check_rights, *check)
-                    && ctx
-                        .any_flows(&new_resources, &[*check], EdgeSelection::Data)
-                        .is_none()
+                    && if let Some((from, to)) = ctx
+                        .any_flows(&new_resources, &[*check], EdgeSelection::Data) {
+                            // let mut msg = ctx.struct_node_note(to, "This is could be a check but");
+                            // msg.with_node_help(from, "it is influenced by this new_resource");
+                            // msg.emit();
+                            false
+                        } else {
+                            true
+                        }
             })
             .collect::<Box<[_]>>();
 
