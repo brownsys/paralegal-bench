@@ -5,12 +5,13 @@ extern crate paralegal_policy;
 use std::{
     ffi::{OsStr, OsString},
     path::PathBuf,
+    process::exit,
 };
 
 use clap::Parser;
 
 use anyhow::Result;
-use paralegal_policy::GraphLocation;
+use paralegal_policy::{algo::ahb, GraphLocation};
 
 #[derive(Parser)]
 struct Arguments {
@@ -48,11 +49,17 @@ fn main() -> Result<()> {
         cmd.run(&args.directory)?
     };
 
-    let result = graph_loc.with_context(atomic::check_rights)?;
+    let mut config = paralegal_policy::Config::default();
+    config.always_happens_before_tracing = ahb::TraceLevel::Full;
+
+    let result = graph_loc.with_context_configured(config, atomic::check_rights)?;
     println!(
         "Policy {}successful with {}",
         if result.success { "" } else { "un" },
         result.stats
     );
+    if !result.success {
+        exit(111);
+    }
     Ok(())
 }

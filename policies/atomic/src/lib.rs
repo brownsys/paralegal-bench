@@ -5,7 +5,7 @@ use paralegal_policy::{
     Context, Diagnostics, Marker,
 };
 use petgraph::{visit::EdgeRef, Direction::Outgoing};
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, hash::Hash, sync::Arc};
 
 macro_rules! marker {
     ($name:ident) => {{
@@ -167,7 +167,50 @@ policy!(check_rights, ctx {
 
         for (store, check) in checks.iter() {
             if check.is_none() {
+                let store_influencing = ctx.influencers(*store, EdgeSelection::Control).chain(
+                    ctx.influencers(*store, EdgeSelection::Control).flat_map(|i| ctx.influencers(i, EdgeSelection::Data))
+                ).collect::<HashSet<_>>();
+
                 ctx.node_error(*store, "This store is not protected");
+
+                let mut msg = ctx.struct_node_help(*store, "This store");
+                for influencer in store_influencing.iter().copied() {
+                    msg.with_node_note(influencer, "Is ctrl-influenced by this");
+                }
+                msg.emit();
+                for c in valid_checks.iter().copied() {
+                    let mut msg = ctx.struct_node_help(c, "This is a valid check");
+
+                    let check_influenced =
+                        ctx.influencees(c, EdgeSelection::Control).chain(
+                            ctx.influencees(c, EdgeSelection::Data).flat_map(|i| ctx.influencees(i, EdgeSelection::Control))
+                        ).collect::<HashSet<_>>();
+                    for i in check_influenced.iter().copied() {
+                        msg.with_node_note(i, "that ctrl-influences this node");
+                    }
+                    msg.emit();
+
+                    for i in store_influencing.intersection(&check_influenced) {
+                        ctx.node_help(*i, "This is where influence intersects");
+                    }
+
+                    for i in store_influencing.iter().copied() {
+                        let mut msg = ctx.struct_node_help(i, "This store influence intersects");
+                        let mut emit = false;
+                        for intersection in ctx.influencers(i, EdgeSelection::Data) {
+                            if check_influenced.contains(&intersection) {
+                                msg.with_node_note(intersection, "via this intermediary");
+                                emit = true;
+                            }
+                        }
+                        if emit {
+                            msg.emit();
+                        }
+                    }
+
+                    ctx.always_happens_before(Some(c), |_| false, |t| t == *store).unwrap().report(ctx.clone());
+
+                }
             }
         }
     }

@@ -53,7 +53,7 @@ cargo-args = ["--lib"]
 # Must point to a directory containing the https://github.com/Plume-org/Plume
 # git repository
 source-dir = "../../clones/Plume"
-external-annotations = "../../research/dfpp-verification/misc/original-plume-external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
 flow-args = [
     "--target",
     "plume-models",
@@ -71,7 +71,7 @@ original = "1"
 # Must point to a directory containing the
 # https://github.com/atomicdata-dev/atomic-server git repository
 source-dir = "../../clones/atomic-server"
-external-annotations = "../../research/dfpp-verification/misc/original-atomic-external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/external-annotations.toml"
 flow-args = [
     "--target",
     "atomic_lib",
