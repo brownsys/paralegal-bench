@@ -271,7 +271,27 @@ expectation = "fail"
 # Contains the ranges for atomic's roll forward experiment in order. See
 # https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
 # for an overview table
+[[experiment.atomic-roll-forward-HEAD]]
+start = "79c9a91ae734ddd253d162a268de2a0365befcd7"
+end = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
+mode = "roll-forward"
+application = "atomic-data"
+app-config-override = "roll-forward-atomic"
+expectation = "pass"
 
+# The batches above and below are actually sort of part of the same. However
+# there are a number of commits in this batch (namely the range
+# 8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2..3b67266f8e7a99089997fb8e5aea9bfee9c7c13b)
+# that are broken and won't even compile. Because that range is fairly large
+# (73) we exclude it by splitting this batch into two.
+
+[[experiment.atomic-roll-forward-HEAD]]
+start = "c0690d4c7a501c78999589fc11d7ec332b74d3aa"
+end = "22ba25abd1177e1453042a395ef2bc2a35338b78"
+mode = "roll-forward"
+application = "atomic-data"
+app-config-override = "roll-forward-atomic"
+expectation = "pass"
 
 [[experiment.atomic-roll-forward-c11ff7463a69489ba2c217f18076fe73d69c8b83]]
 start = "c11ff7463a69489ba2c217f18076fe73d69c8b83"
