@@ -80,6 +80,19 @@ flow-args = [
 ]
 cargo-args = ["--lib", "--features", "db"]
 
+[app-config.roll-forward-atomic-c11ff7463a69489ba2c217f18076fe73d69c8b83]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+source-dir = "../../clones/atomic-server"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/c11ff7463a69489ba2c217f18076fe73d69c8b83-external-annotations.toml"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+]
+cargo-args = ["--lib", "--features", "db"]
+
 [app-config.roll-forward-atomic-22ba25abd1177e1453042a395ef2bc2a35338b78]
 # Must point to a directory containing the
 # https://github.com/atomicdata-dev/atomic-server git repository
@@ -258,12 +271,14 @@ expectation = "fail"
 # Contains the ranges for atomic's roll forward experiment in order. See
 # https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
 # for an overview table
-[[experiment.atomic-roll-forward-c97cde6567d49ae0eab6e94130748560660ba830]]
-start = "c97cde6567d49ae0eab6e94130748560660ba830"
+
+
+[[experiment.atomic-roll-forward-c11ff7463a69489ba2c217f18076fe73d69c8b83]]
+start = "c11ff7463a69489ba2c217f18076fe73d69c8b83"
 end = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
 mode = "roll-forward"
 application = "atomic-data"
-app-config-override = "roll-forward-atomic"
+app-config-override = "roll-forward-atomic-c11ff7463a69489ba2c217f18076fe73d69c8b83"
 expectation = "pass"
 
 [[experiment.atomic-roll-forward-22ba25abd1177e1453042a395ef2bc2a35338b78]]
