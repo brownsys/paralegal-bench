@@ -1,5 +1,5 @@
 extern crate anyhow;
-use std::{ops::Deref, sync::Arc};
+use std::{ops::Deref, path::Path, sync::Arc};
 
 use anyhow::Result;
 use paralegal_policy::{
@@ -340,7 +340,6 @@ pub enum Policy {
     ScopedStorage,
     Deletion,
     AuthorizedDisclosure,
-    All,
 }
 
 impl Policy {
@@ -349,9 +348,33 @@ impl Policy {
             Self::ScopedStorage => run_sc_policy,
             Self::AuthorizedDisclosure => run_dis_policy,
             Self::Deletion => run_del_policy,
-            Self::All => |ctx| {
-                run_dis_policy(ctx.clone()).and(run_sc_policy(ctx.clone()).and(run_del_policy(ctx)))
-            },
+        }
+    }
+}
+
+#[derive(Copy, Clone, clap::ValueEnum, strum::AsRefStr, Serialize, Deserialize)]
+#[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
+pub enum Flavour {
+    Lib,
+    Application,
+    Strict,
+}
+
+impl Flavour {
+    pub fn external_annotations(self) -> &'static Path {
+        Path::new(match self {
+            Flavour::Lib => "lib-external-annotations.toml",
+            Flavour::Application => "baseline-external-annotations.toml",
+            Flavour::Strict => "strict-external-annotations.toml",
+        })
+    }
+
+    pub fn annotation_feature(self) -> &'static str {
+        match self {
+            Flavour::Application => "v-ann-baseline",
+            Flavour::Lib => "v-ann-lib",
+            Flavour::Strict => "v-ann-strict",
         }
     }
 }

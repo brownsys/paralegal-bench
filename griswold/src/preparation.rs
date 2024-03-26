@@ -294,7 +294,7 @@ impl Application {
                 "data-deletion",
                 Rc::new(plume::check) as PolicyFn<'a>,
             ))),
-            Application::Websubmit { policies } => Box::new(
+            Application::Websubmit { policies, .. } => Box::new(
                 selection_or_all(policies)
                     .iter()
                     .map(|p| (p.as_ref(), Rc::new(p.runnable()) as PolicyFn<'a>)),
