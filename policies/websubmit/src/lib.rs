@@ -66,7 +66,53 @@ impl PropRunner {
         !ahb.holds()
     }
 
+    fn check_deletion_lib(&self) -> Result<()> {
+        let ctx = &self.cx;
+        let sensitive = marker!(sensitive);
+        let stores = marker!(stores);
+        let deletes = marker!(deletes);
+        let from_storage = marker!(from_storage);
+        let num_types_to_expect = ctx
+            .marked_nodes(sensitive)
+            .chain(
+                ctx.marked_type(sensitive)
+                    .iter()
+                    .flat_map(|&t| {
+                        ctx.all_controllers()
+                            .flat_map(move |(ctrl, _)| ctx.srcs_with_type(ctrl, t))
+                    })
+                    .filter(|sens| {
+                        ctx.influencees(*sens, EdgeSelection::Data)
+                            .any(|store| ctx.has_marker(stores, store))
+                    }),
+            )
+            .count();
+
+        let cleanup = self.cx.controller_contexts().find(|ctx| {
+            let cleaned = ctx.marked_nodes(from_storage).filter(|&src| {
+                ctx.influencees(src, EdgeSelection::Data)
+                    .any(|clean| ctx.has_marker(deletes, clean))
+            });
+            cleaned.count() == num_types_to_expect
+        });
+
+        if let Some(cleanup) = cleanup {
+            cleanup.note(format!(
+                "Found controller {} deletes all stored data",
+                cleanup.current().name
+            ));
+        } else {
+            self.cx
+                .error("Found no controller that deletes {num_types_to_expect} types")
+        };
+        Ok(())
+    }
+
     pub fn check_deletion(&self) -> Result<()> {
+        if self.flavour.is_lib() {
+            return self.check_deletion_lib();
+        }
+
         // All types marked "sensitive"
         let types_to_check = self
             .cx
