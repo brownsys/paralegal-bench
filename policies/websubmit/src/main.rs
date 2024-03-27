@@ -49,7 +49,7 @@ fn main() -> Result<()> {
                 args.policy.as_slice()
             };
             for prop in policies.iter() {
-                prop.runnable()(ctx.clone())?;
+                prop.runnable(args.flavour)(ctx.clone())?;
             }
             Ok(())
         })?;

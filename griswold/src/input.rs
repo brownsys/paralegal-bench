@@ -105,6 +105,7 @@ pub enum Application {
     Websubmit {
         #[serde(default)]
         policies: Box<[websubmit::Policy]>,
+        flavour: websubmit::Flavour,
     },
     AtomicData,
     Freedit {

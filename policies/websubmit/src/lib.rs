@@ -1,5 +1,5 @@
 extern crate anyhow;
-use std::{ops::Deref, path::Path, sync::Arc};
+use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 
 use anyhow::Result;
 use paralegal_policy::{
@@ -17,23 +17,56 @@ macro_rules! marker {
 
 /// Asserts that there exists one controller which calls a deletion
 /// function on every value (or an equivalent type) that is ever stored.
-pub struct DeletionProp {
+pub struct PropRunner {
     cx: Arc<PolicyContext>,
+    flavour: Flavour,
 }
 
-impl Deref for DeletionProp {
+impl Deref for PropRunner {
     type Target = PolicyContext;
     fn deref(&self) -> &Self::Target {
         self.cx.deref()
     }
 }
 
-impl DeletionProp {
-    pub fn new(cx: Arc<PolicyContext>) -> Self {
-        DeletionProp { cx }
+trait NodeExt {
+    fn unconditional(self, ctx: &Context) -> bool;
+}
+
+impl NodeExt for GlobalNode {
+    fn unconditional(self, ctx: &Context) -> bool {
+        !ctx.desc().controllers[&self.controller_id()]
+            .graph
+            .edges_directed(self.local_node(), petgraph::Incoming)
+            .any(|e| e.weight().is_control())
+    }
+}
+
+impl PropRunner {
+    pub fn new(cx: Arc<PolicyContext>, flavour: Flavour) -> Self {
+        Self { cx, flavour }
     }
 
-    pub fn check(self) -> Result<()> {
+    pub fn flows_to_no_skip(
+        &self,
+        from: impl IntoIterGlobalNodes,
+        to: impl IntoIterGlobalNodes,
+    ) -> bool {
+        let target = to.iter_global_nodes().collect::<HashSet<_>>();
+        let ahb = self
+            .always_happens_before(
+                from.iter_global_nodes(),
+                |n| {
+                    self.cx.instruction_at_node(n).kind.is_function_call()
+                        && !self.cx.has_marker(Identifier::new_intern("safe"), n)
+                },
+                |t| target.contains(&t),
+            )
+            .unwrap();
+        !ahb.holds()
+    }
+
+    pub fn check_deletion(&self) -> Result<()> {
         // All types marked "sensitive"
         let types_to_check = self
             .cx
@@ -56,65 +89,72 @@ impl DeletionProp {
                     })
                 }
             })
-            // Mapped to their otype
-            .flat_map(|t| self.cx.otypes(*t))
             .collect::<Vec<_>>();
-        let found_deleter = self.cx.desc().controllers.keys().any(|ctrl_id| {
+        let found_deleter = self.cx.desc().controllers.keys().find_map(|&ctrl_id| {
             // For all types to check
-            types_to_check.iter().all(|ty| {
-                // If there is any src of that type
-                self.cx.srcs_with_type(*ctrl_id, **ty).any(|node| {
-                    // That has data flow influence on
-                    self.cx
-                        .influencees(node, EdgeSelection::Data)
-                        // A node with marker "deletes"
-                        .any(|influencee| self.cx.has_marker(marker!(deletes), influencee))
+            let deleters = types_to_check
+                .iter()
+                .copied()
+                .filter_map(|&ty| {
+                    std::iter::once(&ty)
+                        .chain(self.cx.otypes(ty).iter())
+                        .find_map(|&ty| {
+                            let (from, to) =
+                                self.cx.srcs_with_type(ctrl_id, ty).find_map(|node| {
+                                    if self.flavour.is_strict() && !node.unconditional(&self.cx) {
+                                        return None;
+                                    }
+                                    // That has data flow influence on
+                                    let to = self
+                                        .cx
+                                        .influencees(node, EdgeSelection::Data)
+                                        // A node with marker "deletes"
+                                        .find(|influencee| {
+                                            self.cx.has_marker(marker!(deletes), *influencee)
+                                        })?;
+                                    Some((node, to))
+                                })?;
+                            Some((ty, from, to))
+                        })
+                    // If there is any src of that type
                 })
-            })
+                .collect::<Box<[_]>>();
+            (deleters.len() == types_to_check.len()).then_some((ctrl_id, deleters))
         });
 
-        assert_error!(
-            self.cx,
-            found_deleter,
-            "Did not find valid deleter for all types."
-        );
-        for ty in types_to_check {
-            assert_error!(
-                self.cx,
-                found_deleter,
-                format!("Type: {}", self.cx.describe_def(*ty))
-            )
+        if let Some((deleter, deletions)) = found_deleter.as_ref() {
+            let mut msg = self.cx.struct_help(format!(
+                "The function {} is found to delete all types",
+                self.cx.desc().controllers[deleter].name
+            ));
+            for (ty, from, to) in deletions.iter() {
+                msg.with_node_note(
+                    *from,
+                    format!(
+                        "This node returns type {}",
+                        &self.cx.desc().type_info[ty].rendering
+                    ),
+                );
+                msg.with_node_note(*to, "Which is deleted here");
+            }
+            msg.emit();
+        } else {
+            let mut msg = self
+                .cx
+                .struct_error("Did not find valid deleter for all types");
+            for ty in types_to_check {
+                msg.with_note(format!(
+                    "Expected deletion of {}",
+                    &self.cx.desc().type_info[ty].rendering
+                ));
+            }
+            msg.emit();
         }
 
         Ok(())
     }
-}
 
-pub fn run_del_policy(ctx: Arc<Context>) -> Result<()> {
-    ctx.named_policy(Identifier::new_intern("Deletion"), |ctx| {
-        DeletionProp::new(ctx).check()
-    })
-}
-
-/// Storing data in the database must be associated to a user. This is
-/// necessary for e.g. the deletion to work.
-pub struct ScopedStorageProp {
-    cx: Arc<PolicyContext>,
-}
-
-impl Deref for ScopedStorageProp {
-    type Target = PolicyContext;
-    fn deref(&self) -> &Self::Target {
-        self.cx.deref()
-    }
-}
-
-impl ScopedStorageProp {
-    pub fn new(cx: Arc<PolicyContext>) -> Self {
-        ScopedStorageProp { cx }
-    }
-
-    pub fn check(self) -> Result<()> {
+    pub fn check_scoped_storage(&self) -> Result<()> {
         let mut found_local_witnesses = true;
         for cx in self.cx.clone().controller_contexts() {
             let c_id = cx.id();
@@ -206,32 +246,9 @@ impl ScopedStorageProp {
         }
         Ok(())
     }
-}
 
-pub fn run_sc_policy(ctx: Arc<Context>) -> Result<()> {
-    ctx.named_policy(Identifier::new_intern("Scoped Storage"), |ctx| {
-        ScopedStorageProp::new(ctx).check()
-    })
-}
-
-/// If sensitive data is released, the release must be scoped, and all inputs to the scope must be safe.
-pub struct AuthDisclosureProp {
-    cx: Arc<PolicyContext>,
-}
-
-impl Deref for AuthDisclosureProp {
-    type Target = PolicyContext;
-    fn deref(&self) -> &Self::Target {
-        self.cx.deref()
-    }
-}
-
-impl AuthDisclosureProp {
-    pub fn new(cx: Arc<PolicyContext>) -> Self {
-        AuthDisclosureProp { cx }
-    }
-
-    pub fn check(self) -> Result<()> {
+    /// If sensitive data is released, the release must be scoped, and all inputs to the scope must be safe.
+    pub fn check_authorized_disclosure(&self) -> Result<()> {
         for c_id in self.cx.desc().controllers.keys() {
             // All srcs that have no influencers
             let roots = self
@@ -327,12 +344,6 @@ impl AuthDisclosureProp {
     }
 }
 
-pub fn run_dis_policy(ctx: Arc<Context>) -> Result<()> {
-    ctx.named_policy(Identifier::new_intern("Authorized Disclosure"), |ctx| {
-        AuthDisclosureProp::new(ctx).check()
-    })
-}
-
 #[derive(Copy, Clone, clap::ValueEnum, strum::AsRefStr, Serialize, Deserialize)]
 #[strum(serialize_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
@@ -343,16 +354,21 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
-        match self {
-            Self::ScopedStorage => run_sc_policy,
-            Self::AuthorizedDisclosure => run_dis_policy,
-            Self::Deletion => run_del_policy,
-        }
+    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<Context>) -> Result<()>> {
+        Box::new(move |ctx| {
+            ctx.named_policy(Identifier::new_intern(self.as_ref()), |ctx| {
+                let runner = PropRunner::new(ctx, flavour);
+                match self {
+                    Policy::ScopedStorage => runner.check_scoped_storage(),
+                    Policy::AuthorizedDisclosure => runner.check_authorized_disclosure(),
+                    Policy::Deletion => runner.check_deletion(),
+                }
+            })
+        })
     }
 }
 
-#[derive(Copy, Clone, clap::ValueEnum, strum::AsRefStr, Serialize, Deserialize)]
+#[derive(Copy, Clone, clap::ValueEnum, strum::AsRefStr, Serialize, Deserialize, strum::EnumIs)]
 #[strum(serialize_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
 pub enum Flavour {
