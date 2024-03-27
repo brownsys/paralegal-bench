@@ -27,7 +27,12 @@ pub struct RunMeasurements {
     experiment: String,
     mode: String,
     application: String,
-    comment: Option<String>,
+    /// If only one controller is selected this is set. (Usually lemmy)
+    controller: Option<String>,
+    /// The features that selects the ablation configuration. Only set in ablation experiments.
+    ablation_feature: Option<String>,
+    /// Only set in roll-forward experiments. Indicates the commit this was run on.
+    commit: Option<String>,
     run: String,
     policy: String,
     expectation: PolicyResult,
@@ -52,30 +57,21 @@ pub struct RunMeasurements {
 }
 
 impl RunMeasurements {
-    pub fn new(
-        id: u32,
-        experiment: String,
-        mode: String,
-        application: String,
-        run: String,
-        comment: Option<String>,
-        policy: String,
-        expectation: PolicyResult,
-        adaptive_depth: bool,
-        pdg_stat: CommandMeasurement,
-    ) -> Self {
+    pub fn from_experiment(id: u32, exp: &Run, pdg_stat: CommandMeasurement) -> Self {
         Self {
             id,
-            experiment,
-            application,
-            mode,
-            run,
-            policy,
-            expectation,
-            comment,
+            experiment: exp.experiment_name.to_owned(),
+            application: exp.config.app_config_name().to_owned(),
+            mode: exp.config.mode.as_ref().to_owned(),
+            run: exp.name(),
+            policy: exp.policy_name.to_owned(),
+            expectation: exp.expectation,
+            controller: exp.controller.map(ToOwned::to_owned),
+            ablation_feature: exp.ablation_feature.map(ToOwned::to_owned),
+            commit: exp.commit.clone(),
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
-            adaptive_depth,
+            adaptive_depth: exp.config.adaptive_depth,
             rustc_time: None,
             policy_time: None,
             pdg_timed_out: pdg_stat.timed_out,
@@ -92,21 +88,6 @@ impl RunMeasurements {
             mean_mem_usage_pdg: pdg_stat.mean_mem_usage,
             mean_mem_usage_policy: None,
         }
-    }
-
-    pub fn from_experiment(id: u32, exp: &Run, pdg_stat: CommandMeasurement) -> Self {
-        Self::new(
-            id,
-            exp.experiment_name.to_owned(),
-            exp.config.mode.as_ref().to_owned(),
-            exp.config.app_config_name().to_owned(),
-            exp.name(),
-            exp.comment.as_ref().map(Cow::to_string),
-            exp.policy_name.to_owned(),
-            exp.expectation,
-            exp.config.adaptive_depth,
-            pdg_stat,
-        )
     }
 
     pub fn add_policy_stat(

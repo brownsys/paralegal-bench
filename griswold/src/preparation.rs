@@ -71,14 +71,14 @@ impl<'a> RunBuilder<'a> {
                             let mut run =
                                 self.case_study_run(name, policy.clone(), PolicyResult::Pass);
                             run.extra_cargo_args.extend(["--features", &feature]);
-                            run.comment = Some(feature.as_str().into());
+                            run.ablation_feature = Some(feature.as_str());
                             run
                         })
                         .chain(feature_space_fail.iter().map(move |feature| {
                             let mut run =
                                 self.case_study_run(name, policy_clone.clone(), PolicyResult::Fail);
                             run.extra_cargo_args.extend(["--features", &feature]);
-                            run.comment = Some(feature.as_str().into());
+                            run.ablation_feature = Some(feature.as_str());
                             run
                         }))
                 },
@@ -99,7 +99,7 @@ impl<'a> RunBuilder<'a> {
                         move |(policy_name, policy)| {
                             let mut run = self.case_study_run(policy_name, policy, *expectation);
                             run.prepare = Some(Rc::new(checkout(&c)));
-                            run.comment = Some(c.clone().into());
+                            run.commit = Some(c.clone());
                             run
                         },
                     )
@@ -154,7 +154,7 @@ impl<'a> RunBuilder<'a> {
                                     PolicyResult::Pass
                                 },
                             );
-                            exp.comment = Some((*c).into());
+                            exp.controller = Some(c);
                             exp.extra_cargo_args =
                                 vec!["--features", c, "--features", base_feature];
                             if let Some(f) = $extra_feature {
@@ -199,19 +199,14 @@ impl<'a> RunBuilder<'a> {
         policy: PolicyFn<'a>,
         expectation: PolicyResult,
     ) -> Run<'a> {
-        let app_config =
-            &self.evaluation_config.app_config[self.experiment_config.app_config_name()];
-        Run {
-            experiment_name: self.experiment_name,
-            config: self.experiment_config,
+        Run::new(
+            self.experiment_name,
+            self.experiment_config,
+            self.evaluation_config,
             policy_name,
-            app_config,
             policy,
             expectation,
-            prepare: None,
-            comment: None,
-            extra_cargo_args: vec![],
-        }
+        )
     }
 }
 

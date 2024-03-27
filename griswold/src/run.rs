@@ -10,7 +10,6 @@ use csv::Writer;
 use indicatif::ProgressBar;
 use paralegal_policy::{Context, GraphLocation};
 use std::{
-    borrow::Cow,
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
     process::Stdio,
@@ -31,23 +30,58 @@ pub struct Run<'c> {
     pub config: &'c ExperimentConfig,
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
-    pub comment: Option<Cow<'c, str>>,
+    /// Only set when a single controller is selected (used in Lemmy)
+    pub controller: Option<&'static str>,
+    /// Only set in ablation experiments. This feature is what selects the
+    /// ablation configuration
+    pub ablation_feature: Option<&'c str>,
+    /// Only set in roll-forward experiments. Denotes the commit this run is
+    /// performed on.
+    pub commit: Option<String>,
     pub expectation: PolicyResult,
-    /// The first function is called before the analyzer, the second after the
-    /// policy finishes.
+    /// Called before the analyzer runs. Arguments are a handle to use as stdout
+    /// and stderr
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
 
-impl Run<'_> {
+impl<'a> Run<'a> {
     pub fn name(&self) -> String {
         let mut result = format!("{}-{}", self.config.application.as_ref(), self.policy_name);
-        if let Some(comment) = self.comment.as_ref() {
+        if let Some(comment) = self.controller {
+            result.push('-');
+            result.push_str(comment.as_ref());
+        }
+        if let Some(comment) = self.ablation_feature.as_ref() {
             result.push('-');
             result.push_str(comment.as_ref());
         }
         result
+    }
+
+    pub fn new(
+        experiment_name: &'a str,
+        experiment_config: &'a ExperimentConfig,
+        evaluation_config: &'a EvaluationConfig,
+        policy_name: &'a str,
+        policy: PolicyFn<'a>,
+        expectation: PolicyResult,
+    ) -> Run<'a> {
+        let app_config = &evaluation_config.app_config[experiment_config.app_config_name()];
+        Self {
+            experiment_name,
+            config: experiment_config,
+            policy_name,
+            app_config,
+            policy,
+            expectation,
+            prepare: None,
+            ablation_feature: None,
+            commit: None,
+            controller: None,
+            extra_cargo_args: vec![],
+        }
     }
 }
 
