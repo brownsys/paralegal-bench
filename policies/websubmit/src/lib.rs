@@ -3,8 +3,8 @@ use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 
 use anyhow::Result;
 use paralegal_policy::{
-    assert_error, loc, paralegal_spdg, Context, Diagnostics, IntoIterGlobalNodes, Marker,
-    PolicyContext,
+    assert_error, diagnostics::ControllerContext, loc, paralegal_spdg, Context, Diagnostics,
+    IntoIterGlobalNodes, Marker, PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use serde::{Deserialize, Serialize};
@@ -200,12 +200,101 @@ impl PropRunner {
         Ok(())
     }
 
+    fn scoped_storage_check_store(
+        &self,
+        cx: &Arc<ControllerContext>,
+        sens: GlobalNode,
+        store: GlobalNode,
+        scopes: &[GlobalNode],
+        safe_source: Marker,
+        scopes_store: Marker,
+        witness_marker: Marker,
+        witnesses: &[GlobalNode],
+        found_local_witnesses: &mut bool,
+    ) -> bool {
+        // sensitive flows to store implies some scope flows to store callsite
+        if !cx.flows_to(sens, store, EdgeSelection::Data) {
+            return true;
+        }
+        let store_cs = cx.node_info(store).at;
+        let direct_scopes = scopes
+            .iter()
+            .copied()
+            .filter(|n| cx.node_info(*n).at == store_cs)
+            .collect::<Box<[_]>>();
+        let eligible_scopes = match self.flavour {
+            Flavour::Strict => {
+                if !direct_scopes.is_empty() {
+                    direct_scopes
+                } else if cx.current().return_.contains(&store.local_node()) {
+                    cx.marked_type(safe_source)
+                        .iter()
+                        .flat_map(|&t| cx.srcs_with_type(cx.id(), t))
+                        .collect()
+                } else {
+                    cx.influencers(store, EdgeSelection::Data)
+                        .filter(|n| cx.has_marker(scopes_store, *n))
+                        .collect()
+                }
+            }
+            Flavour::Lib => {
+                if !direct_scopes.is_empty() {
+                    direct_scopes
+                } else if cx.current().return_.contains(&store.local_node()) {
+                    cx.current()
+                        .arguments
+                        .iter()
+                        .map(|&n| GlobalNode::from_local_node(cx.id(), n))
+                        .collect()
+                } else {
+                    cx.influencers(store, EdgeSelection::Data)
+                        .filter(|n| cx.has_marker(scopes_store, *n))
+                        .collect()
+                }
+            }
+            Flavour::Application => direct_scopes,
+        };
+        if eligible_scopes.iter().any(|&scope| {
+            cx.influencers(scope, EdgeSelection::Data)
+                .chain(std::iter::once(scope))
+                .any(|i| self.cx.has_marker(witness_marker, i))
+        }) {
+            return true;
+        }
+        let mut err = cx.struct_node_error(store, loc!("Sensitive value store is not scoped."));
+        err.with_node_note(sens, loc!("Sensitive value originates here"));
+        if eligible_scopes.is_empty() {
+            err.with_warning(loc!("No scopes were found to flow to this node"));
+            for &scope in scopes.iter() {
+                err.with_node_help(scope, "This node would have been a valid scope");
+            }
+        } else {
+            for &scope in eligible_scopes.iter() {
+                err.with_node_help(scope, "This scope would have been eligible but is not influenced by an `auth_whitness`");
+            }
+            if witnesses.is_empty() {
+                *found_local_witnesses = false;
+                err.with_warning(format!("No local `{witness_marker}` sources found."));
+            }
+            for w in witnesses.iter().copied() {
+                err.with_node_help(w, &format!("This is a local source of `{witness_marker}`"));
+            }
+        }
+        err.emit();
+        false
+    }
+
     pub fn check_scoped_storage(&self) -> Result<()> {
         let scopes_store = marker!(scopes_store);
         let stores = marker!(stores);
         let sensitive = marker!(sensitive);
         let safe_source = marker!(safe_source);
         let mut found_local_witnesses = true;
+        let witness_marker = if self.flavour.is_lib() {
+            marker!(request_generated)
+        } else {
+            marker!(auth_witness)
+        };
         for cx in self.cx.clone().controller_contexts() {
             let c_id = cx.id();
             let scopes = cx
@@ -221,8 +310,6 @@ impl PropRunner {
                 .all_nodes_for_ctrl(c_id)
                 .filter(|node| self.cx.has_marker(sensitive, *node));
 
-            let witness_marker = marker!(auth_witness);
-
             let witnesses = cx
                 .all_nodes_for_ctrl(c_id)
                 .filter(|node| self.cx.has_marker(witness_marker, *node))
@@ -230,50 +317,17 @@ impl PropRunner {
 
             let controller_valid = sensitives.all(|sens| {
                 stores.iter().all(|&store| {
-                    // sensitive flows to store implies some scope flows to store callsite
-                    if !cx.flows_to(sens, store, EdgeSelection::Data) {
-                        return true;
-                    }
-                    let store_cs = cx.node_info(store).at;
-                    let direct_scopes = scopes.iter().copied().filter(|n| cx.node_info(*n).at == store_cs).collect::<Box<[_]>>();
-                    let eligible_scopes = match self.flavour {
-                        Flavour::Strict => if !direct_scopes.is_empty() {
-                            direct_scopes
-                        } else if cx.current().return_.contains(&store.local_node()) {
-                            cx.marked_type(safe_source).iter().flat_map(|&t| cx.srcs_with_type(cx.id(), t)).collect()
-                        } else {
-                            cx.influencers(store, EdgeSelection::Data).filter(|n| cx.has_marker(scopes_store, *n)).collect()
-                        }
-                        _ => direct_scopes,
-                    };
-                    if eligible_scopes.iter().any(|&scope|
-                            cx
-                            .influencers(scope, EdgeSelection::Data)
-                            .any(|i| self.cx.has_marker(witness_marker, i)))
-                    {
-                        return true;
-                    }
-                    let mut err = cx.struct_node_error(store, loc!("Sensitive value store is not scoped."));
-                    err.with_node_note(sens, loc!("Sensitive value originates here"));
-                    if eligible_scopes.is_empty() {
-                        err.with_warning(loc!("No scopes were found to flow to this node"));
-                        for &scope in scopes.iter() {
-                            err.with_node_help(scope, "This node would have been a valid scope");
-                    }
-                    } else {
-                        for &scope in eligible_scopes.iter() {
-                            err.with_node_help(scope, "This scope would have been eligible but is not influenced by an `auth_whitness`");
-                        }
-                        if witnesses.is_empty() {
-                            found_local_witnesses = false;
-                            err.with_warning(format!("No local `{witness_marker}` sources found."));
-                        }
-                        for w in witnesses.iter().copied() {
-                            err.with_node_help(w, &format!("This is a local source of `{witness_marker}`"));
-                        }
-                    }
-                    err.emit();
-                    false
+                    self.scoped_storage_check_store(
+                        &cx,
+                        sens,
+                        store,
+                        &scopes,
+                        safe_source,
+                        scopes_store,
+                        witness_marker,
+                        &witnesses,
+                        &mut found_local_witnesses,
+                    )
                 })
             });
 
