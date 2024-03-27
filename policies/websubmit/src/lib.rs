@@ -201,21 +201,25 @@ impl PropRunner {
     }
 
     pub fn check_scoped_storage(&self) -> Result<()> {
+        let scopes_store = marker!(scopes_store);
+        let stores = marker!(stores);
+        let sensitive = marker!(sensitive);
+        let safe_source = marker!(safe_source);
         let mut found_local_witnesses = true;
         for cx in self.cx.clone().controller_contexts() {
             let c_id = cx.id();
             let scopes = cx
                 .all_nodes_for_ctrl(c_id)
-                .filter(|node| self.cx.has_marker(marker!(scopes_store), *node))
-                .collect::<Vec<GlobalNode>>();
+                .filter(|node| self.cx.has_marker(scopes_store, *node))
+                .collect::<Box<[_]>>();
 
             let stores = cx
                 .all_nodes_for_ctrl(c_id)
-                .filter(|node| self.cx.has_marker(marker!(stores), *node))
+                .filter(|node| self.cx.has_marker(stores, *node))
                 .collect::<Vec<_>>();
             let mut sensitives = cx
                 .all_nodes_for_ctrl(c_id)
-                .filter(|node| self.cx.has_marker(marker!(sensitive), *node));
+                .filter(|node| self.cx.has_marker(sensitive, *node));
 
             let witness_marker = marker!(auth_witness);
 
@@ -230,14 +234,19 @@ impl PropRunner {
                     if !cx.flows_to(sens, store, EdgeSelection::Data) {
                         return true;
                     }
-                    let store_callsite = cx.inputs_of(self.cx.associated_call_site(store));
-                    // The sink that scope flows to may be another CallArgument attached to the store's CallSite, it doesn't need to be store itself.
-                    let eligible_scopes = scopes.iter().copied().filter(|scope|
-                        cx
-                            .flows_to(*scope, &store_callsite, EdgeSelection::Data))
-                            .collect::<Vec<_>>();
+                    let store_cs = cx.node_info(store).at;
+                    let direct_scopes = scopes.iter().copied().filter(|n| cx.node_info(*n).at == store_cs).collect::<Box<[_]>>();
+                    let eligible_scopes = match self.flavour {
+                        Flavour::Strict => if !direct_scopes.is_empty() {
+                            direct_scopes
+                        } else if cx.current().return_.contains(&store.local_node()) {
+                            cx.marked_type(safe_source).iter().flat_map(|&t| cx.srcs_with_type(cx.id(), t)).collect()
+                        } else {
+                            cx.influencers(store, EdgeSelection::Data).filter(|n| cx.has_marker(scopes_store, *n)).collect()
+                        }
+                        _ => direct_scopes,
+                    };
                     if eligible_scopes.iter().any(|&scope|
-
                             cx
                             .influencers(scope, EdgeSelection::Data)
                             .any(|i| self.cx.has_marker(witness_marker, i)))
@@ -248,11 +257,11 @@ impl PropRunner {
                     err.with_node_note(sens, loc!("Sensitive value originates here"));
                     if eligible_scopes.is_empty() {
                         err.with_warning(loc!("No scopes were found to flow to this node"));
-                        for &scope in &scopes {
+                        for &scope in scopes.iter() {
                             err.with_node_help(scope, "This node would have been a valid scope");
                     }
                     } else {
-                        for scope in eligible_scopes {
+                        for &scope in eligible_scopes.iter() {
                             err.with_node_help(scope, "This scope would have been eligible but is not influenced by an `auth_whitness`");
                         }
                         if witnesses.is_empty() {
