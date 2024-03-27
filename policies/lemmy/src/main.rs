@@ -15,6 +15,8 @@ struct Arguments {
     prop: Vec<Prop>,
     #[clap(long, short)]
     quiet: bool,
+    #[clap(long, short)]
+    controller: Vec<String>,
     #[clap(last = true)]
     extra_args: Vec<String>,
 }
@@ -28,8 +30,14 @@ fn main() -> anyhow::Result<()> {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml");
         cmd.abort_after_analysis();
-        cmd.get_command().arg("--target").arg("lemmy_api");
-        cmd.get_command().args(&args.extra_args);
+        let rcmd = cmd.get_command();
+        rcmd.arg("--target").arg("lemmy_api").args(&args.extra_args);
+        if !args.extra_args.contains(&"--".to_owned()) {
+            rcmd.arg("--");
+        }
+        for c in &args.controller {
+            rcmd.args(["--features", c]);
+        }
         cmd.run(&args.path)?
     };
 
