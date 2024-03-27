@@ -64,23 +64,12 @@ impl<'a> RunBuilder<'a> {
                 feature_space_fail,
             } => Box::new(self.experiment_config.application.policies().flat_map(
                 move |(name, policy)| {
-                    let policy_clone = policy.clone();
-                    feature_space_success
-                        .iter()
-                        .map(move |feature| {
-                            let mut run =
-                                self.case_study_run(name, policy.clone(), PolicyResult::Pass);
-                            run.extra_cargo_args.extend(["--features", &feature]);
-                            run.ablation_feature = Some(feature.as_str());
-                            run
-                        })
-                        .chain(feature_space_fail.iter().map(move |feature| {
-                            let mut run =
-                                self.case_study_run(name, policy_clone.clone(), PolicyResult::Fail);
-                            run.extra_cargo_args.extend(["--features", &feature]);
-                            run.ablation_feature = Some(feature.as_str());
-                            run
-                        }))
+                    self.ablation_runs_for_policy(
+                        feature_space_success,
+                        feature_space_fail,
+                        name,
+                        policy,
+                    )
                 },
             )),
             ExperimentMode::RollForward {
@@ -106,6 +95,35 @@ impl<'a> RunBuilder<'a> {
                 }))
             }
         }
+    }
+
+    fn ablation_runs_for_policy(
+        self,
+        feature_space_success: &'a [String],
+        feature_space_fail: &'a [String],
+        policy_name: &'a str,
+        policy: PolicyFn<'a>,
+    ) -> impl Iterator<Item = Run<'a>> {
+        let policy_clone = policy.clone();
+        // An extra run to check that with no modifications this
+        // policy version passes
+        let canary_run = self.case_study_run(policy_name, policy.clone(), PolicyResult::Pass);
+        let success_runs = feature_space_success.iter().map(move |feature| {
+            let mut run = self.case_study_run(policy_name, policy.clone(), PolicyResult::Pass);
+            run.extra_cargo_args.extend(["--features", &feature]);
+            run.ablation_feature = Some(feature.as_str());
+            run
+        });
+        let fail_runs = feature_space_fail.iter().map(move |feature| {
+            let mut run =
+                self.case_study_run(policy_name, policy_clone.clone(), PolicyResult::Fail);
+            run.extra_cargo_args.extend(["--features", &feature]);
+            run.ablation_feature = Some(feature.as_str());
+            run
+        });
+        std::iter::once(canary_run)
+            .chain(success_runs)
+            .chain(fail_runs)
     }
 
     fn case_study_runs(self) -> impl Iterator<Item = Run<'a>> {
