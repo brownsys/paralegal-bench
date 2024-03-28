@@ -142,14 +142,55 @@ impl PropRunner {
         Ok(())
     }
 
-    fn flavor_rejects_deletion_data_source(&self, src: GlobalNode) -> bool {
+    fn check_deletion_flow(&self, src: GlobalNode) -> Option<GlobalNode> {
         let auth = marker!(auth_witness);
-        self.flavour.is_strict()
-            && !(src.unconditional(&self.cx)
-                && self
+        let delete = marker!(deletes);
+        let m_no_skip = marker!(no_skip);
+        match self.flavour {
+            Flavour::Strict => {
+                if src.unconditional(&self.cx)
+                    || !self
+                        .cx
+                        .influencers(src, EdgeSelection::Data)
+                        .any(|n| self.cx.has_marker(auth, n))
+                {
+                    return None;
+                }
+                let mut msg = self.struct_node_help(src, "Checking this node as a deleter");
+                let ahb = self
                     .cx
-                    .influencers(src, EdgeSelection::Data)
-                    .any(|n| self.cx.has_marker(auth, n)))
+                    .always_happens_before(
+                        [src],
+                        |c| {
+                            if !self.has_marker(delete, c)
+                                && self.cx.instruction_at_node(c).kind.is_function_call()
+                                && !self.cx.has_marker(m_no_skip, c)
+                            {
+                                msg.with_node_note(
+                                    c,
+                                    format!(
+                                        "This is a checkpoint {}",
+                                        self.node_info(c).description
+                                    ),
+                                );
+                                true
+                            } else {
+                                false
+                            }
+                        },
+                        |c| self.cx.has_marker(delete, c),
+                    )
+                    .unwrap();
+                msg.emit();
+                Some(ahb.reached().unwrap().first()?.1)
+            }
+            _ => {
+                self.cx
+                    .influencees(src, EdgeSelection::Data)
+                    // A node with marker "deletes"
+                    .find(|influencee| self.cx.has_marker(delete, *influencee))
+            }
+        }
     }
 
     pub fn check_deletion(&self) -> Result<()> {
@@ -191,17 +232,7 @@ impl PropRunner {
                         .find_map(|&ty| {
                             let (from, to) =
                                 self.cx.srcs_with_type(ctrl_id, ty).find_map(|node| {
-                                    if self.flavor_rejects_deletion_data_source(node) {
-                                        return None;
-                                    }
-                                    // That has data flow influence on
-                                    let to = self
-                                        .cx
-                                        .influencees(node, EdgeSelection::Data)
-                                        // A node with marker "deletes"
-                                        .find(|influencee| {
-                                            self.cx.has_marker(marker!(deletes), *influencee)
-                                        })?;
+                                    let to = self.check_deletion_flow(node)?;
                                     Some((node, to))
                                 })?;
                             Some((ty, from, to))
@@ -591,6 +622,14 @@ impl Policy {
                 }
             })
         })
+    }
+
+    pub fn short_name(self) -> &'static str {
+        match self {
+            Self::AuthorizedDisclosure => "dis",
+            Self::ScopedStorage => "sc",
+            Self::Deletion => "del",
+        }
     }
 }
 

@@ -8,9 +8,10 @@ use websubmit::*;
 #[derive(Parser)]
 struct Args {
     /// path to WebSubmit directory.
+    #[clap(default_value = "case-studies/websubmit")]
     ws_dir: std::path::PathBuf,
 
-    /// `edit-<property>-<articulation point>-<short edit type>`
+    /// `<articulation point>-<short edit type>`
     #[clap(long)]
     edit_type: Option<String>,
 
@@ -31,8 +32,18 @@ fn main() -> Result<()> {
         .get_command()
         .arg("--");
 
+    let policies = if args.policy.is_empty() {
+        Policy::value_variants()
+    } else {
+        args.policy.as_slice()
+    };
+
     if let Some(edit) = args.edit_type.as_ref() {
-        command.get_command().args(["--features", &edit]);
+        for p in policies.iter() {
+            command
+                .get_command()
+                .args(["--features", &format!("edit-{}-{edit}", p.short_name())]);
+        }
     }
     command
         .get_command()
@@ -43,11 +54,6 @@ fn main() -> Result<()> {
     let res = command
         .run(args.ws_dir)?
         .with_context_configured(cfg, |ctx| {
-            let policies = if args.policy.is_empty() {
-                Policy::value_variants()
-            } else {
-                args.policy.as_slice()
-            };
             for prop in policies.iter() {
                 prop.runnable(args.flavour)(ctx.clone())?;
             }

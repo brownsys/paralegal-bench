@@ -3,12 +3,14 @@ marker = "safe_source"
 on_return = true
 
 [["core::iter::traits::collect::IntoIterator::into_iter"]]
-marker = "into_iter"
+marker = "no_skip"
 on_return = true
+on_argument = [0]
 
 [["core::iter::traits::iterator::Iterator::next"]]
-marker = "next"
+marker = "no_skip"
 on_return = true
+on_argument = [0]
 
 [["std::io::_print"]]
 marker = "sink"
