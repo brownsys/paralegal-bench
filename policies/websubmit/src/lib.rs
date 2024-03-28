@@ -523,6 +523,7 @@ impl PropRunner {
                             .unwrap();
                         msg.emit();
 
+                        safe_before_scope.report(self.cx.clone());
                         holds &= safe_before_scope.holds();
                     }
 
