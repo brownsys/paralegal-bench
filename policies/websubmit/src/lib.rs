@@ -4,7 +4,7 @@ use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 use anyhow::Result;
 use paralegal_policy::{
     assert_error, diagnostics::ControllerContext, loc, paralegal_spdg, Context, Diagnostics,
-    IntoIterGlobalNodes, Marker, PolicyContext,
+    IntoIterGlobalNodes, Marker, NodeQueries, PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use serde::{Deserialize, Serialize};
@@ -487,21 +487,11 @@ impl PropRunner {
                 sinks.iter().any(|sink| {
                     // sensitive flows to store implies
                     if !self.cx.flows_to(sens, *sink, EdgeSelection::Data) {
+                        self.node_note(*sink, "This sink is not reached");
                         return false;
                     }
 
-                    let call_sites = self.cx.consuming_call_sites(*sink).collect::<Box<[_]>>();
-                    let [cs] = call_sites.as_ref() else {
-                        self.cx.node_error(
-                            *sink,
-                            format!(
-                                "Unexpected number of call sites {} for this node",
-                                call_sites.len()
-                            ),
-                        );
-                        return false;
-                    };
-                    let sink_callsite = self.cx.inputs_of(*cs);
+                    let sink_callsite = sink.siblings(self);
 
                     // scopes for the store
                     let store_scopes = self
@@ -513,19 +503,31 @@ impl PropRunner {
                         self.node_error(*sink, loc!("Did not find any scopes for this sink"));
                     }
 
+                    let mut holds = true;
+                    for root in roots.iter().copied() {
+                        let mut msg = self.struct_node_help(root, "Checking this root");
+                        let safe_before_scope = self
+                            .cx
+                            .always_happens_before(
+                                [root],
+                                |n| {
+                                    if safe_scopes.contains(&n) {
+                                        msg.with_node_note(n, "Reached this checkpoint");
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                },
+                                |n| store_scopes.contains(&n),
+                            )
+                            .unwrap();
+                        msg.emit();
+
+                        holds &= safe_before_scope.holds();
+                    }
+
                     // all flows are safe before scope
-                    let safe_before_scope = self
-                        .cx
-                        .always_happens_before(
-                            roots.iter().cloned(),
-                            |n| safe_scopes.contains(&n),
-                            |n| store_scopes.contains(&n),
-                        )
-                        .unwrap();
-
-                    safe_before_scope.report(self.cx.clone());
-
-                    !safe_before_scope.holds()
+                    !holds
                 })
             });
 

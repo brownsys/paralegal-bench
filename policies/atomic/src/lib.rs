@@ -2,7 +2,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error,
     paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
-    Context, Diagnostics, Marker,
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeQueries,
 };
 use petgraph::{visit::EdgeRef, Direction::Outgoing};
 use std::{collections::HashSet, hash::Hash, sync::Arc};
@@ -25,8 +25,6 @@ macro_rules! policy {
 }
 
 trait NodeExt: Sized {
-    fn siblings(self, ctx: &Context) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
-
     fn is_argument(self, ctx: &Context, num: u8) -> bool;
 }
 
@@ -55,18 +53,6 @@ impl ContextExt for Context {
 }
 
 impl NodeExt for GlobalNode {
-    fn siblings(self, ctx: &Context) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
-        let self_at = ctx.node_info(self).at;
-        let mut set: HashSet<_> = ctx
-            .predecessors(self)
-            .flat_map(|n| ctx.successors(n))
-            .chain(ctx.successors(self).flat_map(|n| ctx.predecessors(n)))
-            .filter(|n| ctx.node_info(*n).at == self_at)
-            .collect();
-        set.remove(&self);
-        Box::new(set.into_iter())
-    }
-
     fn is_argument(self, ctx: &Context, num: u8) -> bool {
         ctx.desc().controllers[&self.controller_id()]
             .graph
@@ -113,6 +99,7 @@ policy!(check_rights, ctx {
                 // as `urls::PARENT`, *but* we can't annotate constants so this
                 // has to do.
                 let argument_siblings = n.siblings(&ctx)
+                    .iter_global_nodes()
                     .filter(|n| n.is_argument(&ctx, 1))
                     .collect::<Box<[_]>>();
 
