@@ -42,6 +42,32 @@ impl NodeExt for GlobalNode {
     }
 }
 
+trait ContextExt {
+    fn nodes_marked_any_way(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
+
+    fn nodes_marked_via_type(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
+}
+
+impl ContextExt for Context {
+    fn nodes_marked_via_type(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        Box::new(self.marked_type(marker).iter().copied().flat_map(|t| {
+            self.all_controllers().flat_map(move |(cid, c)| {
+                c.type_assigns
+                    .iter()
+                    .filter(move |(_, tys)| tys.0.contains(&t))
+                    .map(move |(n, _)| GlobalNode::from_local_node(cid, *n))
+            })
+        }))
+    }
+
+    fn nodes_marked_any_way(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        Box::new(
+            self.marked_nodes(marker)
+                .chain(self.nodes_marked_via_type(marker)),
+        )
+    }
+}
+
 impl PropRunner {
     pub fn new(cx: Arc<PolicyContext>, flavour: Flavour) -> Self {
         Self { cx, flavour }
@@ -73,19 +99,11 @@ impl PropRunner {
         let deletes = marker!(deletes);
         let from_storage = marker!(from_storage);
         let num_types_to_expect = ctx
-            .marked_nodes(sensitive)
-            .chain(
-                ctx.marked_type(sensitive)
-                    .iter()
-                    .flat_map(|&t| {
-                        ctx.all_controllers()
-                            .flat_map(move |(ctrl, _)| ctx.srcs_with_type(ctrl, t))
-                    })
-                    .filter(|sens| {
-                        ctx.influencees(*sens, EdgeSelection::Data)
-                            .any(|store| ctx.has_marker(stores, store))
-                    }),
-            )
+            .nodes_marked_any_way(sensitive)
+            .filter(|sens| {
+                ctx.influencees(*sens, EdgeSelection::Data)
+                    .any(|store| ctx.has_marker(stores, store))
+            })
             .count();
 
         let cleanup = self.cx.controller_contexts().find(|ctx| {
@@ -200,14 +218,66 @@ impl PropRunner {
         Ok(())
     }
 
+    fn all_scopes(
+        &self,
+        target: GlobalNode,
+        m_scopes: Marker,
+    ) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        let cx = &self.cx;
+        let c_id = target.controller_id();
+        let store_cs = cx.node_info(target).at;
+        let current = &cx.desc().controllers[&c_id];
+        let safe_source = marker!(safe_source);
+        let scopes = cx
+            .all_nodes_for_ctrl(c_id)
+            .filter(move |node| self.cx.has_marker(m_scopes, *node));
+        let mut direct_scopes = scopes
+            .filter(move |n| cx.node_info(*n).at == store_cs)
+            .peekable();
+        match self.flavour {
+            Flavour::Strict => {
+                if direct_scopes.peek().is_some() {
+                    Box::new(direct_scopes)
+                } else if current.return_.contains(&target.local_node()) {
+                    Box::new(
+                        cx.marked_type(safe_source)
+                            .iter()
+                            .flat_map(move |&t| cx.srcs_with_type(c_id, t)),
+                    )
+                } else {
+                    Box::new(
+                        cx.influencers(target, EdgeSelection::Data)
+                            .filter(move |n| cx.has_marker(m_scopes, *n)),
+                    )
+                }
+            }
+            Flavour::Lib => {
+                if direct_scopes.peek().is_some() {
+                    Box::new(direct_scopes)
+                } else if current.return_.contains(&target.local_node()) {
+                    Box::new(
+                        current
+                            .arguments
+                            .iter()
+                            .map(move |&n| GlobalNode::from_local_node(c_id, n)),
+                    )
+                } else {
+                    Box::new(
+                        cx.influencers(target, EdgeSelection::Data)
+                            .filter(move |n| cx.has_marker(m_scopes, *n)),
+                    )
+                }
+            }
+            Flavour::Application => Box::new(direct_scopes),
+        }
+    }
+
     fn scoped_storage_check_store(
         &self,
         cx: &Arc<ControllerContext>,
         sens: GlobalNode,
         store: GlobalNode,
         scopes: &[GlobalNode],
-        safe_source: Marker,
-        scopes_store: Marker,
         witness_marker: Marker,
         witnesses: &[GlobalNode],
         found_local_witnesses: &mut bool,
@@ -216,44 +286,9 @@ impl PropRunner {
         if !cx.flows_to(sens, store, EdgeSelection::Data) {
             return true;
         }
-        let store_cs = cx.node_info(store).at;
-        let direct_scopes = scopes
-            .iter()
-            .copied()
-            .filter(|n| cx.node_info(*n).at == store_cs)
+        let eligible_scopes = self
+            .all_scopes(store, marker!(scopes_store))
             .collect::<Box<[_]>>();
-        let eligible_scopes = match self.flavour {
-            Flavour::Strict => {
-                if !direct_scopes.is_empty() {
-                    direct_scopes
-                } else if cx.current().return_.contains(&store.local_node()) {
-                    cx.marked_type(safe_source)
-                        .iter()
-                        .flat_map(|&t| cx.srcs_with_type(cx.id(), t))
-                        .collect()
-                } else {
-                    cx.influencers(store, EdgeSelection::Data)
-                        .filter(|n| cx.has_marker(scopes_store, *n))
-                        .collect()
-                }
-            }
-            Flavour::Lib => {
-                if !direct_scopes.is_empty() {
-                    direct_scopes
-                } else if cx.current().return_.contains(&store.local_node()) {
-                    cx.current()
-                        .arguments
-                        .iter()
-                        .map(|&n| GlobalNode::from_local_node(cx.id(), n))
-                        .collect()
-                } else {
-                    cx.influencers(store, EdgeSelection::Data)
-                        .filter(|n| cx.has_marker(scopes_store, *n))
-                        .collect()
-                }
-            }
-            Flavour::Application => direct_scopes,
-        };
         if eligible_scopes.iter().any(|&scope| {
             cx.influencers(scope, EdgeSelection::Data)
                 .chain(std::iter::once(scope))
@@ -288,7 +323,6 @@ impl PropRunner {
         let scopes_store = marker!(scopes_store);
         let stores = marker!(stores);
         let sensitive = marker!(sensitive);
-        let safe_source = marker!(safe_source);
         let mut found_local_witnesses = true;
         let witness_marker = if self.flavour.is_lib() {
             marker!(request_generated)
@@ -322,8 +356,6 @@ impl PropRunner {
                         sens,
                         store,
                         &scopes,
-                        safe_source,
-                        scopes_store,
                         witness_marker,
                         &witnesses,
                         &mut found_local_witnesses,
@@ -358,6 +390,10 @@ impl PropRunner {
 
     /// If sensitive data is released, the release must be scoped, and all inputs to the scope must be safe.
     pub fn check_authorized_disclosure(&self) -> Result<()> {
+        if self.flavour.is_lib() {
+            return self.check_authorized_disclosure_lib();
+        }
+
         for c_id in self.cx.desc().controllers.keys() {
             // All srcs that have no influencers
             let roots = self
@@ -446,6 +482,59 @@ impl PropRunner {
                     }
 
                     err.emit();
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn check_authorized_disclosure_lib(&self) -> Result<()> {
+        let ctx = &self.cx;
+        let m_sensitive = marker!(sensitive);
+        let m_sink = marker!(sink);
+        let m_scopes = marker!(scopes);
+        let m_request_gen = marker!(request_generated);
+        let m_server_state = marker!(server_state);
+        let m_from_storage = marker!(from_storage);
+
+        let is_safe_source = |n| {
+            ctx.has_marker(m_request_gen, n)
+                || ctx.has_marker(m_server_state, n)
+                || ctx.has_marker(m_from_storage, n)
+        };
+
+        for src in ctx
+            .nodes_marked_any_way(m_sensitive)
+            .chain(ctx.nodes_marked_any_way(m_from_storage))
+        {
+            for sink in ctx
+                .influencees(src, EdgeSelection::Data)
+                .filter(|s| ctx.has_marker(m_sink, *s))
+            {
+                for scope in self.all_scopes(sink, m_scopes) {
+                    for recipient in ctx.influencers(scope, EdgeSelection::Data) {
+                        let is_safe = is_safe_source(recipient)
+                            || ctx
+                                .always_happens_before([recipient], is_safe_source, |n| n == scope)?
+                                .holds()
+                            || ctx.influencers(recipient, EdgeSelection::Control).any(|i| {
+                                is_safe_source(i)
+                                    || ctx.influencers(i, EdgeSelection::Data).any(is_safe_source)
+                            });
+                        if !is_safe {
+                            let mut msg = ctx.struct_node_error(
+                                sink,
+                                "This data release is not sufficiently protected",
+                            );
+                            msg.with_node_note(src, "it receives this sensitive data");
+                            msg.with_node_note(
+                                recipient,
+                                "this unsafe data determines the recipient",
+                            );
+                            msg.with_node_note(scope, "This is declared as recipient");
+                            msg.emit();
+                        }
+                    }
                 }
             }
         }
