@@ -103,14 +103,6 @@ flow-args = [
 ]
 cargo-args = ["--lib", "--features", "db"]
 
-[app-config.original-atomic-data.version-override.proc-macro2]
-replacement = "1.0.78"
-original = "1"
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "lemmy"
-
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
