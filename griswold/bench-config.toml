@@ -16,17 +16,14 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
-cargo-args = ["--features", "v-ann-baseline"]
 
 [app-config.websubmit-lib]
 source-dir = "case-studies/websubmit"
 external-annotations = "lib-external-annotations.toml"
-cargo-args = ["--features", "v-ann-lib"]
 
 [app-config.websubmit-strict]
 source-dir = "case-studies/websubmit"
 external-annotations = "strict-external-annotations.toml"
-cargo-args = ["--features", "v-ann-strict"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
@@ -157,6 +154,7 @@ policies = ["deletion"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "lib"
 app-config-override = "websubmit-lib"
 feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
 feature-space-fail = [
@@ -172,6 +170,7 @@ policies = ["deletion"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "strict"
 app-config-override = "websubmit-strict"
 feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
 feature-space-fail = [
@@ -194,6 +193,7 @@ policies = ["scoped-storage"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "lib"
 app-config-override = "websubmit-lib"
 feature-space-success = ["edit-sc-1-a"]
 feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
@@ -202,6 +202,7 @@ policies = ["scoped-storage"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "strict"
 app-config-override = "websubmit-strict"
 feature-space-success = ["edit-sc-1-a"]
 feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
@@ -224,6 +225,7 @@ policies = ["authorized-disclosure"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "lib"
 app-config-override = "websubmit-lib"
 feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
 feature-space-fail = [
@@ -239,6 +241,7 @@ policies = ["authorized-disclosure"]
 [[experiment.ablation]]
 mode = "ablation"
 application = "websubmit"
+flavour = "strict"
 app-config-override = "websubmit-strict"
 feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
 feature-space-fail = [

@@ -89,6 +89,10 @@ pub enum ExperimentMode {
     CaseStudy,
 }
 
+fn const_application_flavour() -> websubmit::Flavour {
+    websubmit::Flavour::Application
+}
+
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
 #[serde(tag = "application", rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
@@ -105,6 +109,7 @@ pub enum Application {
     Websubmit {
         #[serde(default)]
         policies: Box<[websubmit::Policy]>,
+        #[serde(default = "const_application_flavour")]
         flavour: websubmit::Flavour,
     },
     AtomicData,

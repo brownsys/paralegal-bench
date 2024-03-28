@@ -217,14 +217,19 @@ impl<'a> RunBuilder<'a> {
         policy: PolicyFn<'a>,
         expectation: PolicyResult,
     ) -> Run<'a> {
-        Run::new(
+        let mut run = Run::new(
             self.experiment_name,
             self.experiment_config,
             self.evaluation_config,
             policy_name,
             policy,
             expectation,
-        )
+        );
+        if let Application::Websubmit { flavour, .. } = &self.experiment_config.application {
+            run.extra_cargo_args
+                .extend(["--features", flavour.annotation_feature()]);
+        }
+        run
     }
 }
 
