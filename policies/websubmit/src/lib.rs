@@ -31,6 +31,7 @@ impl Deref for PropRunner {
 
 trait NodeExt {
     fn unconditional(self, ctx: &Context) -> bool;
+    fn is_return(self, ctx: &Context) -> bool;
 }
 
 impl NodeExt for GlobalNode {
@@ -40,12 +41,18 @@ impl NodeExt for GlobalNode {
             .edges_directed(self.local_node(), petgraph::Incoming)
             .any(|e| e.weight().is_control())
     }
+
+    fn is_return(self, ctx: &Context) -> bool {
+        ctx.desc().controllers[&self.controller_id()]
+            .return_
+            .contains(&self.local_node())
+    }
 }
 
 trait ContextExt {
     fn nodes_marked_any_way(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
-
     fn nodes_marked_via_type(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
+    fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
 impl ContextExt for Context {
@@ -65,6 +72,15 @@ impl ContextExt for Context {
             self.marked_nodes(marker)
                 .chain(self.nodes_marked_via_type(marker)),
         )
+    }
+
+    fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
+        Box::new(self.desc().controllers.iter().flat_map(|(id, spdg)| {
+            spdg.return_
+                .iter()
+                .copied()
+                .map(move |local_node| GlobalNode::from_local_node(*id, local_node))
+        }))
     }
 }
 
@@ -496,11 +512,13 @@ impl PropRunner {
         let m_request_gen = marker!(request_generated);
         let m_server_state = marker!(server_state);
         let m_from_storage = marker!(from_storage);
+        let m_safe_source = marker!(safe_source);
 
         let is_safe_source = |n| {
             ctx.has_marker(m_request_gen, n)
                 || ctx.has_marker(m_server_state, n)
                 || ctx.has_marker(m_from_storage, n)
+                || ctx.has_marker(m_safe_source, n)
         };
 
         for src in ctx
@@ -509,7 +527,7 @@ impl PropRunner {
         {
             for sink in ctx
                 .influencees(src, EdgeSelection::Data)
-                .filter(|s| ctx.has_marker(m_sink, *s))
+                .filter(|s| ctx.has_marker(m_sink, *s) || s.is_return(ctx))
             {
                 for scope in self.all_scopes(sink, m_scopes) {
                     for recipient in ctx.influencers(scope, EdgeSelection::Data) {
