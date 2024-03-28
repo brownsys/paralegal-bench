@@ -142,6 +142,16 @@ impl PropRunner {
         Ok(())
     }
 
+    fn flavor_rejects_deletion_data_source(&self, src: GlobalNode) -> bool {
+        let auth = marker!(auth_witness);
+        self.flavour.is_strict()
+            && !(src.unconditional(&self.cx)
+                && self
+                    .cx
+                    .influencers(src, EdgeSelection::Data)
+                    .any(|n| self.cx.has_marker(auth, n)))
+    }
+
     pub fn check_deletion(&self) -> Result<()> {
         if self.flavour.is_lib() {
             return self.check_deletion_lib();
@@ -181,7 +191,7 @@ impl PropRunner {
                         .find_map(|&ty| {
                             let (from, to) =
                                 self.cx.srcs_with_type(ctrl_id, ty).find_map(|node| {
-                                    if self.flavour.is_strict() && !node.unconditional(&self.cx) {
+                                    if self.flavor_rejects_deletion_data_source(node) {
                                         return None;
                                     }
                                     // That has data flow influence on
