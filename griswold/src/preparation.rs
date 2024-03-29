@@ -264,21 +264,14 @@ fn diff_analyzed(
     let prior = prior.map(ToOwned::to_owned);
     use std::io::Write;
     move |ctx, target_path, measurement| {
-        let id_set = ctx
+        let ordered_span_set = ctx
             .desc()
             .controllers
             .values()
-            .flat_map(|spdg| {
-                spdg.graph
-                    .node_weights()
-                    .flat_map(|n| n.at.iter().map(|l| l.function))
-            })
-            .collect::<HashSet<_>>();
-        let ordered_span_set = id_set
-            .into_iter()
-            .map(|id| &ctx.desc().def_info[&id.to_def_id()].src_info)
+            .flat_map(|c| c.analyzed_spans.values())
             .collect::<BTreeSet<_>>();
-        let current_code_path = target_path.join(format!("{current}.code.rs"));
+        let code_path = |commit| target_path.join(format!("{commit}.code.rs"));
+        let current_code_path = code_path(&current);
         let mut out = File::create(&current_code_path).unwrap();
         for s in ordered_span_set {
             let file = BufReader::new(File::open(&s.source_file.abs_file_path).unwrap());
@@ -295,7 +288,7 @@ fn diff_analyzed(
             let diff = Command::new("diff")
                 .args([
                     OsStr::new("-u"),
-                    target_path.join(format!("{p}.code.rs")).as_os_str(),
+                    code_path(p).as_os_str(),
                     current_code_path.as_os_str(),
                 ])
                 .stdout(Stdio::piped())

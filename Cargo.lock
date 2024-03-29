@@ -942,7 +942,7 @@ dependencies = [
 [[package]]
 name = "flowistry_pdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=sosp#4ba8720e180099c9e3154c3350192236cc903e0d"
+source = "git+https://github.com/brownsys/paralegal?branch=sosp#3e0414395a31fe8540471cd205d792d18f14ee08"
 dependencies = [
  "cfg-if",
  "internment",
@@ -2460,7 +2460,7 @@ dependencies = [
 [[package]]
 name = "paralegal-policy"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=sosp#4ba8720e180099c9e3154c3350192236cc903e0d"
+source = "git+https://github.com/brownsys/paralegal?branch=sosp#3e0414395a31fe8540471cd205d792d18f14ee08"
 dependencies = [
  "anyhow",
  "bitvec",
@@ -2479,7 +2479,7 @@ dependencies = [
 [[package]]
 name = "paralegal-spdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=sosp#4ba8720e180099c9e3154c3350192236cc903e0d"
+source = "git+https://github.com/brownsys/paralegal?branch=sosp#3e0414395a31fe8540471cd205d792d18f14ee08"
 dependencies = [
  "cfg-if",
  "dot",
