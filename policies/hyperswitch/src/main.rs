@@ -9,9 +9,10 @@ use hyperswitch::Policy;
 
 #[derive(clap::Parser)]
 struct Args {
+    /// Policy to run. (defaults to all of them)
     #[clap(long, short)]
-    policy: Option<Vec<Policy>>,
-    #[clap(long, default_value = "..")]
+    policy: Vec<Policy>,
+    #[clap(long, default_value = "case-studies/hyperswitch")]
     source_dir: std::path::PathBuf,
     #[clap(last = true)]
     extra_flow_args: Vec<String>,
@@ -34,11 +35,12 @@ fn main() -> Result<()> {
     }
     cmd.get_command().arg("--lib");
     let result = cmd.run(&args.source_dir)?.with_context(|ctx| {
-        for p in args
-            .policy
-            .as_ref()
-            .map_or(Policy::value_variants(), Vec::as_slice)
-        {
+        let policies = if args.policy.is_empty() {
+            Policy::value_variants()
+        } else {
+            args.policy.as_slice()
+        };
+        for p in policies {
             p.runnable()(ctx.clone())?
         }
         Ok(())
