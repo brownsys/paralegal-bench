@@ -3,7 +3,6 @@
 use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
 use paralegal_policy::Context;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::process::Child;
 use std::sync;
 use std::thread;

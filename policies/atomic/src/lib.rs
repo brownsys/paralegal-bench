@@ -4,8 +4,8 @@ use paralegal_policy::{
     paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
     Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeQueries,
 };
-use petgraph::{visit::EdgeRef, Direction::Outgoing};
-use std::{collections::HashSet, hash::Hash, sync::Arc};
+use petgraph::Direction::Outgoing;
+use std::{collections::HashSet, sync::Arc};
 
 macro_rules! marker {
     ($name:ident) => {{

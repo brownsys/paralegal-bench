@@ -8,7 +8,6 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
 
-use cargo::util::credential::process;
 use clap::ValueEnum;
 use lemmy::eval_driver::GetUserVersion;
 use paralegal_policy::{Context, SPDGGenCommand};
@@ -320,7 +319,7 @@ fn diff_analyzed(
 
 fn get_all_commits(path: impl AsRef<Path>, start: &str, end: &str) -> Vec<String> {
     let output = Command::new("git")
-        .args(["log", &format!("{start}..{end}"), "--format=%H"])
+        .args(["log", &format!("{end}..{start}"), "--format=%H"])
         .current_dir(path)
         .output()
         .unwrap();

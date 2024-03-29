@@ -2,11 +2,7 @@ extern crate anyhow;
 extern crate clap;
 extern crate paralegal_policy;
 
-use std::{
-    ffi::{OsStr, OsString},
-    path::PathBuf,
-    process::exit,
-};
+use std::{ffi::OsString, path::PathBuf, process::exit};
 
 use clap::Parser;
 

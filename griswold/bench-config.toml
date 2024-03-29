@@ -280,7 +280,7 @@ expectation = "pass"
 # that are broken and won't even compile. Because that range is fairly large
 # (73) we exclude it by splitting this batch into two.
 
-[[experiment.atomic-roll-forward-HEAD]]
+[[experiment.atomic-roll-forward-c0690d4c7a501c78999589fc11d7ec332b74d3aa]]
 start = "c0690d4c7a501c78999589fc11d7ec332b74d3aa"
 end = "22ba25abd1177e1453042a395ef2bc2a35338b78"
 mode = "roll-forward"
