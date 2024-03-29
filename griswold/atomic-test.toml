@@ -1,0 +1,98 @@
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+pdg-timeout = "10min"
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy"
+flow-args = ["--target", "lemmy_api"]
+external-annotations = "external-annotations.toml"
+
+[app-config.plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+[app-config.websubmit]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+
+[app-config.websubmit-lib]
+source-dir = "case-studies/websubmit"
+external-annotations = "lib-external-annotations.toml"
+
+[app-config.websubmit-strict]
+source-dir = "case-studies/websubmit"
+external-annotations = "strict-external-annotations.toml"
+
+[app-config.freedit]
+source-dir = "case-studies/freedit"
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "--router"]
+cargo-args = ["--lib"]
+
+[app-config.original-plume]
+# Must point to a directory containing the https://github.com/Plume-org/Plume
+# git repository
+source-dir = "../../clones/Plume"
+external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
+flow-args = [
+    "--target",
+    "plume-models",
+    "--analyze",
+    "crate::users::User::delete",
+]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+
+[app-config.original-plume.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.roll-forward-atomic]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+source-dir = "../../clones/atomic-server"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+
+[[experiment.atomic-roll-forward]]
+mode = "roll-forward"
+application = "atomic-data"
+app-config-override = "roll-forward-atomic"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+expectation = "pass"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "22ba25abd1177e1453042a395ef2bc2a35338b78"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+expectation = "pass"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "cd1146ec416191b381fac4ed630731178867891e"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+expectation = "pass"

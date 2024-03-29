@@ -87,46 +87,51 @@ impl<'a> RunBuilder<'a> {
                 let app_dir = &self.evaluation_config.app_config
                     [self.experiment_config.app_config_name()]
                 .source_dir;
+                let mut code_compare = None;
                 let all = (0..cutoff.len()).rev().flat_map(move |cidx| {
-                    let next_cutoff = &cutoff[cidx];
+                    let current = &cutoff[cidx];
 
-                    let iter = next_cutoff.expectation.map(|expectation| {
-                        let commits = if let Some(end) = cutoff.get(cidx + 1) {
-                            get_all_commits(app_dir, &next_cutoff.commit, &end.commit)
-                        } else {
-                            vec![next_cutoff.commit.clone()]
-                        };
-                        // Compare to the last commit that we actually ran
-                        let mut inner_code_compare_commit = cutoff[cidx + 1..]
-                            .iter()
-                            .find(|c| c.expectation.is_some())
-                            .map(|f| f.commit.clone());
-                        let iter = commits.into_iter().rev().flat_map(move |commit| {
-                            let current_compare_commit = inner_code_compare_commit.clone();
-                            inner_code_compare_commit = Some(commit.clone());
-                            let iter = self.experiment_config.application.policies().map(
-                                move |(policy_name, policy)| {
-                                    let mut run =
-                                        self.case_study_run(policy_name, policy, expectation);
-                                    run.external_annotations = next_cutoff
-                                        .external_annotations
-                                        .as_ref()
-                                        .map(|pb| pb.as_path());
-                                    run.prepare = Some(Rc::new(checkout(&commit)));
-                                    run.post_process = Some(Rc::new(diff_analyzed(
-                                        current_compare_commit.as_ref(),
-                                        &commit,
-                                        target_path,
-                                    )));
-                                    run.commit = Some(commit.clone());
-                                    run
-                                },
+                    current
+                        .expectation
+                        .map(|expectation| {
+                            let commits = if let Some(next) = cutoff.get(cidx - 1) {
+                                get_all_commits(app_dir, &next.commit, &current.commit)
+                            } else {
+                                vec![current.commit.clone()]
+                            };
+                            println!(
+                                "Creating range for {} {} commits",
+                                current.commit,
+                                commits.len()
                             );
-                            iter
-                        });
-                        iter
-                    });
-                    iter.into_iter().flatten()
+                            // Compare to the last commit that we actually ran
+                            let mut inner_code_compare_commit = code_compare.clone();
+                            code_compare = commits.last().map(Clone::clone);
+                            commits.into_iter().rev().flat_map(move |commit| {
+                                let current_compare_commit = inner_code_compare_commit.clone();
+                                inner_code_compare_commit = Some(commit.clone());
+                                self.experiment_config.application.policies().map(
+                                    move |(policy_name, policy)| {
+                                        let mut run =
+                                            self.case_study_run(policy_name, policy, expectation);
+                                        run.external_annotations = current
+                                            .external_annotations
+                                            .as_ref()
+                                            .map(|pb| pb.as_path());
+                                        run.prepare = Some(Rc::new(checkout(&commit)));
+                                        run.post_process = Some(Rc::new(diff_analyzed(
+                                            current_compare_commit.as_ref(),
+                                            &commit,
+                                            target_path,
+                                        )));
+                                        run.commit = Some(commit.clone());
+                                        run
+                                    },
+                                )
+                            })
+                        })
+                        .into_iter()
+                        .flatten()
                 });
                 // Need to reverse the iterator here, because we need the older
                 // commits to be executed first so that their source is

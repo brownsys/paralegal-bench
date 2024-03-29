@@ -50,7 +50,6 @@ cargo-args = ["--lib"]
 # Must point to a directory containing the https://github.com/Plume-org/Plume
 # git repository
 source-dir = "../../clones/Plume"
-external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
 flow-args = [
     "--target",
     "plume-models",
@@ -68,7 +67,6 @@ original = "1"
 # Must point to a directory containing the
 # https://github.com/atomicdata-dev/atomic-server git repository
 source-dir = "../../clones/atomic-server"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/external-annotations.toml"
 flow-args = [
     "--target",
     "atomic_lib",
@@ -77,31 +75,6 @@ flow-args = [
 ]
 cargo-args = ["--lib", "--features", "db"]
 
-[app-config.roll-forward-atomic-c11ff7463a69489ba2c217f18076fe73d69c8b83]
-# Must point to a directory containing the
-# https://github.com/atomicdata-dev/atomic-server git repository
-source-dir = "../../clones/atomic-server"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/c11ff7463a69489ba2c217f18076fe73d69c8b83-external-annotations.toml"
-flow-args = [
-    "--target",
-    "atomic_lib",
-    "--analyze",
-    "crate::commit::Commit::apply_opts",
-]
-cargo-args = ["--lib", "--features", "db"]
-
-[app-config.roll-forward-atomic-22ba25abd1177e1453042a395ef2bc2a35338b78]
-# Must point to a directory containing the
-# https://github.com/atomicdata-dev/atomic-server git repository
-source-dir = "../../clones/atomic-server"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
-flow-args = [
-    "--target",
-    "atomic_lib",
-    "--analyze",
-    "crate::commit::Commit::apply_opts",
-]
-cargo-args = ["--lib", "--features", "db"]
 
 [[experiment.case-studies]]
 mode = "case-study"
@@ -246,68 +219,60 @@ feature-space-fail = [
 ]
 policies = ["authorized-disclosure"]
 
-[[experiment.plume-roll-forward-1]]
-start = "304fb740d8ba3aaae64b3eb67ecfe476841b87c4"
-end = "e1777e9071b1b71fc164f88c74df56462ff11904"
+[[experiment.plume-roll-forward]]
 mode = "roll-forward"
 application = "plume"
 app-config-override = "original-plume"
+
+[[experiment.plume-roll-forward.cutoff]]
+commit = "304fb740d8ba3aaae64b3eb67ecfe476841b87c4"
+external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
 expectation = "pass"
 
-[[experiment.plume-roll-forward-2]]
-start = "613ccbcd945618cce624725aee3e2997cbf6de38"
-# From this one onwards compilation fails because the rustc versions are too different.
-end = "08cd777f8146c4a619a8615d091ef22901ed0b58"
-mode = "roll-forward"
-application = "plume"
-app-config-override = "original-plume"
+[[experiment.plume-roll-forward.cutoff]]
+commit = "e1777e9071b1b71fc164f88c74df56462ff11904"
+external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
+expectation = "pass"
+
+[[experiment.plume-roll-forward.cutoff]]
+commit = "08cd777f8146c4a619a8615d091ef22901ed0b58"
+external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
 expectation = "fail"
 
-# Contains the ranges for atomic's roll forward experiment in order. See
-# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
-# for an overview table
-[[experiment.atomic-roll-forward-HEAD]]
-start = "79c9a91ae734ddd253d162a268de2a0365befcd7"
-end = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
+
+[[experiment.atomic-roll-forward]]
 mode = "roll-forward"
 application = "atomic-data"
 app-config-override = "roll-forward-atomic"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
+expectation = "pass"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/external-annotations.toml"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
+expectation = "pass"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/external-annotations.toml"
+
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "b3fe55d9aa72facc561a31eeac36cfc5dce0ff01"
+expectation = "pass"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+
+# Skipping this range of 73 commits, because they don't compile (even with
+# regular rustc, this is not a Paralegal issue).
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
+
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "pass"
 
-# The batches above and below are actually sort of part of the same. However
-# there are a number of commits in this batch (namely the range
-# 8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2..3b67266f8e7a99089997fb8e5aea9bfee9c7c13b)
-# that are broken and won't even compile. Because that range is fairly large
-# (73) we exclude it by splitting this batch into two.
 
-[[experiment.atomic-roll-forward-c0690d4c7a501c78999589fc11d7ec332b74d3aa]]
-start = "c0690d4c7a501c78999589fc11d7ec332b74d3aa"
-end = "22ba25abd1177e1453042a395ef2bc2a35338b78"
-mode = "roll-forward"
-application = "atomic-data"
-app-config-override = "roll-forward-atomic"
-expectation = "pass"
-
-[[experiment.atomic-roll-forward-c11ff7463a69489ba2c217f18076fe73d69c8b83]]
-start = "c11ff7463a69489ba2c217f18076fe73d69c8b83"
-end = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
-mode = "roll-forward"
-application = "atomic-data"
-app-config-override = "roll-forward-atomic-c11ff7463a69489ba2c217f18076fe73d69c8b83"
-expectation = "pass"
-
-[[experiment.atomic-roll-forward-22ba25abd1177e1453042a395ef2bc2a35338b78]]
-start = "22ba25abd1177e1453042a395ef2bc2a35338b78"
-end = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
-mode = "roll-forward"
-application = "atomic-data"
-app-config-override = "roll-forward-atomic-22ba25abd1177e1453042a395ef2bc2a35338b78"
-expectation = "pass"
-
-[[experiment.atomic-roll-forward-bae7b97ff105181fce48947163a48e9b50433953]]
-start = "bae7b97ff105181fce48947163a48e9b50433953"
-end = "9745069392e25d70cf159fadcab6d2c22949fa49"
-mode = "roll-forward"
-application = "atomic-data"
-app-config-override = "roll-forward-atomic-22ba25abd1177e1453042a395ef2bc2a35338b78"
+[[experiment.atomic-roll-forward.cutoff]]
+commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "fail"
