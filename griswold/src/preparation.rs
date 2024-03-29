@@ -1,14 +1,20 @@
 //! Conversion from input types to run configurations / run preparation
 
+use std::collections::{BTreeSet, HashSet};
+use std::ffi::OsStr;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
 
+use cargo::util::credential::process;
 use clap::ValueEnum;
 use lemmy::eval_driver::GetUserVersion;
-use paralegal_policy::SPDGGenCommand;
+use paralegal_policy::{Context, SPDGGenCommand};
 
 use crate::input::{Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyResult};
+use crate::output::RunMeasurements;
 use crate::run::{PolicyFn, Run};
 
 fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
@@ -83,11 +89,16 @@ impl<'a> RunBuilder<'a> {
                     start,
                     end,
                 );
+                let mut current_commit = None;
                 Box::new(commits.into_iter().flat_map(move |c| {
+                    let prior_commit = current_commit.clone();
+                    current_commit = Some(c.clone());
                     self.experiment_config.application.policies().map(
                         move |(policy_name, policy)| {
                             let mut run = self.case_study_run(policy_name, policy, *expectation);
                             run.prepare = Some(Rc::new(checkout(&c)));
+                            run.post_process =
+                                Some(Rc::new(diff_analyzed(prior_commit.as_ref(), &c)));
                             run.commit = Some(c.clone());
                             run
                         },
@@ -243,6 +254,67 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
             .status()
             .unwrap()
             .success())
+    }
+}
+
+fn diff_analyzed(
+    prior: Option<&String>,
+    current: &str,
+) -> impl Fn(&Context, &Path, &mut RunMeasurements) {
+    let current = current.to_owned();
+    let prior = prior.map(ToOwned::to_owned);
+    use std::io::Write;
+    move |ctx, target_path, measurement| {
+        let id_set = ctx
+            .desc()
+            .controllers
+            .values()
+            .flat_map(|spdg| {
+                spdg.graph
+                    .node_weights()
+                    .flat_map(|n| n.at.iter().map(|l| l.function))
+            })
+            .collect::<HashSet<_>>();
+        let ordered_span_set = id_set
+            .into_iter()
+            .map(|id| &ctx.desc().def_info[&id.to_def_id()].src_info)
+            .collect::<BTreeSet<_>>();
+        let current_code_path = target_path.join(format!("{current}.code.rs"));
+        let mut out = File::create(&current_code_path).unwrap();
+        for s in ordered_span_set {
+            let file = BufReader::new(File::open(&s.source_file.abs_file_path).unwrap());
+            for l in file
+                .lines()
+                .skip(s.start.line as usize - 1)
+                .take((s.end.line - s.start.line + 1) as usize)
+            {
+                writeln!(out, "{}", l.unwrap()).unwrap()
+            }
+        }
+        out.flush().unwrap();
+        if let Some(p) = prior.as_ref() {
+            let diff = Command::new("diff")
+                .args([
+                    OsStr::new("-u"),
+                    target_path.join(format!("{p}.code.rs")).as_os_str(),
+                    current_code_path.as_os_str(),
+                ])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            measurement.add_changed_lines(
+                BufReader::new(diff.stdout.unwrap())
+                    .lines()
+                    .filter_map(|l| {
+                        let l = l.unwrap();
+                        ((l.starts_with('-') || l.starts_with('+'))
+                            && !l.starts_with("---")
+                            && !l.starts_with("+++"))
+                        .then_some(())
+                    })
+                    .count() as u32,
+            )
+        }
     }
 }
 

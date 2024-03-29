@@ -42,6 +42,7 @@ pub struct Run<'c> {
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
+    pub post_process: Option<Rc<dyn Fn(&Context, &Path, &mut RunMeasurements)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -81,6 +82,7 @@ impl<'a> Run<'a> {
             commit: None,
             controller: None,
             extra_cargo_args: vec![],
+            post_process: None,
         }
     }
 }
@@ -187,6 +189,7 @@ impl EvaluationConfig {
                 "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
             )?,
         );
+        let post_process_dir = output.general_output_dir.join("post_process");
         progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
         let starting_dir = std::env::current_dir()?;
@@ -244,6 +247,9 @@ impl EvaluationConfig {
                     output
                         .controller_stat_out
                         .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
+                }
+                if let Some(pp) = exp.post_process.as_ref() {
+                    pp(&ctx, &post_process_dir, &mut run_stats);
                 }
             } else {
                 progress.println(format!(
