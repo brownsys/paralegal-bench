@@ -25,7 +25,10 @@ fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
 }
 
 impl EvaluationConfig {
-    pub fn experiments(&self) -> impl Iterator<Item = Run<'_>> {
+    pub fn experiments<'a, 'b: 'a>(
+        &'b self,
+        target_path: &'a Path,
+    ) -> impl Iterator<Item = Run<'b>> + 'a {
         self.experiment
             .iter()
             .flat_map(move |(experiment_name, es)| {
@@ -35,7 +38,7 @@ impl EvaluationConfig {
                         experiment_name,
                         evaluation_config: self,
                     }
-                    .into_experiments()
+                    .into_experiments(target_path)
                 })
             })
     }
@@ -59,7 +62,10 @@ struct RunBuilder<'a> {
 }
 
 impl<'a> RunBuilder<'a> {
-    pub fn into_experiments(self) -> impl Iterator<Item = Run<'a>> + 'a {
+    pub fn into_experiments<'b>(self, target_path: &'b Path) -> impl Iterator<Item = Run<'a>> + 'b
+    where
+        'a: 'b,
+    {
         match &self.experiment_config.mode {
             ExperimentMode::CaseStudy => {
                 Box::new(self.case_study_runs()) as Box<dyn Iterator<Item = Run<'a>> + 'a>
@@ -77,32 +83,55 @@ impl<'a> RunBuilder<'a> {
                     )
                 },
             )),
-            ExperimentMode::RollForward {
-                start,
-                end,
-                expectation,
-            } => {
-                let commits = get_all_commits(
-                    &self.evaluation_config.app_config[self.experiment_config.app_config_name()]
-                        .source_dir,
-                    start,
-                    end,
-                );
-                let mut current_commit = None;
-                Box::new(commits.into_iter().flat_map(move |c| {
-                    let prior_commit = current_commit.clone();
-                    current_commit = Some(c.clone());
-                    self.experiment_config.application.policies().map(
-                        move |(policy_name, policy)| {
-                            let mut run = self.case_study_run(policy_name, policy, *expectation);
-                            run.prepare = Some(Rc::new(checkout(&c)));
-                            run.post_process =
-                                Some(Rc::new(diff_analyzed(prior_commit.as_ref(), &c)));
-                            run.commit = Some(c.clone());
-                            run
-                        },
-                    )
-                }))
+            ExperimentMode::RollForward { cutoff } => {
+                let app_dir = &self.evaluation_config.app_config
+                    [self.experiment_config.app_config_name()]
+                .source_dir;
+                let all = (0..cutoff.len()).rev().flat_map(move |cidx| {
+                    let next_cutoff = &cutoff[cidx];
+
+                    let iter = next_cutoff.expectation.map(|expectation| {
+                        let commits = if let Some(end) = cutoff.get(cidx + 1) {
+                            get_all_commits(app_dir, &next_cutoff.commit, &end.commit)
+                        } else {
+                            vec![next_cutoff.commit.clone()]
+                        };
+                        // Compare to the last commit that we actually ran
+                        let mut inner_code_compare_commit = cutoff[cidx + 1..]
+                            .iter()
+                            .find(|c| c.expectation.is_some())
+                            .map(|f| f.commit.clone());
+                        let iter = commits.into_iter().rev().flat_map(move |commit| {
+                            let current_compare_commit = inner_code_compare_commit.clone();
+                            inner_code_compare_commit = Some(commit.clone());
+                            let iter = self.experiment_config.application.policies().map(
+                                move |(policy_name, policy)| {
+                                    let mut run =
+                                        self.case_study_run(policy_name, policy, expectation);
+                                    run.external_annotations = next_cutoff
+                                        .external_annotations
+                                        .as_ref()
+                                        .map(|pb| pb.as_path());
+                                    run.prepare = Some(Rc::new(checkout(&commit)));
+                                    run.post_process = Some(Rc::new(diff_analyzed(
+                                        current_compare_commit.as_ref(),
+                                        &commit,
+                                        target_path,
+                                    )));
+                                    run.commit = Some(commit.clone());
+                                    run
+                                },
+                            );
+                            iter
+                        });
+                        iter
+                    });
+                    iter.into_iter().flatten()
+                });
+                // Need to reverse the iterator here, because we need the older
+                // commits to be executed first so that their source is
+                // available for diffing
+                Box::new(all)
             }
         }
     }
@@ -259,19 +288,20 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
 fn diff_analyzed(
     prior: Option<&String>,
     current: &str,
-) -> impl Fn(&Context, &Path, &mut RunMeasurements) {
+    target_path: &Path,
+) -> impl Fn(&Context, &mut RunMeasurements) {
     let current = current.to_owned();
-    let prior = prior.map(ToOwned::to_owned);
     use std::io::Write;
-    move |ctx, target_path, measurement| {
+    let code_path = |commit: &str| target_path.join(format!("{commit}.code.rs"));
+    let prior_path = prior.map(String::as_str).map(code_path);
+    let current_code_path = code_path(&current);
+    move |ctx, measurement| {
         let ordered_span_set = ctx
             .desc()
             .controllers
             .values()
             .flat_map(|c| c.analyzed_spans.values())
             .collect::<BTreeSet<_>>();
-        let code_path = |commit| target_path.join(format!("{commit}.code.rs"));
-        let current_code_path = code_path(&current);
         let mut out = File::create(&current_code_path).unwrap();
         for s in ordered_span_set {
             let file = BufReader::new(File::open(&s.source_file.abs_file_path).unwrap());
@@ -284,11 +314,11 @@ fn diff_analyzed(
             }
         }
         out.flush().unwrap();
-        if let Some(p) = prior.as_ref() {
+        if let Some(prior) = prior_path.as_ref() {
             let diff = Command::new("diff")
                 .args([
                     OsStr::new("-u"),
-                    code_path(p).as_os_str(),
+                    prior.as_os_str(),
                     current_code_path.as_os_str(),
                 ])
                 .stdout(Stdio::piped())
@@ -389,7 +419,11 @@ impl Run<'_> {
     pub fn compile_cmd(&self) -> SPDGGenCommand {
         let app_config = self.app_config;
         let mut compile_cmd = SPDGGenCommand::global();
-        if let Some(path) = app_config.external_annotations.as_ref() {
+        if let Some(path) = self.external_annotations.or(app_config
+            .external_annotations
+            .as_ref()
+            .map(|pb| pb.as_path()))
+        {
             compile_cmd.external_annotations(path);
         }
         if app_config.abort {

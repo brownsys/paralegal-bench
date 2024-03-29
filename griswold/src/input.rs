@@ -77,9 +77,7 @@ fn const_true() -> bool {
 pub enum ExperimentMode {
     #[serde(rename_all = "kebab-case")]
     RollForward {
-        expectation: PolicyResult,
-        start: String,
-        end: String,
+        cutoff: Box<[RollForwardCutoff]>,
     },
     #[serde(rename_all = "kebab-case")]
     Ablation {
@@ -87,6 +85,17 @@ pub enum ExperimentMode {
         feature_space_fail: Box<[String]>,
     },
     CaseStudy,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case", tag = "mode")]
+pub struct RollForwardCutoff {
+    /// Make sure not to specify external annotations in the app-config for this
+    /// experiment or both will be passed
+    pub external_annotations: Option<PathBuf>,
+    /// If no expectation is set, this range of commits is skipped.
+    pub expectation: Option<PolicyResult>,
+    pub commit: String,
 }
 
 fn const_application_flavour() -> websubmit::Flavour {

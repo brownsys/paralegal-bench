@@ -30,6 +30,7 @@ pub struct Run<'c> {
     pub config: &'c ExperimentConfig,
     pub app_config: &'c ApplicationConfig,
     pub policy_name: &'c str,
+    pub external_annotations: Option<&'c Path>,
     /// Only set when a single controller is selected (used in Lemmy)
     pub controller: Option<&'static str>,
     /// Only set in ablation experiments. This feature is what selects the
@@ -42,7 +43,7 @@ pub struct Run<'c> {
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
-    pub post_process: Option<Rc<dyn Fn(&Context, &Path, &mut RunMeasurements)>>,
+    pub post_process: Option<Rc<dyn Fn(&Context, &mut RunMeasurements)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -73,6 +74,7 @@ impl<'a> Run<'a> {
         Self {
             experiment_name,
             config: experiment_config,
+            external_annotations: None,
             policy_name,
             app_config,
             policy,
@@ -183,13 +185,16 @@ impl CrateOverride {
 
 impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
-        let experiments = self.experiments().enumerate().collect::<Vec<_>>();
+        let post_process_dir = output.general_output_dir.join("post-process");
+        let experiments = self
+            .experiments(&post_process_dir)
+            .enumerate()
+            .collect::<Vec<_>>();
         let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
             indicatif::ProgressStyle::with_template(
                 "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
             )?,
         );
-        let post_process_dir = output.general_output_dir.join("post-process");
         std::fs::create_dir(&post_process_dir)?;
         progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
@@ -250,7 +255,7 @@ impl EvaluationConfig {
                         .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
                 }
                 if let Some(pp) = exp.post_process.as_ref() {
-                    pp(&ctx, &post_process_dir, &mut run_stats);
+                    pp(&ctx, &mut run_stats);
                 }
             } else {
                 progress.println(format!(
