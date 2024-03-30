@@ -583,8 +583,7 @@ fn is_connection_closed(error: &reqwest::Error) -> bool {
 async fn handle_response(
     response: CustomResult<reqwest::Response, errors::ApiClientError>,
 ) -> CustomResult<Result<types::Response, types::Response>, errors::ApiClientError> {
-    response
-        .map(|response| async {
+    let response = response?;
             logger::info!(?response);
             let status_code = response.status().as_u16();
             let headers = Some(response.headers().to_owned());
@@ -656,8 +655,6 @@ async fn handle_response(
                 _ => Err(report!(errors::ApiClientError::UnexpectedServerResponse)
                     .attach_printable("Unexpected response from server")),
             }
-        })?
-        .await
 }
 
 #[derive(Debug, Eq, PartialEq)]
