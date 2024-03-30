@@ -50,30 +50,10 @@ impl NodeExt for GlobalNode {
 }
 
 trait ContextExt {
-    fn nodes_marked_any_way(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
-    fn nodes_marked_via_type(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
 impl ContextExt for Context {
-    fn nodes_marked_via_type(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
-        Box::new(self.marked_type(marker).iter().copied().flat_map(|t| {
-            self.all_controllers().flat_map(move |(cid, c)| {
-                c.type_assigns
-                    .iter()
-                    .filter(move |(_, tys)| tys.0.contains(&t))
-                    .map(move |(n, _)| GlobalNode::from_local_node(cid, *n))
-            })
-        }))
-    }
-
-    fn nodes_marked_any_way(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
-        Box::new(
-            self.marked_nodes(marker)
-                .chain(self.nodes_marked_via_type(marker)),
-        )
-    }
-
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
         Box::new(self.desc().controllers.iter().flat_map(|(id, spdg)| {
             spdg.return_

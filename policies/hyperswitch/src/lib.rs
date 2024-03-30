@@ -2,7 +2,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{GlobalNode, Identifier},
-    Context, EdgeSelection, Marker,
+    Context, EdgeSelection, Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -22,30 +22,6 @@ macro_rules! policy {
             ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
-}
-
-trait ContextExt {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
-
-    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool;
-}
-
-impl ContextExt for Context {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a> {
-        Box::new(
-            self.desc()
-                .controllers
-                .keys()
-                .copied()
-                .flat_map(move |k| self.all_nodes_for_ctrl(k))
-                .filter(move |node| self.has_marker(marker, *node)),
-        )
-    }
-
-    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool {
-        self.influencees(influencer, EdgeSelection::Data)
-            .any(|inf| self.flows_to(inf, target, EdgeSelection::Control))
-    }
 }
 
 policy!(apikey_storage, ctx, {
@@ -79,13 +55,13 @@ policy!(card_storage, ctx {
     assert_warning!(ctx, !sinks.is_empty());
     for src in srcs {
         for sink in sinks.iter().cloned() {
-            if !ctx.flows_to(src, sink, EdgeSelection::Data) {
+            if !src.flows_to(sink, &ctx, EdgeSelection::Data) {
                 continue;
             }
             any_sink_reached = true;
 
             let decision_reaches = decision_sources.iter().cloned().any(|decision_source|
-                ctx.determines_ctrl(decision_source, sink)
+                decision_source.has_ctrl_influence(sink, &ctx)
             );
             assert_error!(ctx, decision_reaches);
         }
