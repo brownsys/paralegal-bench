@@ -202,7 +202,6 @@ impl EvaluationConfig {
                 "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
             )?,
         );
-        std::fs::create_dir(&post_process_dir)?;
         progress.enable_steady_tick(Duration::from_millis(500));
         let mut policy_out = File::create(output.path("policy.out.txt"))?;
         let starting_dir = std::env::current_dir()?;
