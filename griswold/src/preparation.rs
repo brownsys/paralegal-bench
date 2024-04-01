@@ -12,7 +12,10 @@ use clap::ValueEnum;
 use lemmy::eval_driver::GetUserVersion;
 use paralegal_policy::{Context, SPDGGenCommand};
 
-use crate::input::{Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyResult};
+use crate::input::{
+    Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyResult,
+    RollForwardCutoff,
+};
 use crate::output::RunMeasurements;
 use crate::run::{PolicyFn, Run};
 
@@ -84,60 +87,63 @@ impl<'a> RunBuilder<'a> {
                 },
             )),
             ExperimentMode::RollForward { cutoff } => {
-                let app_dir = &self.evaluation_config.app_config
-                    [self.experiment_config.app_config_name()]
-                .source_dir;
-                let mut code_compare = None;
-                let all = (0..cutoff.len()).rev().flat_map(move |cidx| {
-                    let current = &cutoff[cidx];
-
-                    current
-                        .expectation
-                        .map(|expectation| {
-                            let next_commit = (cidx != 0)
-                                .then(|| cutoff.get(cidx - 1))
-                                .flatten()
-                                .map(|c| &c.commit);
-                            let commits = if let Some(next) = next_commit.as_ref() {
-                                get_all_commits(app_dir, &next, &current.commit)
-                            } else {
-                                vec![current.commit.clone()]
-                            };
-                            // Compare to the last commit that we actually ran
-                            let mut inner_code_compare_commit = code_compare.clone();
-                            code_compare = commits.last().map(Clone::clone);
-                            commits.into_iter().rev().flat_map(move |commit| {
-                                let current_compare_commit = inner_code_compare_commit.clone();
-                                inner_code_compare_commit = Some(commit.clone());
-                                self.experiment_config.application.policies().map(
-                                    move |(policy_name, policy)| {
-                                        let mut run =
-                                            self.case_study_run(policy_name, policy, expectation);
-                                        run.external_annotations = current
-                                            .external_annotations
-                                            .as_ref()
-                                            .map(|pb| pb.as_path());
-                                        run.prepare = Some(Rc::new(checkout(&commit)));
-                                        run.post_process = Some(Rc::new(diff_analyzed(
-                                            current_compare_commit.as_ref(),
-                                            &commit,
-                                            target_path,
-                                        )));
-                                        run.commit = Some(commit.clone());
-                                        run
-                                    },
-                                )
-                            })
-                        })
-                        .into_iter()
-                        .flatten()
-                });
-                // Need to reverse the iterator here, because we need the older
-                // commits to be executed first so that their source is
-                // available for diffing
-                Box::new(all)
+                Box::new(self.roll_forward_runs(target_path, cutoff))
             }
         }
+    }
+
+    fn roll_forward_runs<'b>(
+        self,
+        target_path: &'b Path,
+        cutoff: &'a [RollForwardCutoff],
+    ) -> impl Iterator<Item = Run<'a>> + 'b
+    where
+        'a: 'b,
+    {
+        let app_dir =
+            &self.evaluation_config.app_config[self.experiment_config.app_config_name()].source_dir;
+        let mut code_compare = None;
+        (0..cutoff.len()).rev().flat_map(move |cidx| {
+            let current = &cutoff[cidx];
+
+            current
+                .expectation
+                .map(|expectation| {
+                    let next_commit = (cidx != 0)
+                        .then(|| cutoff.get(cidx - 1))
+                        .flatten()
+                        .map(|c| &c.commit);
+                    let commits = if let Some(next) = next_commit.as_ref() {
+                        get_all_commits(app_dir, &next, &current.commit)
+                    } else {
+                        vec![current.commit.clone()]
+                    };
+                    // Compare to the last commit that we actually ran
+                    let mut inner_code_compare_commit = code_compare.clone();
+                    code_compare = commits.last().map(Clone::clone);
+                    commits.into_iter().rev().flat_map(move |commit| {
+                        let current_compare_commit = inner_code_compare_commit.clone();
+                        inner_code_compare_commit = Some(commit.clone());
+                        self.experiment_config.application.policies().map(
+                            move |(policy_name, policy)| {
+                                let mut run = self.case_study_run(policy_name, policy, expectation);
+                                run.external_annotations =
+                                    current.external_annotations.as_ref().map(|pb| pb.as_path());
+                                run.prepare = Some(Rc::new(checkout(&commit)));
+                                run.post_process = Some(Rc::new(diff_analyzed(
+                                    current_compare_commit.as_ref(),
+                                    &commit,
+                                    target_path,
+                                )));
+                                run.commit = Some(commit.clone());
+                                run
+                            },
+                        )
+                    })
+                })
+                .into_iter()
+                .flatten()
+        })
     }
 
     fn ablation_runs_for_policy(
