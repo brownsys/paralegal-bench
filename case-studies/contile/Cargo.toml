@@ -77,3 +77,5 @@ paralegal = { rev = "18c259edc14f62e31badf0f170e0a7c7e1ebf561", git = "https://g
 
 [replace]
 "time:0.3.20" = { path = "../time/time" }
+
+[workspace]
