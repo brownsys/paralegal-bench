@@ -84,15 +84,15 @@ app-config-override = "roll-forward-atomic"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 expectation = "pass"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "22ba25abd1177e1453042a395ef2bc2a35338b78"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "pass"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "cd1146ec416191b381fac4ed630731178867891e"
-external-annotations = "../../research/dfpp-verification/roll-forward/atomic/22ba25abd1177e1453042a395ef2bc2a35338b78-external-annotations.toml"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "pass"

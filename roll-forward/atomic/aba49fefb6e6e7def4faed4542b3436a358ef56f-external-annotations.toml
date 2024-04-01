@@ -18,6 +18,10 @@ on_argument = [1]
 marker = "new_resource"
 on_argument = [0]
 
+[["atomic_lib::storelike::Storelike::add_resource_opts"]]
+marker = "sink"
+on_argument = [1]
+
 [["atomic_lib::storelike::Storelike::add_resource"]]
 marker = "sink"
 on_argument = [1]
