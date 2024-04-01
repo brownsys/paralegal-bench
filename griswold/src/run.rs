@@ -107,10 +107,10 @@ impl Output {
             .as_secs();
         std::fs::create_dir_all(&args.result_path)?;
         let mut general_output_dir = args.result_path.canonicalize()?;
-        let post_process_dir = general_output_dir.join("pp-{bench_num}");
+        let post_process_dir = general_output_dir.join(format!("pp-{bench_num}"));
         general_output_dir.push(format!("run-{bench_num}"));
         for dir in [&general_output_dir, &post_process_dir] {
-            assert!(!dir.exists());
+            assert!(!dir.exists(), "{}", dir.display());
             std::fs::create_dir(dir)?;
         }
         std::fs::copy(
