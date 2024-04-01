@@ -1,0 +1,20 @@
+.DS_Store
+
+target/
+tools/test/venv
+.pytest_cache
+.DS_Store
+.Python
+Python 3.9
+venv
+__pycache__/
+*.py[cod]
+.python-version
+
+*.mir
+*.gv
+*.gv.pdf
+*.df
+*.regal
+*.eqs
+flow-graph.json

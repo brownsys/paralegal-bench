@@ -1,0 +1,79 @@
+[package]
+name = "contile"
+# be sure to update
+# test-engineering/contract-tests/volumes/client/scenarios.yml
+# test-engineering/contract-tests/volumes/client/scenarios_tiles_cache.yml
+version = "1.11.0"
+authors = [
+  "Philip Jenvey <pjenvey@underboss.org>",
+  "jrconlin <jr+git@mozilla.com>",
+  "Mozilla Services Engineering <services-engineering+code@mozilla.com>",
+]
+edition = "2021"
+
+# See more keys and their definitions at
+# https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+leak = []
+
+[profile.release]
+# Enables line numbers in Sentry
+debug = 1
+
+[dependencies]
+actix-cors = "0.6"
+actix-web = { version = "4", default_features = false, features = ["macros"] }
+actix-web-location = { version = "0.7", features = [
+  "actix-web-v4",
+  "maxmind",
+  "cadence",
+] }
+async-trait = "0.1"
+backtrace = "0.3"
+base64 = "0.13"
+blake3 = "1"
+bytes = "1"
+cadence = "0.29"
+chrono = "0.4"
+crossbeam-channel = "0.5.4"
+docopt = "1.1"
+cloud-storage = { git = "https://github.com/mozilla-services/cloud-storage-rs", branch = "release/0.11.1-client-builder-and-params" }
+config = "0.13"
+dashmap = "5.3"
+futures = "0.3"
+gethostname = "0.2.1"
+hex = "0.4"
+image = "0.24"
+lazy_static = "1.4"
+log = { version = "0.4", features = [
+  "max_level_trace",
+  "release_max_level_info",
+] }
+rand = "0.8"
+regex = "1"
+reqwest = { version = "0.11", features = ["json"] }
+serde = "1"
+sentry = "0.27"
+sentry-backtrace = "0.27"
+serde_json = "1"
+scopeguard = "1.1"
+slog = { version = "2.7", features = [
+  "max_level_trace",
+  "release_max_level_info",
+  "dynamic-keys",
+] }
+slog-async = "2.7"
+slog-envlogger = "2.2.0"
+slog-mozlog-json = "0.1"
+slog-scope = "4.4"
+slog-stdlog = "4.1"
+slog-term = "2"
+thiserror = "1"
+tokio = { version = "1", features = ["macros", "sync"] }
+url = "2"
+woothee = "0.13"
+paralegal = { rev = "18c259edc14f62e31badf0f170e0a7c7e1ebf561", git = "https://github.com/brownsys/paralegal" }
+
+[replace]
+"time:0.3.20" = { path = "../time/time" }

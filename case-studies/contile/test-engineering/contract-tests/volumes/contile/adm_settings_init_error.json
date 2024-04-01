@@ -1,0 +1,17 @@
+{
+  "adm_advertisers": {
+    "DunBroch": {
+      "GB": [
+        {
+          "host": "www.dunbroch.co.uk",
+          "paths": [
+            {
+              "value": "/gb_desktop",
+              "matching": "prefix"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

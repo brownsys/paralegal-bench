@@ -1,0 +1,108 @@
+version: "3"
+services:
+  partner:
+    image: partner
+    build:
+      context: .
+      dockerfile: ./partner/Dockerfile
+    container_name: partner
+    environment:
+      PORT: 5000
+      RESPONSES_DIR: /tmp/partner/
+      ACCEPTED_MOBILE_FORM_FACTORS: phone,tablet
+      ACCEPTED_DESKTOP_FORM_FACTORS: desktop
+    expose:
+      - "5000"
+    volumes:
+      - ./volumes/partner:/tmp/partner
+  contile:
+    ## If Contile cannot run, or fails early, this image will close and
+    ## the `client` will not be able to connect. You can sometimes
+    ## debug this by running
+    ## `docker-compose -f docker-compose.yml run --rm contile`
+    image: app:build
+    container_name: contile
+    depends_on:
+      - partner
+    links:
+      - partner
+    environment:
+      CONTILE_MAXMINDDB_LOC: /tmp/mmdb/GeoLite2-City-Test.mmdb
+      CONTILE_ADM_ENDPOINT_URL: http://partner:5000/tilesp/desktop
+      CONTILE_ADM_MOBILE_ENDPOINT_URL: http://partner:5000/tilesp/mobile
+      CONTILE_ADM_QUERY_TILE_COUNT: 5
+      CONTILE_ADM_SETTINGS: /tmp/contile/adm_settings.json
+      CONTILE_ADM_DEFAULTS: '{
+        "advertiser_urls": [],
+        "click_hosts": [
+          "example.com",
+          "example.org",
+          "dunbroch.co.uk"
+        ],
+        "impression_hosts": [
+          "example.com",
+          "example.org",
+          "dunbroch.co.uk"
+        ],
+        "image_hosts": [
+          "example.com",
+          "example.org",
+          "dunbroch.co.uk"
+        ],
+        "include_regions":[
+          "US",
+          "GB",
+          "CN"
+        ]
+      }'
+      CONTILE_ADM_SUB1: sub1_test
+      CONTILE_ADM_PARTNER_ID: partner_id_test
+      CONTILE_ADM_HAS_LEGACY_IMAGE: '["Example ORG","Example COM"]'
+      # Timeout requests to the ADM server after this many seconds (default: 5)
+      # Use larger timeouts to mitigate the network latency issues on M1 laptops
+      CONTILE_ADM_TIMEOUT: 10
+      CONTILE_CONNECT_TIMEOUT: 10
+      CONTILE_DEBUG: 1
+      CONTILE_HOST: 0.0.0.0
+      CONTILE_HUMAN_LOGS: 1
+      CONTILE_PORT: 8000
+      CONTILE_TILES_TTL: 0 # cached tiles will always be expired
+      RUST_LOG: main,contile=INFO
+    expose:
+      - "8000"
+    volumes:
+      - ./volumes/contile:/tmp/contile
+      - ../../mmdb:/tmp/mmdb
+    ## Override the entrypoint to report the IP address, then try
+    ## running Contile this can be useful to debug internal
+    ## networking issues as well as externally connect to contile.
+    ## (We use `hostname` here because the system doesn't include
+    ## many IP reporting functions.)
+    #entrypoint: >
+    #  /bin/sh -c "hostname -I && bin/contile"
+  client:
+    image: client
+    build:
+      context: .
+      dockerfile: ./client/Dockerfile
+    container_name: client
+    depends_on:
+      - partner
+      - contile
+    links:
+      - partner
+      - contile
+    environment:
+      CONTILE_URL: http://contile:8000
+      PARTNER_URL: http://partner:5000
+      SCENARIOS_FILE: /tmp/client/scenarios.yml
+    volumes:
+      - ./volumes/client:/tmp/client
+    ## This pulls in knot-dnsutils because it's the only dnsutil
+    ## package that is available for the host docker image. This line can
+    ## be useful if the tests fail due to connection errors. See also
+    ## the note inside the `contile` service above.
+    #entrypoint: >
+    #  /bin/sh -c "apt update -y && apt install knot-dnsutils -y && hostname -I && kdig contile +short && kdig localhost +short"
+    command: >
+      "-vv"

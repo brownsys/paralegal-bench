@@ -1,0 +1,7 @@
+[["cadence::builder::MetricBuilder::send"]]
+marker = "metrics_server"
+on_argument = [0]
+
+[["cadence::builder::MetricBuilder::try_send"]]
+marker = "metrics_server"
+on_argument = [0]

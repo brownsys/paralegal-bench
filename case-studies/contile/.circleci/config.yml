@@ -1,0 +1,313 @@
+# These environment variables must be set in CircleCI UI
+#
+# DOCKERHUB_REPO - docker hub repo, format: <username>/<repo>
+# DOCKER_USER    - login info for docker hub
+# DOCKER_PASS
+#
+version: 2.1
+
+parameters:
+  rust-version:
+    type: string
+    # NOTE: Ensure this Rust version matches the builder's in ../Dockerfile
+    default: "1.64"
+
+commands:
+  setup-rust:
+    steps:
+      - run:
+          name: Setup Rust
+          command: |
+            rustc --version
+  setup-rust-check:
+    steps:
+      - run:
+          name: Setup Rust checks
+          command: |
+            rustup component add rustfmt
+            cargo install cargo-audit
+            rustup component add clippy
+  rust-check:
+    steps:
+      - run:
+          name: Core Rust Checks
+          command: |
+            cargo fmt -- --check
+            cargo audit
+  rust-clippy:
+    steps:
+      - run:
+          name: Rust Clippy
+          command: |
+            cargo clippy --all --all-targets --all-features -- -D warnings
+  cargo-build:
+    steps:
+      - run:
+          name: cargo build
+          command: cargo build
+  write-version:
+    steps:
+      - run:
+          name: Create a version.json
+          command: |
+            # create a version.json per
+            # https://github.com/mozilla-services/Dockerflow/blob/master/docs/version_object.md
+            printf '{"commit":"%s","version":"%s","source":"https://github.com/%s/%s","build":"%s"}\n' \
+            "$CIRCLE_SHA1" \
+            "$CIRCLE_TAG" \
+            "$CIRCLE_PROJECT_USERNAME" \
+            "$CIRCLE_PROJECT_REPONAME" \
+            "$CIRCLE_BUILD_URL" > version.json
+
+  run-tests:
+    steps:
+      - run:
+          name: cargo test
+          command: cargo test --all --verbose
+
+  setup-sccache:
+    steps:
+      - run:
+          name: Install sccache
+          command: |
+            cargo install sccache
+            # This configures Rust to use sccache.
+            echo 'export "RUSTC_WRAPPER"="sccache"' >> $BASH_ENV
+            # This is the maximum space sccache cache will use on disk.
+            echo 'export "SCCACHE_CACHE_SIZE"="1G"' >> $BASH_ENV
+            sccache --version
+  restore-sccache-cache:
+    steps:
+      - restore_cache:
+          name: Restore sccache cache
+          key: sccache-cache-stable-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+  save-sccache-cache:
+    steps:
+      - save_cache:
+          name: Save sccache cache
+          key: sccache-cache-stable-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+          paths:
+            - "~/.cache/sccache"
+jobs:
+  checks:
+    docker:
+      - image: cimg/rust:<< pipeline.parameters.rust-version >>
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+    steps:
+      - checkout
+      - setup-rust
+      - setup-rust-check
+      - rust-check
+      - rust-clippy
+
+  test:
+    docker:
+      - image: cimg/rust:<< pipeline.parameters.rust-version >>
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+        environment:
+          RUST_BACKTRACE: 1
+          # XXX: begin_test_transaction doesn't play nice over threaded tests
+          RUST_TEST_THREADS: 1
+    steps:
+      - checkout
+      - setup-rust
+      - cargo-build
+      - run-tests
+
+  build:
+    docker:
+      - image: cimg/rust:<< pipeline.parameters.rust-version >>
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+        environment:
+            RUST_BACKTRACE: 1
+            # XXX: begin_test_transaction doesn't play nice over threaded tests
+            RUST_TEST_THREADS: 1
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Login to Dockerhub
+          command: |
+            if [ "${DOCKER_USER}" == "" ] || [ "${DOCKER_PASS}" == "" ]; then
+              echo "Skipping Login to DockerHub, credentials unavailable"
+            else
+              echo "${DOCKER_PASS}" | docker login -u="${DOCKER_USER}" --password-stdin
+            fi
+      #- save-sccache-cache
+      - checkout
+      - write-version
+      - run:
+          name: Build Docker image
+          command: docker build -t app:build .
+      # save the built docker container into CircleCI's cache. This is
+      # required since Workflows do not have the same remote docker instance.
+      - run:
+          name: docker save app:build
+          command: |
+            mkdir -p /home/circleci/cache
+            docker save -o /home/circleci/cache/docker.tar "app:build"
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}-{{ epoch }}
+          paths:
+            - /home/circleci/cache
+
+  deploy:
+    docker:
+      - image: docker:18.02.0-ce
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASS
+    steps:
+      - setup_remote_docker
+      - restore_cache:
+          key: v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Restore Docker image cache
+          command: docker load -i /home/circleci/cache/docker.tar
+      - run:
+          name: Deploy to Dockerhub
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "main" ]; then
+              DOCKER_TAG="${CIRCLE_SHA1}"
+            fi
+
+            if echo "${CIRCLE_BRANCH}" | grep '^feature\..*' > /dev/null; then
+              DOCKER_TAG="${CIRCLE_BRANCH}"
+            fi
+
+            if [ -n "${CIRCLE_TAG}" ]; then
+              DOCKER_TAG="$CIRCLE_TAG"
+            fi
+
+            if [ -n "${DOCKER_TAG}" ]; then
+              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+              echo ${DOCKERHUB_REPO}:${DOCKER_TAG}
+              docker tag app:build ${DOCKERHUB_REPO}:${DOCKER_TAG}
+              docker images
+              docker push "${DOCKERHUB_REPO}:${DOCKER_TAG}"
+            else
+              echo "Not pushing to dockerhub for tag=${CIRCLE_TAG} branch=${CIRCLE_BRANCH}"
+            fi
+
+  contract-test-checks:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: "~/contile/test-engineering/contract-tests"
+    steps:
+      - checkout:
+          path: ~/contile/
+      - run:
+          name: setup poetry
+          command: |
+            poetry -V
+            poetry install
+      - run:
+          name: isort
+          command: poetry run isort --check-only client partner
+      - run:
+          name: black
+          command: poetry run black --quiet --diff --check client partner
+      - run:
+          name: flake8
+          command: poetry run flake8 client partner
+      - run:
+          name: mypy
+          command: poetry run mypy client partner
+
+  contract-tests:
+    machine:
+      docker_layer_caching: true
+      image: ubuntu-2004:202101-01 # Ubuntu 20.04, Docker v20.10.2, Docker Compose v1.28.2
+    working_directory: ~/contile
+    steps:
+      - checkout
+      - restore_cache:
+          key: v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+         name: Restore Docker image cache
+         command: docker load -i /home/circleci/cache/docker.tar
+      - run:
+         name: Log in to the default Docker registry
+         command: |
+           echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+      - run:
+         name: Build client and partner images
+         command: |
+           docker-compose --version
+           docker-compose \
+            -f test-engineering/contract-tests/docker-compose.yml \
+            build client partner
+      - run:
+         name: Run contract tests
+         command: |
+           docker-compose \
+            -f test-engineering/contract-tests/docker-compose.yml \
+            up --abort-on-container-exit --force-recreate
+      - run:
+          name: Run "tiles cache" contract tests
+          command: |
+           docker-compose \
+            -f test-engineering/contract-tests/docker-compose.yml \
+            -f test-engineering/contract-tests/docker-compose.tiles_cache.yml \
+            up --abort-on-container-exit --force-recreate
+      - run:
+         name: Run "204" contract tests
+         command: |
+           docker-compose \
+            -f test-engineering/contract-tests/docker-compose.yml \
+            -f test-engineering/contract-tests/docker-compose.204.yml \
+            up --abort-on-container-exit --force-recreate
+      - run:
+         name: Run "init_error" contract tests
+         command: |
+           set +e # We need this so that the run doesn't exit after docker-compose
+           docker-compose \
+            -f test-engineering/contract-tests/docker-compose.yml \
+            -f test-engineering/contract-tests/docker-compose.init_error.yml \
+            up --abort-on-container-exit --exit-code contile --force-recreate
+           contile_exit_code=$?
+           if [ "${contile_exit_code}" -eq 0 ]; then
+            echo "Expected non-zero exit_code from Contile service"
+            exit 1
+           else
+            echo "Contile service exit_code: ${contile_exit_code}"
+            exit 0
+           fi
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - checks:
+          filters:
+            tags:
+              only: /.*/
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - test:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - build
+      - contract-test-checks
+      - contract-tests:
+          requires:
+          - build
+          - contract-test-checks
+      - deploy:
+          requires:
+            - build
+            - test
+            - contract-tests
+          filters:
+            tags:
+              only: /.*/
