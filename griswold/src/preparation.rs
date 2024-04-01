@@ -1,6 +1,5 @@
 //! Conversion from input types to run configurations / run preparation
 
-use std::collections::{BTreeSet, HashSet};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -301,29 +300,12 @@ fn diff_analyzed(
     target_path: &Path,
 ) -> impl Fn(&Context, &mut RunMeasurements) {
     let current = current.to_owned();
-    use std::io::Write;
     let code_path = |commit: &str| target_path.join(format!("{commit}.code.rs"));
     let prior_path = prior.map(String::as_str).map(code_path);
     let current_code_path = code_path(&current);
     move |ctx, measurement| {
-        let ordered_span_set = ctx
-            .desc()
-            .controllers
-            .values()
-            .flat_map(|c| c.analyzed_spans.values())
-            .collect::<BTreeSet<_>>();
-        let mut out = File::create(&current_code_path).unwrap();
-        for s in ordered_span_set {
-            let file = BufReader::new(File::open(&s.source_file.abs_file_path).unwrap());
-            for l in file
-                .lines()
-                .skip(s.start.line as usize - 1)
-                .take((s.end.line - s.start.line + 1) as usize)
-            {
-                writeln!(out, "{}", l.unwrap()).unwrap()
-            }
-        }
-        out.flush().unwrap();
+        ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false)
+            .unwrap();
         if let Some(prior) = prior_path.as_ref() {
             let diff = Command::new("diff")
                 .args([

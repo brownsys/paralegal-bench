@@ -80,7 +80,7 @@ fn main() -> Result<()> {
     config.always_happens_before_tracing = TraceLevel::Full;
     let result = graph.with_context_configured(config, |ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, true)?;
+            ctx.write_analyzed_code(File::create(path)?, false)?;
         }
         policy(ctx)
     })?;
