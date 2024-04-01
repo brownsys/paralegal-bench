@@ -94,8 +94,12 @@ impl<'a> RunBuilder<'a> {
                     current
                         .expectation
                         .map(|expectation| {
-                            let commits = if let Some(next) = cutoff.get(cidx - 1) {
-                                get_all_commits(app_dir, &next.commit, &current.commit)
+                            let next_commit = (cidx != 0)
+                                .then(|| cutoff.get(cidx - 1))
+                                .flatten()
+                                .map(|c| &c.commit);
+                            let commits = if let Some(next) = next_commit.as_ref() {
+                                get_all_commits(app_dir, &next, &current.commit)
                             } else {
                                 vec![current.commit.clone()]
                             };
@@ -342,7 +346,7 @@ fn diff_analyzed(
 
 fn get_all_commits(path: impl AsRef<Path>, start: &str, end: &str) -> Vec<String> {
     let output = Command::new("git")
-        .args(["log", &format!("{end}..{start}"), "--format=%H"])
+        .args(["log", &format!("{end}^..{start}^"), "--format=%H"])
         .current_dir(path)
         .output()
         .unwrap();
