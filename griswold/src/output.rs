@@ -126,13 +126,10 @@ impl RunMeasurements {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct SystemParameters {
-    num_cores: u16,
     num_physical_cores: u16,
-    cpu_brand: String,
-    cpu_frequency: u64,
-    cpu_vendor_id: String,
+    cpus: Box<[CpuParameters]>,
     max_mem: u64,
     max_swap: u64,
     cpu_arch: Option<String>,
@@ -140,26 +137,30 @@ pub struct SystemParameters {
     os_version: Option<String>,
 }
 
+#[derive(Serialize)]
+struct CpuParameters {
+    brand: String,
+    frequency: u64,
+    vendor_id: String,
+}
+
 impl SystemParameters {
     pub fn new() -> Self {
         use sysinfo::System;
         let sys = System::new_all();
-        let cpus = sys.cpus();
-        let cpu = cpus.first().unwrap();
-        let cpu_brand = cpu.brand().to_owned();
-        let cpu_frequency = cpu.frequency();
-        let cpu_vendor_id = cpu.vendor_id().to_owned();
-        for cpu in cpus {
-            assert_eq!(cpu_brand, cpu.brand());
-            assert_eq!(cpu_frequency, cpu.frequency());
-            assert_eq!(cpu_vendor_id, cpu.vendor_id());
-        }
+        let cpus = sys
+            .cpus()
+            .iter()
+            .map(|cpu| CpuParameters {
+                brand: cpu.brand().to_owned(),
+                frequency: cpu.frequency(),
+                vendor_id: cpu.vendor_id().to_owned(),
+            })
+            .collect();
+
         Self {
-            num_cores: cpus.len() as u16,
             num_physical_cores: sys.physical_core_count().unwrap() as u16,
-            cpu_vendor_id,
-            cpu_brand,
-            cpu_frequency,
+            cpus,
             max_mem: sys.total_memory(),
             max_swap: sys.total_swap(),
             cpu_arch: System::cpu_arch(),

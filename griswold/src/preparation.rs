@@ -99,11 +99,6 @@ impl<'a> RunBuilder<'a> {
                             } else {
                                 vec![current.commit.clone()]
                             };
-                            println!(
-                                "Creating range for {} {} commits",
-                                current.commit,
-                                commits.len()
-                            );
                             // Compare to the last commit that we actually ran
                             let mut inner_code_compare_commit = code_compare.clone();
                             code_compare = commits.last().map(Clone::clone);

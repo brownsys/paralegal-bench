@@ -92,22 +92,27 @@ impl<'a> Run<'a> {
 pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
+    bench_num: u64,
     general_output_dir: PathBuf,
+    post_process_dir: PathBuf,
     pub controller_stat_out: Writer<File>,
     pub run_stat_out: Writer<File>,
 }
 
 impl Output {
     pub fn init(args: &Arguments) -> std::io::Result<Self> {
-        let t = SystemTime::now()
+        let bench_num = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
             .as_secs();
         std::fs::create_dir_all(&args.result_path)?;
         let mut general_output_dir = args.result_path.canonicalize()?;
-        general_output_dir.push(format!("run-{t}"));
-        assert!(!general_output_dir.exists());
-        std::fs::create_dir(&general_output_dir)?;
+        let post_process_dir = general_output_dir.join("pp-{bench_num}");
+        general_output_dir.push(format!("run-{bench_num}"));
+        for dir in [&general_output_dir, &post_process_dir] {
+            assert!(!dir.exists());
+            std::fs::create_dir(dir)?;
+        }
         std::fs::copy(
             &args.config_path,
             general_output_dir.join("bench-config.toml"),
@@ -122,9 +127,11 @@ impl Output {
         )
         .unwrap();
         Ok(Self {
+            bench_num,
             controller_stat_out: Writer::from_path(general_output_dir.join("controllers.csv"))?,
             run_stat_out: Writer::from_path(general_output_dir.join("results.csv"))?,
             general_output_dir,
+            post_process_dir,
         })
     }
 
@@ -185,7 +192,7 @@ impl CrateOverride {
 
 impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
-        let post_process_dir = output.general_output_dir.join("post-process");
+        let post_process_dir = &output.post_process_dir;
         let experiments = self
             .experiments(&post_process_dir)
             .enumerate()

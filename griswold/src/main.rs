@@ -38,6 +38,8 @@ pub struct Arguments {
     /// Umbrella folder into which results should be written
     #[clap(long, default_value = "results")]
     result_path: PathBuf,
+    #[clap(long)]
+    no_install_flow_analyzer: bool,
 }
 
 fn main() {
@@ -46,15 +48,17 @@ fn main() {
     let config_file = std::fs::read_to_string(&args.config_path).unwrap();
     let config: EvaluationConfig = toml::from_str(&config_file).unwrap();
 
-    let current_dir = std::env::current_dir().unwrap();
-    std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
-    let compile_stat = process::Command::new("cargo")
-        .args(["install", "--locked", "--path"])
-        .arg(Path::new("crates").join("paralegal-flow"))
-        .status()
-        .unwrap();
-    assert!(compile_stat.success());
-    std::env::set_current_dir(current_dir).unwrap();
+    if !args.no_install_flow_analyzer {
+        let current_dir = std::env::current_dir().unwrap();
+        std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
+        let compile_stat = process::Command::new("cargo")
+            .args(["install", "--locked", "--path"])
+            .arg(Path::new("crates").join("paralegal-flow"))
+            .status()
+            .unwrap();
+        assert!(compile_stat.success());
+        std::env::set_current_dir(current_dir).unwrap();
+    }
 
     config.run(&mut output).unwrap()
 }
