@@ -255,14 +255,27 @@ commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
 expectation = "pass"
 external-annotations = "../../research/dfpp-verification/roll-forward/atomic/external-annotations.toml"
 
+[[experiment.atomic-roll-forward]]
+commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
+expectation = "pass"
+external-annotations = "../../research/dfpp-verification/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+
+# Skipping this range of 73 commits, because they don't compile (even with
+# regular rustc, this is not a Paralegal issue). See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
+[[experiment.atomic-roll-forward]]
+commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "b3fe55d9aa72facc561a31eeac36cfc5dce0ff01"
 expectation = "pass"
 external-annotations = "../../research/dfpp-verification/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 
-# Skipping this range of 73 commits, because they don't compile (even with
-# regular rustc, this is not a Paralegal issue).
+# Skipping 8 commits that don't compile with rustc. This is not a Paralegal
+# issue. See
+# https://www.notion.so/justus-adam/Roll-forward-experiment-on-5706ecdd8c7045ca9f3a9e3a4603e2fe?pvs=4
+# for more information
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
 
