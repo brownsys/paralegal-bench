@@ -69,7 +69,7 @@ impl TilesCache {
         self.inner.get(audience_key)
     }
 
-    #[paralegal::marker(noinline)]
+    //#[paralegal::marker(noinline)]
     /// Prepare to write to the cache.
     ///
     /// Sets the cache entry to the Refreshing/Populating states.
@@ -194,7 +194,7 @@ pub struct Tiles {
 }
 
 impl Tiles {
-    #[paralegal::marker(noinline)]
+    //#[paralegal::marker(noinline)]
     pub fn new(
         tile_response: TileResponse,
         ttl: Duration,
