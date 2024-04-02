@@ -101,48 +101,58 @@ impl<'a> RunBuilder<'a> {
     {
         let app_dir =
             &self.evaluation_config.app_config[self.experiment_config.app_config_name()].source_dir;
-        let mut code_compare = None;
-        (0..cutoff.len()).rev().flat_map(move |cidx| {
-            let current = &cutoff[cidx];
 
-            current
-                .expectation
-                .map(|expectation| {
-                    let next_commit = (cidx != 0)
-                        .then(|| cutoff.get(cidx - 1))
-                        .flatten()
-                        .map(|c| &c.commit);
-                    let commits = if let Some(next) = next_commit.as_ref() {
-                        get_all_commits(app_dir, &next, &current.commit)
-                    } else {
-                        vec![current.commit.clone()]
-                    };
-                    // Compare to the last commit that we actually ran
-                    let mut inner_code_compare_commit = code_compare.clone();
-                    code_compare = commits.last().map(Clone::clone);
-                    commits.into_iter().rev().flat_map(move |commit| {
-                        let current_compare_commit = inner_code_compare_commit.clone();
-                        inner_code_compare_commit = Some(commit.clone());
-                        self.experiment_config.application.policies().map(
-                            move |(policy_name, policy)| {
-                                let mut run = self.case_study_run(policy_name, policy, expectation);
-                                run.external_annotations =
-                                    current.external_annotations.as_ref().map(|pb| pb.as_path());
-                                run.prepare = Some(Rc::new(checkout(&commit)));
-                                run.post_process = Some(Rc::new(diff_analyzed(
-                                    current_compare_commit.as_ref(),
-                                    &commit,
-                                    target_path,
-                                )));
-                                run.commit = Some(commit.clone());
-                                run
-                            },
-                        )
+        let (commit_range, conf): (Vec<_>, Vec<_>) = (0..cutoff.len())
+            .rev()
+            .flat_map(|cidx| {
+                let current = &cutoff[cidx];
+                current
+                    .expectation
+                    .map(|expectation| {
+                        let next_commit = (cidx != 0)
+                            .then(|| cutoff.get(cidx - 1))
+                            .flatten()
+                            .map(|c| &c.commit);
+                        if let Some(next) = next_commit.as_ref() {
+                            get_all_commits(app_dir, &next, &current.commit)
+                        } else {
+                            vec![current.commit.clone()]
+                        }
+                        .into_iter()
+                        .zip(std::iter::repeat((current, expectation)))
                     })
-                })
-                .into_iter()
-                .flatten()
-        })
+                    .into_iter()
+                    .flatten()
+            })
+            .unzip();
+        let commit_range = Rc::new(commit_range);
+
+        commit_range
+            .clone()
+            .iter()
+            .zip(conf.iter())
+            .enumerate()
+            .flat_map(move |(idx, (commit, (current, expectation)))| {
+                let commit_range = commit_range.clone();
+                self.experiment_config
+                    .application
+                    .policies()
+                    .map(move |(policy_name, policy)| {
+                        let mut run = self.case_study_run(policy_name, policy, *expectation);
+                        run.external_annotations =
+                            current.external_annotations.as_ref().map(|pb| pb.as_path());
+                        run.prepare = Some(Rc::new(checkout(&commit)));
+                        run.post_process = Some(Rc::new(diff_analyzed(
+                            idx,
+                            commit_range.clone(),
+                            target_path,
+                        )));
+                        run.commit = Some(commit.clone());
+                        run
+                    })
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
     fn ablation_runs_for_policy(
@@ -295,22 +305,34 @@ fn checkout(s: &str) -> impl Fn(Stdio, Stdio) {
 }
 
 fn diff_analyzed(
-    prior: Option<&String>,
-    current: &str,
+    current_idx: usize,
+    range: Rc<Vec<String>>,
     target_path: &Path,
 ) -> impl Fn(&Context, &mut RunMeasurements) {
-    let current = current.to_owned();
-    let code_path = |commit: &str| target_path.join(format!("{commit}.code.rs"));
-    let prior_path = prior.map(String::as_str).map(code_path);
+    let current = range[current_idx].clone();
+    let target_path = target_path.to_owned();
+    let code_path = move |commit: &str| target_path.join(format!("{commit}.code.rs"));
+    let prior_path = (current_idx != 0)
+        .then(|| &range[current_idx - 1])
+        .map(|s| code_path(s));
     let current_code_path = code_path(&current);
     move |ctx, measurement| {
         ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false)
             .unwrap();
-        if let Some(prior) = prior_path.as_ref() {
+        for predecessor in (current_idx != 0)
+            .then(|| &range[0..current_idx])
+            .unwrap_or(&[])
+            .iter()
+            .rev()
+        {
+            let path = code_path(&predecessor);
+            if !path.exists() {
+                continue;
+            }
             let diff = Command::new("diff")
                 .args([
                     OsStr::new("-u"),
-                    prior.as_os_str(),
+                    path.as_os_str(),
                     current_code_path.as_os_str(),
                 ])
                 .stdout(Stdio::piped())
@@ -327,7 +349,8 @@ fn diff_analyzed(
                         .then_some(())
                     })
                     .count() as u32,
-            )
+            );
+            break;
         }
     }
 }
