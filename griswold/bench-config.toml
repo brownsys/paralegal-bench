@@ -268,7 +268,7 @@ external-annotations = "../../research/dfpp-verification/roll-forward/atomic/aba
 commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
 
 [[experiment.atomic-roll-forward.cutoff]]
-commit = "b3fe55d9aa72facc561a31eeac36cfc5dce0ff01"
+commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
 expectation = "pass"
 external-annotations = "../../research/dfpp-verification/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 
