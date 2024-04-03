@@ -1,5 +1,6 @@
 //! Conversion from input types to run configurations / run preparation
 
+use core::slice;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -262,7 +263,13 @@ impl<'a> RunBuilder<'a> {
                         })
                     }))
                     .chain(batch_config.change.iter().flat_map(move |change| {
-                        change.affected_controllers.iter().flat_map(move |c| {
+                        let fixed = change
+                            .affected_controllers
+                            .as_ref()
+                            .map_or(batch_config.baseline_controllers, |ctrl| {
+                                slice::from_ref(ctrl)
+                            });
+                        fixed.iter().flat_map(move |c| {
                             mk_batch_exps!(!batch_config.expect_failure, c, changed_extra_feature)
                         })
                     }))
