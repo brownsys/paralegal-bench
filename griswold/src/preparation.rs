@@ -319,9 +319,6 @@ fn diff_analyzed(
     let current = range[current_idx].clone();
     let target_path = target_path.to_owned();
     let code_path = move |commit: &str| target_path.join(format!("{commit}.code.rs"));
-    let prior_path = (current_idx != 0)
-        .then(|| &range[current_idx - 1])
-        .map(|s| code_path(s));
     let current_code_path = code_path(&current);
     move |ctx, measurement| {
         ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false)
