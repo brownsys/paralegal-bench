@@ -65,13 +65,16 @@ fn parse_url(
     tile_name: &str,
     tags: &mut Tags,
 ) -> HandlerResult<Url> {
-    Url::parse(url).map_err(|e| {
-        tags.add_tag("type", species);
-        tags.add_extra("tile", tile_name);
-        tags.add_extra("url", url);
-        tags.add_extra("parse_error", &e.to_string());
-        HandlerErrorKind::InvalidHost(species, "Url::parse failed".to_owned()).into()
-    })
+    match Url::parse(url) {
+        Ok(e) => Ok(e),
+        Err(e) => {
+            tags.add_tag("type", species);
+            tags.add_extra("tile", tile_name);
+            tags.add_extra("url", url);
+            tags.add_extra("parse_error", &e.to_string());
+            Err(HandlerErrorKind::InvalidHost(species, "Url::parse failed".to_owned()).into())
+        }
+    }
 }
 
 /// Extract the host from Url
