@@ -47,11 +47,11 @@ policy!(card_encryption, ctx, {
 });
 
 policy!(card_storage, ctx {
-    let mut srcs = ctx.marked_nodes(marker!(credit_card)).peekable();
-    let decision_sources = ctx.marked_nodes(marker!(future_usage_decision)).collect::<Vec<_>>();
+    let mut srcs = ctx.nodes_marked_any_way(marker!(credit_card)).peekable();
+    let decision_sources = ctx.nodes_marked_any_way(marker!(future_usage_decision)).collect::<Vec<_>>();
     assert_warning!(ctx, srcs.peek().is_some());
     let mut any_sink_reached = false;
-    let sinks = ctx.marked_nodes(marker!(store)).collect::<Vec<_>>();
+    let sinks = ctx.nodes_marked_any_way(marker!(store)).collect::<Vec<_>>();
     assert_warning!(ctx, !sinks.is_empty());
     for src in srcs {
         for sink in sinks.iter().cloned() {
