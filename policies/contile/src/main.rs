@@ -3,7 +3,8 @@ use clap::Parser;
 use paralegal_policy::{
     algo::ahb::TraceLevel,
     paralegal_spdg::{GlobalNode, Identifier},
-    Config, Context, Diagnostics, EdgeSelection, GraphLocation, NodeQueries, SPDGGenCommand,
+    Config, Context, Diagnostics, EdgeSelection, GraphLocation, NodeExt, NodeQueries,
+    SPDGGenCommand,
 };
 use std::{fs::File, path::PathBuf, sync::Arc};
 
@@ -12,21 +13,47 @@ fn policy(ctx: Arc<Context>) -> Result<()> {
     let m_sensitive = Identifier::new_intern("sensitive");
     let m_send = Identifier::new_intern("metrics_server");
     ctx.clone().named_policy(
-        Identifier::new_intern("personal tags not in metrics"),
+        Identifier::new_intern("personal tags not sent to adm"),
         |ctx| {
             for sink in ctx.nodes_marked_any_way(m_sink) {
                 for src in ctx.nodes_marked_any_way(m_sensitive) {
-                    let mut intersections = sink
-                        .influencers(&ctx, EdgeSelection::Data)
-                        .into_iter()
-                        .filter(|intersection| {
-                            src.flows_to(*intersection, &ctx, EdgeSelection::Data)
-                        });
-                    if let Some(intersection) = intersections.next() {
-                        let mut msg = ctx
-                            .struct_node_error(intersection, "This call releases sensitive data");
-                        msg.with_node_note(src, "Sensitive data originates here");
-                        msg.with_node_note(intersection, "Externalizing value originates here");
+                    if let Some(path) = src.shortest_path(sink, &ctx, EdgeSelection::Data) {
+                        let mut msg =
+                            ctx.struct_node_error(sink, "this call sends personal data to the adm");
+                        msg.with_node_help(src, "personal data originates here");
+                        for n in path.iter() {
+                            msg.with_node_note(
+                                *n,
+                                format!("Passes through this {}", n.info(&ctx).description),
+                            );
+                        }
+                        msg.emit();
+                    }
+                }
+            }
+
+            Ok(())
+        },
+    )?;
+    ctx.named_policy(
+        Identifier::new_intern("personal tags not sent to metrics"),
+        |ctx| {
+            let personals = ctx.nodes_marked_any_way(m_sensitive).collect::<Box<[_]>>();
+            let sends = ctx.nodes_marked_any_way(m_send).collect::<Box<[_]>>();
+            for personal in personals.iter() {
+                for send in sends.iter() {
+                    if let Some(path) = personal.shortest_path(*send, &ctx, EdgeSelection::Data) {
+                        let mut msg = ctx.struct_node_error(
+                            *send,
+                            "this call sends personal data to the metrics server",
+                        );
+                        msg.with_node_note(*personal, "personal data originates here");
+                        for p in path.iter() {
+                            msg.with_node_note(
+                                *p,
+                                format!("Passes through this {}", p.info(&ctx).description),
+                            );
+                        }
                         msg.emit();
                     }
                 }
@@ -34,18 +61,7 @@ fn policy(ctx: Arc<Context>) -> Result<()> {
             Ok(())
         },
     )?;
-    ctx.named_policy(Identifier::new_intern("personal tags not sent"), |ctx| {
-        let personals = ctx.nodes_marked_any_way(m_sensitive).collect::<Box<[_]>>();
-        let sends = ctx.nodes_marked_any_way(m_send).collect::<Box<[_]>>();
-        if let Some((from, to)) = ctx.any_flows(&personals, &sends, EdgeSelection::Data) {
-            ctx.always_happens_before([from], |_| false, |t| t == to)?
-                .report(ctx);
-            // let mut msg = ctx.struct_node_error(to, "This call externalizes a sensitive value");
-            // msg.with_node_note(from, "Sensitive data originates here");
-            // msg.emit();
-        }
-        Ok(())
-    })
+    Ok(())
 }
 
 #[derive(Parser)]
