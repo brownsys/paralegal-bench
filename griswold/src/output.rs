@@ -119,6 +119,7 @@ impl RunMeasurements {
         set!(traversal_time, traversal_time.into());
         set!(num_controllers, ctx.desc().controllers.len() as u16);
         set!(rustc_time, ctx.desc().rustc_time.into());
+        set!(policy_time, cmd_stat.elapsed);
     }
 
     pub fn add_changed_lines(&mut self, l: u32) {
