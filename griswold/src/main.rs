@@ -6,6 +6,8 @@ use std::{
     process,
 };
 
+const GRISWOLD_COMMIT: &str = env!("COMMIT_HASH");
+
 pub mod input;
 pub mod output;
 pub mod preparation;
@@ -42,23 +44,41 @@ pub struct Arguments {
     no_install_flow_analyzer: bool,
 }
 
+fn get_commit_version() -> String {
+    std::process::Command::new("git")
+        .args(["log", "-n", "1", "--format=%H"])
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .unwrap_or("unknown".to_owned())
+        .trim()
+        .to_owned()
+}
+
 fn main() {
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
-    let mut output = Output::init(args).unwrap();
     let config_file = std::fs::read_to_string(&args.config_path).unwrap();
     let config: EvaluationConfig = toml::from_str(&config_file).unwrap();
 
+    let current_dir = std::env::current_dir().unwrap();
+    std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
     if !args.no_install_flow_analyzer {
-        let current_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
         let compile_stat = process::Command::new("cargo")
             .args(["install", "--locked", "--path"])
             .arg(Path::new("crates").join("paralegal-flow"))
             .status()
             .unwrap();
         assert!(compile_stat.success());
-        std::env::set_current_dir(current_dir).unwrap();
     }
+    let paralegal_commit = get_commit_version();
+    std::env::set_current_dir(current_dir).unwrap();
+    let this_commit_version = get_commit_version();
+
+    if this_commit_version != GRISWOLD_COMMIT {
+        println!("WARN: This application was compiled from a different commit ({GRISWOLD_COMMIT}) than the current state of the repo ({this_commit_version})");
+    }
+
+    let mut output = Output::init(args, paralegal_commit, this_commit_version).unwrap();
 
     config.run(&mut output).unwrap()
 }

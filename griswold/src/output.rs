@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::input::{EvaluationConfig, PolicyResult};
 use crate::run::Run;
+use crate::GRISWOLD_COMMIT;
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 struct TimeMeasurement(u128);
@@ -136,6 +137,9 @@ pub struct SystemParameters {
     cpu_arch: Option<String>,
     kernel_version: Option<String>,
     os_version: Option<String>,
+    paralegal_commit: String,
+    griswold_commit: String,
+    repo_commit: String,
 }
 
 #[derive(Serialize)]
@@ -146,7 +150,7 @@ struct CpuParameters {
 }
 
 impl SystemParameters {
-    pub fn new() -> Self {
+    pub fn new(paralegal_commit: String, repo_commit: String) -> Self {
         use sysinfo::System;
         let sys = System::new_all();
         let cpus = sys
@@ -167,6 +171,9 @@ impl SystemParameters {
             cpu_arch: System::cpu_arch(),
             os_version: System::long_os_version(),
             kernel_version: System::kernel_version(),
+            paralegal_commit,
+            griswold_commit: GRISWOLD_COMMIT.to_owned(),
+            repo_commit,
         }
     }
 }

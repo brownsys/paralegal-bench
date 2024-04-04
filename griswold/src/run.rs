@@ -100,7 +100,11 @@ pub struct Output {
 }
 
 impl Output {
-    pub fn init(args: &Arguments) -> std::io::Result<Self> {
+    pub fn init(
+        args: &Arguments,
+        paralegal_commit: String,
+        repo_commit: String,
+    ) -> std::io::Result<Self> {
         let bench_num = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -117,7 +121,7 @@ impl Output {
             &args.config_path,
             general_output_dir.join("bench-config.toml"),
         )?;
-        let sys_stat = SystemParameters::new();
+        let sys_stat = SystemParameters::new(paralegal_commit, repo_commit);
         let mut sys_stat_file = File::create(general_output_dir.join("sys.toml"))?;
         use std::io::Write;
         write!(
