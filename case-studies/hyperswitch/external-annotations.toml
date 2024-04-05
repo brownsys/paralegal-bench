@@ -7,3 +7,10 @@ marker = "credit_card"
 
 [["common_enums::FutureUsage"]]
 marker = "future_usage_decision"
+
+# [["common_enums::DbFutureUsage"]]
+# marker = "future_usage_decision"
+
+# [["crate::core::mandate::MandateBehaviour::get_setup_future_usage"]]
+# marker = "future_usage_decision"
+# on_return = true
