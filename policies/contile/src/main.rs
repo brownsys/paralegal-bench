@@ -14,6 +14,8 @@ struct Arguments {
     dump_analyzed_code: Option<PathBuf>,
     #[clap(long)]
     policy: Vec<Policy>,
+    #[clap(long, conflicts_with = "skip_compile")]
+    buggy: bool,
     #[clap(last = true)]
     extra_args: Vec<String>,
 }
@@ -32,6 +34,9 @@ fn main() -> Result<()> {
             cmd.get_command().arg("--");
         }
         cmd.get_command().arg("--lib");
+        if args.buggy {
+            cmd.get_command().args(["--features", "leak"]);
+        }
         cmd.run(&args.repo_dir)?
     };
     let mut config = Config::default();
