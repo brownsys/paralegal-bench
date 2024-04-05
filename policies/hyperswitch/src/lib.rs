@@ -51,10 +51,10 @@ policy!(card_storage, ctx {
     let m_credit_card = marker!(credit_card);
     let mut srcs = ctx.nodes_marked_any_way(m_credit_card).peekable();
     let decision_sources = ctx.nodes_marked_any_way(m_future_usage).collect::<Vec<_>>();
-    assert_warning!(ctx, srcs.peek().is_some());
+    assert_error!(ctx, srcs.peek().is_some(), "VACUITY: No sensitive sources found");
     let mut any_sink_reached = false;
     let sinks = ctx.nodes_marked_any_way(marker!(store)).collect::<Vec<_>>();
-    assert_warning!(ctx, !sinks.is_empty());
+    assert_error!(ctx, !sinks.is_empty(), "VACUITY: No sinks found");
     for src in srcs {
         for sink in sinks.iter().cloned() {
             if !src.flows_to(sink, &ctx, EdgeSelection::Data) {
