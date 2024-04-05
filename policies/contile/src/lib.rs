@@ -23,7 +23,6 @@ impl Policy {
 pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
     let m_sink = Identifier::new_intern("sink");
     let m_sensitive = Identifier::new_intern("sensitive");
-    let m_send = Identifier::new_intern("metrics_server");
     ctx.clone().named_policy(
         Identifier::new_intern("personal tags not sent to adm"),
         |ctx| {
@@ -50,7 +49,6 @@ pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
 }
 
 pub fn send_to_metrics(ctx: Arc<Context>) -> Result<()> {
-    let m_sink = Identifier::new_intern("sink");
     let m_sensitive = Identifier::new_intern("sensitive");
     let m_send = Identifier::new_intern("metrics_server");
     ctx.named_policy(

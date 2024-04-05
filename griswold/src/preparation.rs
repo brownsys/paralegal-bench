@@ -396,7 +396,10 @@ impl Application {
                 ),
             ],
             Application::Websubmit { .. } => &[(PolicyResult::Pass, &[])],
-            Application::Contile { .. } => &[(PolicyResult::Pass, &[])],
+            Application::Contile { .. } => &[
+                (PolicyResult::Pass, &[]),
+                (PolicyResult::Fail, &["--features", "leak"]),
+            ],
         }
     }
 
