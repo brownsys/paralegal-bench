@@ -46,6 +46,7 @@ pub struct RunMeasurements {
     precomputation_time: Option<TimeMeasurement>,
     traversal_time: Option<TimeMeasurement>,
     num_controllers: Option<u16>,
+    num_markers: Option<u32>,
     /// How many of the analyzed lines changed vs the previous commit. Used in
     /// roll-forward only
     changed_lines: Option<u32>,
@@ -83,6 +84,7 @@ impl RunMeasurements {
             traversal_time: None,
             num_controllers: None,
             changed_lines: None,
+            num_markers: None,
             peak_cpu_usage_pdg: pdg_stat.peak_cpu_usage,
             peak_cpu_usage_policy: None,
             mean_cpu_usage_pdg: pdg_stat.mean_cpu_usage,
@@ -121,6 +123,7 @@ impl RunMeasurements {
         set!(num_controllers, ctx.desc().controllers.len() as u16);
         set!(rustc_time, ctx.desc().rustc_time.into());
         set!(policy_time, cmd_stat.elapsed);
+        set!(num_markers, ctx.desc().marker_annotation_count);
     }
 
     pub fn add_changed_lines(&mut self, l: u32) {
