@@ -126,6 +126,10 @@ pub enum Application {
         #[serde(default)]
         policies: Box<[freedit::Policy]>,
     },
+    Contile {
+        #[serde(default)]
+        policies: Box<[contile::Policy]>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]

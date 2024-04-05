@@ -581,6 +581,7 @@ dependencies = [
  "anyhow",
  "clap",
  "paralegal-policy",
+ "serde",
  "strum 0.26.2",
 ]
 
@@ -1811,6 +1812,7 @@ dependencies = [
  "atomic",
  "cargo",
  "clap",
+ "contile",
  "csv",
  "freedit",
  "humantime",

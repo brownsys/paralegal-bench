@@ -27,4 +27,5 @@ hyperswitch = { path = "../policies/hyperswitch" }
 lemmy = { path = "../policies/lemmy" }
 plume = { path = "../policies/plume" }
 websubmit = { path = "../policies/websubmit" }
+contile = { path = "../policies/contile" }
 semver = { version = "1.0.22", features = ["serde"] }

@@ -1,68 +1,8 @@
 use anyhow::{Ok, Result};
-use clap::Parser;
-use paralegal_policy::{
-    algo::ahb::TraceLevel,
-    paralegal_spdg::{GlobalNode, Identifier},
-    Config, Context, Diagnostics, EdgeSelection, GraphLocation, NodeExt, NodeQueries,
-    SPDGGenCommand,
-};
-use std::{fs::File, path::PathBuf, sync::Arc};
-
-fn policy(ctx: Arc<Context>) -> Result<()> {
-    let m_sink = Identifier::new_intern("sink");
-    let m_sensitive = Identifier::new_intern("sensitive");
-    let m_send = Identifier::new_intern("metrics_server");
-    ctx.clone().named_policy(
-        Identifier::new_intern("personal tags not sent to adm"),
-        |ctx| {
-            for sink in ctx.nodes_marked_any_way(m_sink) {
-                for src in ctx.nodes_marked_any_way(m_sensitive) {
-                    if let Some(path) = src.shortest_path(sink, &ctx, EdgeSelection::Data) {
-                        let mut msg =
-                            ctx.struct_node_error(sink, "this call sends personal data to the adm");
-                        msg.with_node_help(src, "personal data originates here");
-                        for n in path.iter() {
-                            msg.with_node_note(
-                                *n,
-                                format!("Passes through this {}", n.info(&ctx).description),
-                            );
-                        }
-                        msg.emit();
-                    }
-                }
-            }
-
-            Ok(())
-        },
-    )?;
-    ctx.named_policy(
-        Identifier::new_intern("personal tags not sent to metrics"),
-        |ctx| {
-            let personals = ctx.nodes_marked_any_way(m_sensitive).collect::<Box<[_]>>();
-            let sends = ctx.nodes_marked_any_way(m_send).collect::<Box<[_]>>();
-            for personal in personals.iter() {
-                for send in sends.iter() {
-                    if let Some(path) = personal.shortest_path(*send, &ctx, EdgeSelection::Data) {
-                        let mut msg = ctx.struct_node_error(
-                            *send,
-                            "this call sends personal data to the metrics server",
-                        );
-                        msg.with_node_note(*personal, "personal data originates here");
-                        for p in path.iter() {
-                            msg.with_node_note(
-                                *p,
-                                format!("Passes through this {}", p.info(&ctx).description),
-                            );
-                        }
-                        msg.emit();
-                    }
-                }
-            }
-            Ok(())
-        },
-    )?;
-    Ok(())
-}
+use clap::{Parser, ValueEnum};
+use contile::Policy;
+use paralegal_policy::{algo::ahb::TraceLevel, Config, GraphLocation, SPDGGenCommand};
+use std::{fs::File, path::PathBuf};
 
 #[derive(Parser)]
 struct Arguments {
@@ -72,6 +12,8 @@ struct Arguments {
     skip_compile: bool,
     #[clap(long)]
     dump_analyzed_code: Option<PathBuf>,
+    #[clap(long)]
+    policy: Vec<Policy>,
     #[clap(last = true)]
     extra_args: Vec<String>,
 }
@@ -98,7 +40,15 @@ fn main() -> Result<()> {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
             ctx.write_analyzed_code(File::create(path)?, false)?;
         }
-        policy(ctx)
+        let policy = if args.policy.is_empty() {
+            Policy::value_variants()
+        } else {
+            args.policy.as_slice()
+        };
+        for p in policy {
+            p.runnable()(ctx.clone())?
+        }
+        Ok(())
     })?;
 
     assert!(result.success);

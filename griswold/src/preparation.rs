@@ -396,6 +396,7 @@ impl Application {
                 ),
             ],
             Application::Websubmit { .. } => &[(PolicyResult::Pass, &[])],
+            Application::Contile { .. } => &[(PolicyResult::Pass, &[])],
         }
     }
 
@@ -429,6 +430,11 @@ impl Application {
                 selection_or_all(policies)
                     .iter()
                     .map(|p| (p.as_ref(), Rc::from(p.runnable(*flavour)) as PolicyFn<'a>)),
+            ),
+            Application::Contile { policies } => Box::new(
+                selection_or_all(policies)
+                    .iter()
+                    .map(|p| (p.as_ref(), Rc::from(p.runnable()) as PolicyFn<'a>)),
             ),
         }
     }
