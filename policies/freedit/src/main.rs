@@ -9,19 +9,20 @@ use freedit::Policy;
 
 #[derive(Parser)]
 struct Args {
-    #[clap(long, value_enum)]
+    #[clap(long, default_value = "case-studies/freedit")]
+    repo_dir: std::path::PathBuf,
+    #[clap(long, short, value_enum)]
     policy: Vec<Policy>,
     #[clap(long)]
     skip_compile: bool,
-    #[clap(long)]
+    #[clap(long, conflicts_with = "skip_compile")]
     buggy: bool,
 }
 
 fn main() -> Result<()> {
-    let dir = "..";
     let args = Args::parse();
     let graph_loc = if args.skip_compile {
-        GraphLocation::std(dir)
+        GraphLocation::std(&args.repo_dir)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml")
@@ -31,7 +32,7 @@ fn main() -> Result<()> {
         if args.buggy {
             cmd.get_command().args(["--features", "buggy"]);
         }
-        cmd.run(dir)?
+        cmd.run(&args.repo_dir)?
     };
     let policy = if args.policy.is_empty() {
         Policy::value_variants()

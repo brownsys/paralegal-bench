@@ -12,7 +12,7 @@ struct Arguments {
     skip_compile: bool,
     #[clap(long)]
     dump_analyzed_code: Option<PathBuf>,
-    #[clap(long)]
+    #[clap(long, short, value_enum)]
     policy: Vec<Policy>,
     #[clap(long, conflicts_with = "skip_compile")]
     buggy: bool,

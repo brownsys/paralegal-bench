@@ -13,7 +13,7 @@ use paralegal_policy::GraphLocation;
 #[derive(clap::Parser)]
 struct Args {
     /// Policy to run. (defaults to all of them)
-    #[clap(long, short)]
+    #[clap(long, short, value_enum)]
     policy: Vec<Policy>,
     #[clap(long, default_value = "case-studies/hyperswitch")]
     source_dir: std::path::PathBuf,
