@@ -2,7 +2,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{GlobalNode, Identifier},
-    Context, EdgeSelection, Marker, NodeQueries,
+    Context, Diagnostics, EdgeSelection, Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -69,6 +69,7 @@ policy!(card_storage, ctx {
         }
     }
     assert_warning!(ctx, any_sink_reached);
+    ctx.note("Card storage policy finished");
     Ok(())
 });
 
