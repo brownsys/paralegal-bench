@@ -1,5 +1,7 @@
 use anyhow::{Ok, Result};
-use paralegal_policy::{paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection, NodeExt};
+use paralegal_policy::{
+    assert_error, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection, NodeExt,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -26,8 +28,20 @@ pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
     ctx.clone().named_policy(
         Identifier::new_intern("personal tags not sent to adm"),
         |ctx| {
-            for sink in ctx.nodes_marked_any_way(m_sink) {
-                for src in ctx.nodes_marked_any_way(m_sensitive) {
+            let mut sink_nodes = ctx.nodes_marked_any_way(m_sink).peekable();
+            assert_error!(
+                ctx,
+                sink_nodes.peek().is_some(),
+                "VACUITY: No sink nodes found"
+            );
+            let sensitive_nodes = ctx.nodes_marked_any_way(m_sensitive).collect::<Box<_>>();
+            assert_error!(
+                ctx,
+                !sensitive_nodes.is_empty(),
+                "VACUITY: No sensitive nodes found"
+            );
+            for sink in sink_nodes {
+                for src in sensitive_nodes.iter().copied() {
                     if let Some(path) = src.shortest_path(sink, &ctx, EdgeSelection::Data) {
                         let mut msg =
                             ctx.struct_node_error(sink, "this call sends personal data to the adm");
@@ -56,6 +70,12 @@ pub fn send_to_metrics(ctx: Arc<Context>) -> Result<()> {
         |ctx| {
             let personals = ctx.nodes_marked_any_way(m_sensitive).collect::<Box<[_]>>();
             let sends = ctx.nodes_marked_any_way(m_send).collect::<Box<[_]>>();
+            assert_error!(
+                ctx,
+                !personals.is_empty(),
+                "VACUITY: No personal data nodes found"
+            );
+            assert_error!(ctx, !sends.is_empty(), "VACUITY: No sending nodes found");
             for personal in personals.iter() {
                 for send in sends.iter() {
                     if let Some(path) = personal.shortest_path(*send, &ctx, EdgeSelection::Data) {
