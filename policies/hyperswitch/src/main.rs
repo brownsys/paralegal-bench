@@ -51,7 +51,8 @@ fn main() -> Result<()> {
             ctx.write_analyzed_code(File::create(path)?, false)?;
         }
         let policies = if args.policy.is_empty() {
-            Policy::value_variants()
+            &[Policy::CardStorage]
+            // Policy::value_variants()
         } else {
             args.policy.as_slice()
         };

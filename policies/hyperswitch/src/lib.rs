@@ -1,8 +1,7 @@
 use anyhow::Result;
 use paralegal_policy::{
-    assert_error, assert_warning,
-    paralegal_spdg::{GlobalNode, Identifier},
-    Context, Diagnostics, EdgeSelection, Marker, NodeQueries,
+    assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection,
+    Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
