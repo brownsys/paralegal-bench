@@ -92,12 +92,14 @@ application = "websubmit"
 mode = "case-study"
 application = "atomic-data"
 
-# Does not run on this machine sadly
+# # Does not run on this machine sadly
 # [[experiment.case-studies]]
 # mode = "case-study"
 # application = "hyperswitch"
-# Limiting policies for now, because only one is implemented.
+# # Limiting policies for now, because only one is implemented.
 # policies = ["card-storage"]
+# # Buggy currently, hence the disable
+# adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
