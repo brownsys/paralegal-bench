@@ -3,7 +3,7 @@ use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{CallString, GlobalNode, Identifier, InstructionKind, Node, SPDG},
-    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker,
+    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -163,8 +163,7 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
             // Another option is to say expiration must be for all data,
             // with exceptions for certain marked types.
             all type_source = ctx.marked_nodes(db_access_marker)
-                .flat_map(|input| ctx.consuming_call_sites(input))
-                .flat_map(|f| ctx.inputs_of(f).iter_global_nodes().collect::<Vec<_>>())
+                .flat_map(|input| input.siblings(&ctx).into_iter())
                 .filter(|f|
                     ctx.flows_to(*type_ident, *f, EdgeSelection::Data)
                 );
@@ -188,6 +187,10 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         .marked(marker!(pageviews))
         .map(|d| d)
         .collect::<Vec<_>>();
+    let db_store_marker = marker!(db_store);
+    ctx.report_marker_if_absent(db_store_marker);
+    let time_marker = marker!(time);
+    ctx.report_marker_if_absent(time_marker);
     ctx.clone().named_policy(Identifier::new_intern("date store"), |ctx| {
         assert_warning!(
             ctx,
@@ -201,10 +204,6 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         };
         let mut storing_controller = 0;
         ctx.controller_contexts().all(|ctx|{
-            let db_store_marker = marker!(db_store);
-            ctx.report_marker_if_absent(db_store_marker);
-            let time_marker = marker!(time);
-            ctx.report_marker_if_absent(time_marker);
             let time_sources = ctx
                 .current()
                 .data_sources()
