@@ -44,10 +44,24 @@ policy!(apikey_storage, ctx, {
 });
 
 policy!(card_encryption, ctx, {
+    let sources = ctx
+        .nodes_marked_any_way(marker!(credit_card))
+        .collect::<Box<_>>();
+    let sinks = ctx
+        .nodes_marked_any_way(marker!(store))
+        .collect::<HashSet<_>>();
+    assert_error!(
+        ctx,
+        !sources.is_empty(),
+        "VACUITY: No credit card sources found"
+    );
+    assert_error!(ctx, !sinks.is_empty(), "VACUITY: No sinks found");
+    let encrypts = ctx.marked_nodes(marker!(encrypt)).collect::<HashSet<_>>();
+    assert_warning!(ctx, encrypts.is_empty(), "WARN: No encryptors found");
     ctx.always_happens_before(
-        ctx.marked_nodes(marker!(credit_card)),
-        |node| ctx.has_marker(marker!(encrypt), node),
-        |node| ctx.has_marker(marker!(store), node),
+        sources.iter().copied(),
+        |node| encrypts.contains(&node),
+        |node| sinks.contains(&node),
     )?
     .report(ctx);
     Ok(())

@@ -24,3 +24,6 @@ marker = "apikey_response"
 [["router::db::api_keys::ApiKeyInterface::insert_api_key"]]
 marker = "externalize"
 on_argument = [1]
+
+[["router::core::payment_methods::transformers::StoreCardReq"]]
+marker = "store"
