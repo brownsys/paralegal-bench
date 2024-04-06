@@ -4,7 +4,7 @@ use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 use anyhow::Result;
 use paralegal_policy::{
     assert_error, diagnostics::ControllerContext, loc, paralegal_spdg, Context, Diagnostics,
-    IntoIterGlobalNodes, Marker, NodeQueries, PolicyContext,
+    IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use serde::{Deserialize, Serialize};
@@ -94,30 +94,100 @@ impl PropRunner {
         let stores = marker!(stores);
         let deletes = marker!(deletes);
         let from_storage = marker!(from_storage);
+
         let num_types_to_expect = ctx
-            .nodes_marked_any_way(sensitive)
-            .filter(|sens| {
-                ctx.influencees(*sens, EdgeSelection::Data)
-                    .any(|store| ctx.has_marker(stores, store))
+            .nodes_marked_any_way(stores)
+            .filter_map(|store| {
+                Some((
+                    ctx.influencers(store, EdgeSelection::Data)
+                        .find(|sens| ctx.has_marker(sensitive, *sens))?,
+                    store,
+                ))
             })
+            // Comment in for debugging
+            //
+            // .inspect(|(sens, store)| {
+            //     let mut msg = ctx.struct_node_help(
+            //         *sens,
+            //         format!(
+            //             "This sensitive value is stored {}",
+            //             sens.info(&ctx).description
+            //         ),
+            //     );
+            //     msg.with_node_note(
+            //         *store,
+            //         format!("Stored here {}", store.info(&ctx).description),
+            //     );
+            //     msg.emit()
+            // })
             .count();
 
-        let cleanup = self.cx.controller_contexts().find(|ctx| {
-            let cleaned = ctx.marked_nodes(from_storage).filter(|&src| {
-                ctx.influencees(src, EdgeSelection::Data)
-                    .any(|clean| ctx.has_marker(deletes, clean))
-            });
-            cleaned.count() == num_types_to_expect
-        });
+        // This below alternate version of the policy uses the "number of
+        // framework generated values" as the sensitive items. Because of the
+        // type marker policy change this now matches for too many values. We
+        // solve this by abstracting via the number of store calls instead
+        // (above) but the below could also be made to work, if we only considered
+        // "root" data, e.g. framework generated values, that are themselves not
+        // influenced by framework generated values.
+        //
+        // let num_types_to_expect = ctx
+        //     .nodes_marked_any_way(sensitive)
+        //     .filter_map(|sens| {
+        //         Some((
+        //             sens,
+        //             ctx.influencees(sens, EdgeSelection::Data)
+        //                 .find(|store| ctx.has_marker(stores, *store))?,
+        //         ))
+        //     })
+        //     .inspect(|(sens, store)| {
+        //         let mut msg = ctx.struct_node_help(
+        //             *sens,
+        //             format!(
+        //                 "This sensitive value is stored {}",
+        //                 sens.info(&ctx).description
+        //             ),
+        //         );
+        //         msg.with_node_note(
+        //             *store,
+        //             format!("Stored here {}", store.info(&ctx).description),
+        //         );
+        //         msg.emit()
+        //     })
+        //     .count();
 
-        if let Some(cleanup) = cleanup {
+        let cleaned = self
+            .cx
+            .controller_contexts()
+            .map(|ctx| {
+                let cleaned = ctx
+                    .marked_nodes(from_storage)
+                    .filter(|&src| {
+                        ctx.influencees(src, EdgeSelection::Data)
+                            .any(|clean| ctx.has_marker(deletes, clean))
+                    })
+                    .collect::<Box<_>>();
+                (ctx, cleaned)
+            })
+            .collect::<Box<_>>();
+        let cleanup = cleaned
+            .iter()
+            .find(|(_, cleaned)| cleaned.len() == num_types_to_expect);
+
+        if let Some((cleanup, _)) = cleanup {
             cleanup.note(format!(
                 "Found controller {} deletes all stored data",
                 cleanup.current().name
             ));
         } else {
-            self.cx
-                .error("Found no controller that deletes {num_types_to_expect} types")
+            let (ctx, cleaned) = cleaned
+                .iter()
+                .max_by_key(|(_, cleaned)| cleaned.len())
+                .unwrap();
+            self.cx.error(format!(
+                "Found no controller that deletes {num_types_to_expect} types. Max is {} in {}",
+                cleaned.len(),
+                ctx.current().name
+            ))
         };
         Ok(())
     }

@@ -953,7 +953,7 @@ dependencies = [
 [[package]]
 name = "flowistry_pdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#f49c201d82d3236fc5621d54acfc68b5f684f697"
+source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#77b7a6df9e3b876c918138148c299c61f0412622"
 dependencies = [
  "cfg-if",
  "internment",
@@ -1011,9 +1011,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.12"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "190092ea657667030ac6a35e305e62fc4dd69fd98ac98631e5d3a2b1575a12b5"
+checksum = "a06fddc2749e0528d2813f95e050e87e52c8cbbae56223b9babf73b3e53b0cc6"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -2472,7 +2472,7 @@ dependencies = [
 [[package]]
 name = "paralegal-policy"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#f49c201d82d3236fc5621d54acfc68b5f684f697"
+source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#77b7a6df9e3b876c918138148c299c61f0412622"
 dependencies = [
  "anyhow",
  "bitvec",
@@ -2491,7 +2491,7 @@ dependencies = [
 [[package]]
 name = "paralegal-spdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#f49c201d82d3236fc5621d54acfc68b5f684f697"
+source = "git+https://github.com/brownsys/paralegal?branch=marker-assign-v2#77b7a6df9e3b876c918138148c299c61f0412622"
 dependencies = [
  "cfg-if",
  "dot",
