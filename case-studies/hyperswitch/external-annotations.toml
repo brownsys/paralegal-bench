@@ -14,3 +14,13 @@ marker = "future_usage_decision"
 # [["crate::core::mandate::MandateBehaviour::get_setup_future_usage"]]
 # marker = "future_usage_decision"
 # on_return = true
+
+[["router::services::api::ApplicationResponse"]]
+marker = "externalize"
+
+[["api_models::api_keys::CreateApiKeyResponse"]]
+marker = "apikey_response"
+
+[["router::db::api_keys::ApiKeyInterface::insert_api_key"]]
+marker = "externalize"
+on_argument = [1]

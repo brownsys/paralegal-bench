@@ -4,7 +4,7 @@ use paralegal_policy::{
     Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 macro_rules! marker {
     ($name:ident) => {{
@@ -24,12 +24,20 @@ macro_rules! policy {
 }
 
 policy!(apikey_storage, ctx, {
+    let sources = ctx
+        .nodes_marked_any_way(marker!(apikey))
+        .collect::<Box<_>>();
+    assert_error!(ctx, !sources.is_empty());
+    let sinks = ctx
+        .nodes_marked_any_way(marker!(externalize))
+        .collect::<HashSet<_>>();
+    assert_error!(ctx, !sinks.is_empty());
     ctx.always_happens_before(
-        ctx.marked_nodes(marker!(apikey)),
+        sources.iter().copied(),
         |node| {
             ctx.has_marker(marker!(hashed), node) || ctx.has_marker(marker!(apikey_response), node)
         },
-        |node| ctx.has_marker(marker!(externalize), node),
+        |node| sinks.contains(&node),
     )?
     .report(ctx);
     Ok(())
