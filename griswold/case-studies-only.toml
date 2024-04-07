@@ -68,15 +68,20 @@ application = "websubmit"
 mode = "case-study"
 application = "atomic-data"
 
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "lemmy"
+
 [[experiment.case-studies]]
 mode = "case-study"
 application = "hyperswitch"
 policies = ["card-storage"]
 
-
 [[experiment.case-studies]]
 mode = "case-study"
 application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+adaptive-depth = false
 
 [[experiment.ablation]]
 mode = "ablation"
