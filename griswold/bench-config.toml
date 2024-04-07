@@ -92,6 +92,10 @@ application = "websubmit"
 mode = "case-study"
 application = "atomic-data"
 
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "lemmy"
+
 # # Does not run on this machine sadly
 # [[experiment.case-studies]]
 # mode = "case-study"
