@@ -5,6 +5,7 @@ use plume::PlumeVersion;
 
 #[derive(clap::Parser)]
 struct Args {
+    #[clap(default_value = "case-studies/plume")]
     plume_dir: std::path::PathBuf,
     /// Which plume version to run.
     ///
@@ -24,17 +25,19 @@ fn main() -> Result<()> {
     let args = Args::try_parse()?;
 
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
-    cmd.get_command().args([
+    let cmd_raw = cmd.get_command();
+    cmd_raw.args([
         "--external-annotations",
         "external-annotations.toml",
         "--abort-after-analysis",
         "--target",
         "plume-models",
-        "--",
-        "--no-default-features",
-        "--features",
-        "postgres",
     ]);
+    cmd_raw.args(&args.cargo_args);
+    if !args.cargo_args.contains(&"--".to_owned()) {
+        cmd_raw.arg("--");
+    }
+    cmd_raw.args(["--no-default-features", "--features", "postgres"]);
     for (version_bound, feature) in [
         (PlumeVersion::V1, "delete-comments"),
         (PlumeVersion::V2, "require-delete-media"),
@@ -45,7 +48,6 @@ fn main() -> Result<()> {
                 .args(["--features", &format!("plume-models/{feature}")]);
         }
     }
-    cmd.get_command().args(args.cargo_args);
     let result = cmd.run(args.plume_dir)?.with_context(plume::check)?;
     println!(
         "Finished {}successfully with {}",

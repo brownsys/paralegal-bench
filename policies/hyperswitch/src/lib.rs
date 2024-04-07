@@ -96,6 +96,7 @@ policy!(card_storage, ctx {
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum, Deserialize, Serialize, strum::AsRefStr)]
 #[strum(serialize_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum Policy {
     CardStorage,
     CardEncryption,
