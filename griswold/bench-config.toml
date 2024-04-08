@@ -46,6 +46,11 @@ external-annotations = "external-annotations.toml"
 flow-args = ["--target", "router"]
 cargo-args = ["--lib"]
 
+[app-config.contile]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+
 [app-config.original-plume]
 # Must point to a directory containing the https://github.com/Plume-org/Plume
 # git repository
@@ -101,9 +106,13 @@ application = "lemmy"
 # mode = "case-study"
 # application = "hyperswitch"
 # # Limiting policies for now, because only one is implemented.
-# policies = ["card-storage"]
-# # Buggy currently, hence the disable
-# adaptive-depth = false
+# policies = ["card-storage", "apikey-storage"]
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"

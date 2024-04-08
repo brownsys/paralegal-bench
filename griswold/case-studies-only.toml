@@ -75,7 +75,7 @@ application = "lemmy"
 [[experiment.case-studies]]
 mode = "case-study"
 application = "hyperswitch"
-policies = ["card-storage"]
+policies = ["card-storage", "apikey-storage"]
 
 [[experiment.case-studies]]
 mode = "case-study"
