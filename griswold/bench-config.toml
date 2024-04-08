@@ -97,7 +97,7 @@ application = "websubmit"
 mode = "case-study"
 application = "atomic-data"
 
-[[experiment.adaptive-depth]]
+[[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
 
