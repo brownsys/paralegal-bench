@@ -1828,6 +1828,8 @@ dependencies = [
  "strum 0.26.2",
  "sysinfo",
  "toml",
+ "tracing",
+ "tracing-subscriber",
  "websubmit",
 ]
 

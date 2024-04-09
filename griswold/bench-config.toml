@@ -54,7 +54,11 @@ cargo-args = ["--lib"]
 [app-config.original-plume]
 # Must point to a directory containing the https://github.com/Plume-org/Plume
 # git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# direcory must exist however
 source-dir = "../../clones/Plume"
+clone = "https://github.com/Plume-org/Plume"
 flow-args = [
     "--target",
     "plume-models",
@@ -71,7 +75,11 @@ original = "1"
 [app-config.roll-forward-atomic]
 # Must point to a directory containing the
 # https://github.com/atomicdata-dev/atomic-server git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# direcory must exist however
 source-dir = "../../clones/atomic-server"
+clone = "https://github.com/atomicdata-dev/atomic-server"
 flow-args = [
     "--target",
     "atomic_lib",
@@ -101,12 +109,12 @@ application = "atomic-data"
 mode = "case-study"
 application = "lemmy"
 
-# # Does not run on this machine sadly
-# [[experiment.case-studies]]
-# mode = "case-study"
-# application = "hyperswitch"
-# # Limiting policies for now, because only one is implemented.
-# policies = ["card-storage", "apikey-storage"]
+# Does not run on this machine sadly
+[[experiment.case-studies]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
 
 [[experiment.case-studies]]
 mode = "case-study"

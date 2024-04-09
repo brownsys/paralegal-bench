@@ -4,6 +4,7 @@ use indexmap::IndexMap;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, time::Duration};
+use tracing::level_filters::LevelFilter;
 
 #[derive(Clone, Copy, PartialEq, Eq, strum::AsRefStr, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -23,12 +24,36 @@ impl std::ops::Not for PolicyResult {
     }
 }
 
+mod ser_level_filter {
+    use std::str::FromStr;
+
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use tracing::level_filters::LevelFilter;
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<LevelFilter>, D::Error> {
+        let str = <Option<String>>::deserialize(deserializer)?;
+        str.map(|s| LevelFilter::from_str(&s).map_err(|e| serde::de::Error::custom(e)))
+            .transpose()
+    }
+
+    pub fn serialize<S: Serializer>(
+        l: &Option<LevelFilter>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        l.as_ref().map(ToString::to_string).serialize(serializer)
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct EvaluationConfig {
     #[serde(with = "humantime_serde")]
     pub stat_refresh_interval: Duration,
     pub paralegal_home_dir: PathBuf,
+    #[serde(with = "ser_level_filter", default)]
+    pub log_level: Option<LevelFilter>,
     pub app_config: HashMap<String, ApplicationConfig>,
     pub experiment: IndexMap<String, Box<[ExperimentConfig]>>,
     #[serde(with = "humantime_serde")]
@@ -54,6 +79,9 @@ pub struct ExperimentConfig {
 #[serde(rename_all = "kebab-case")]
 pub struct ApplicationConfig {
     pub source_dir: PathBuf,
+    /// A git repository to clone into the application directory if it does not
+    /// exist yet.
+    pub clone: Option<String>,
     #[serde(default)]
     pub cargo_args: Box<[String]>,
     #[serde(default = "const_true")]

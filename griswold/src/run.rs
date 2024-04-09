@@ -1,6 +1,6 @@
 //! Types that describe experiment runs and functions to execute them
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use cargo::{
     core::Workspace,
     ops::{resolve_ws, UpdateOptions},
@@ -12,11 +12,12 @@ use paralegal_policy::{Context, GraphLocation};
 use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
-    process::Stdio,
+    process::{Command, Stdio},
     rc::Rc,
     sync::Arc,
     time::{Duration, Instant, SystemTime},
 };
+use tracing::{info, trace, warn};
 
 use crate::{
     input::{ApplicationConfig, CrateOverride, EvaluationConfig, ExperimentConfig, PolicyResult},
@@ -196,6 +197,35 @@ impl CrateOverride {
 
 impl EvaluationConfig {
     pub fn run(&self, output: &mut Output) -> Result<()> {
+        for (app_name, app_config) in self.app_config.iter() {
+            trace!(app_name, "Checking app for whether folder exists");
+            let app_src = &app_config.source_dir;
+            if !app_src.exists() {
+                if let Some(repo) = app_config.clone.as_ref() {
+                    info!(
+                        app_name,
+                        repo,
+                        app_dir = app_src.to_string_lossy().into_owned(),
+                        "Cloning non existent app"
+                    );
+                    let success = Command::new("git")
+                        .args(["clone", repo])
+                        .arg(app_src.as_os_str())
+                        .status()?;
+                    ensure!(
+                        success.success(),
+                        "Could not clone {app_name} ({repo}) to {}",
+                        app_src.display()
+                    );
+                } else {
+                    warn!(
+                        app_name,
+                        app_dir = app_src.to_string_lossy().into_owned(),
+                        "Directory for application does not exist. The run may fail"
+                    );
+                }
+            }
+        }
         let post_process_dir = &output.post_process_dir;
         let experiments = self
             .experiments(&post_process_dir)

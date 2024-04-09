@@ -1,3 +1,4 @@
+use anyhow::{ensure, Context};
 use clap::Parser;
 use input::EvaluationConfig;
 use run::Output;
@@ -5,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
     process,
 };
+use tracing::{info, level_filters::LevelFilter, warn};
 
 const GRISWOLD_COMMIT: &str = env!("COMMIT_HASH");
 
@@ -42,6 +44,12 @@ pub struct Arguments {
     result_path: PathBuf,
     #[clap(long)]
     no_install_flow_analyzer: bool,
+    #[clap(short, long, conflicts_with_all = ["debug", "trace"])]
+    verbose: bool,
+    #[clap(long)]
+    debug: bool,
+    #[clap(long, conflicts_with = "debug")]
+    trace: bool,
 }
 
 fn get_commit_version() -> String {
@@ -55,30 +63,54 @@ fn get_commit_version() -> String {
         .to_owned()
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
-    let config_file = std::fs::read_to_string(&args.config_path).unwrap();
-    let config: EvaluationConfig = toml::from_str(&config_file).unwrap();
+    let config_file = std::fs::read_to_string(&args.config_path)?;
+    let config: EvaluationConfig = toml::from_str(&config_file)?;
+    let verbosity = if args.trace {
+        LevelFilter::TRACE
+    } else if args.debug {
+        LevelFilter::DEBUG
+    } else if let Ok(lvl_str) = std::env::var("RUST_LOG") {
+        lvl_str
+            .parse()
+            .map_err(anyhow::Error::from)
+            .context("Parsing RUST_LOG env variable")?
+    } else if let Some(lvl) = config.log_level {
+        lvl
+    } else {
+        LevelFilter::WARN
+    };
 
-    let current_dir = std::env::current_dir().unwrap();
-    std::env::set_current_dir(&config.paralegal_home_dir).unwrap();
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_max_level(verbosity)
+            .finish(),
+    )?;
+
+    let current_dir = std::env::current_dir()?;
+    let paralegal_home_dir = &config.paralegal_home_dir;
+    std::env::set_current_dir(paralegal_home_dir)?;
     if !args.no_install_flow_analyzer {
+        info!(
+            paralegal_home_dir = paralegal_home_dir.to_string_lossy().into_owned(),
+            "Installing paralegal flow"
+        );
         let compile_stat = process::Command::new("cargo")
             .args(["install", "--locked", "--path"])
             .arg(Path::new("crates").join("paralegal-flow"))
-            .status()
-            .unwrap();
-        assert!(compile_stat.success());
+            .status()?;
+        ensure!(compile_stat.success());
     }
     let paralegal_commit = get_commit_version();
-    std::env::set_current_dir(current_dir).unwrap();
+    std::env::set_current_dir(current_dir)?;
     let this_commit_version = get_commit_version();
 
     if this_commit_version != GRISWOLD_COMMIT {
-        println!("WARN: This application was compiled from a different commit ({GRISWOLD_COMMIT}) than the current state of the repo ({this_commit_version})");
+        warn!(GRISWOLD_COMMIT, this_commit_version, "WARN: This application was compiled from a different commit than the current state of the repo");
     }
 
-    let mut output = Output::init(args, paralegal_commit, this_commit_version).unwrap();
+    let mut output = Output::init(args, paralegal_commit, this_commit_version)?;
 
-    config.run(&mut output).unwrap()
+    config.run(&mut output)
 }
