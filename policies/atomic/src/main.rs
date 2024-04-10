@@ -2,7 +2,7 @@ extern crate anyhow;
 extern crate clap;
 extern crate paralegal_policy;
 
-use std::{ffi::OsString, path::PathBuf, process::exit};
+use std::{ffi::OsString, fs::File, path::PathBuf, process::exit};
 
 use clap::Parser;
 
@@ -18,6 +18,8 @@ struct Arguments {
     directory: PathBuf,
     #[clap(long, default_value = "external-annotations.toml")]
     annotations: PathBuf,
+    #[clap(long)]
+    dump_analyzed_code: Option<PathBuf>,
     #[clap(last = true)]
     extra_args: Vec<OsString>,
 }
@@ -48,7 +50,12 @@ fn main() -> Result<()> {
     let mut config = paralegal_policy::Config::default();
     config.always_happens_before_tracing = ahb::TraceLevel::Full;
 
-    let result = graph_loc.with_context_configured(config, atomic::check_rights)?;
+    let result = graph_loc.with_context_configured(config, |ctx| {
+        if let Some(target) = args.dump_analyzed_code.as_ref() {
+            ctx.write_analyzed_code(File::create(target)?, false)?;
+        }
+        atomic::check_rights(ctx)
+    })?;
     println!(
         "Policy {}successful with {}",
         if result.success { "" } else { "un" },
