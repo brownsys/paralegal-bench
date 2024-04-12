@@ -1,6 +1,5 @@
 //! Conversion from input types to run configurations / run preparation
 
-use core::slice;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -9,7 +8,6 @@ use std::process::{Command, Stdio};
 use std::rc::Rc;
 
 use clap::ValueEnum;
-use lemmy::eval_driver::GetUserVersion;
 use paralegal_policy::{Context, SPDGGenCommand};
 
 use crate::input::{
@@ -18,6 +16,8 @@ use crate::input::{
 };
 use crate::output::RunMeasurements;
 use crate::run::{PolicyFn, Run};
+
+mod lemmy;
 
 fn selection_or_all<V: ValueEnum>(policies: &[V]) -> &[V] {
     if policies.is_empty() {
@@ -187,10 +187,15 @@ impl<'a> RunBuilder<'a> {
 
     fn case_study_runs(self) -> impl Iterator<Item = Run<'a>> {
         match &self.experiment_config.application {
-            Application::Lemmy { policies } => {
-                Box::new(self.lemmy_case_study(selection_or_all(policies)))
-                    as Box<dyn Iterator<Item = _> + 'a>
-            }
+            Application::Lemmy {
+                policies,
+                bugs,
+                run_mode,
+            } => Box::new(self.lemmy_case_study(
+                selection_or_all(policies),
+                selection_or_all(bugs),
+                *run_mode,
+            )) as Box<dyn Iterator<Item = _> + 'a>,
             _ => Box::new(
                 self.experiment_config
                     .application
@@ -208,72 +213,6 @@ impl<'a> RunBuilder<'a> {
                     }),
             ),
         }
-    }
-
-    fn lemmy_case_study(self, policies: &'a [lemmy::Prop]) -> impl Iterator<Item = Run<'a>> {
-        GetUserVersion::value_variants()
-            .iter()
-            .map(|v| v.to_config())
-            .filter(|c| policies.contains(&c.property))
-            .flat_map(move |batch_config| {
-                let policy = |ctx| batch_config.property.run(ctx);
-                let policy_name = batch_config.property.as_ref();
-                let base_feature = batch_config.baseline_feature;
-                macro_rules! mk_batch_exps {
-                    ($expect_fail:expr, $controllers:expr, $extra_feature:expr) => {
-                        $controllers.iter().map(move |c| {
-                            let mut exp = self.case_study_run(
-                                policy_name,
-                                Rc::new(policy),
-                                if $expect_fail {
-                                    PolicyResult::Fail
-                                } else {
-                                    PolicyResult::Pass
-                                },
-                            );
-                            exp.controller = Some(c);
-                            exp.extra_cargo_args =
-                                vec!["--features", c, "--features", base_feature];
-                            if let Some(f) = $extra_feature {
-                                exp.extra_cargo_args.extend(["--features", &f])
-                            }
-                            exp
-                        })
-                    };
-                }
-                let (initial_extra_feature, changed_extra_feature) =
-                    if let Some(change) = batch_config.change.as_ref() {
-                        if change.add_feature {
-                            (None, Some(change.change_feature))
-                        } else {
-                            (Some(change.change_feature), None)
-                        }
-                    } else {
-                        (None, None)
-                    };
-                batch_config
-                    .baseline_controllers
-                    .iter()
-                    .flat_map(move |ctrl| {
-                        mk_batch_exps!(batch_config.expect_failure, ctrl, initial_extra_feature)
-                    })
-                    .chain(batch_config.change.iter().flat_map(move |change| {
-                        change.affected_controllers.into_iter().flat_map(move |c| {
-                            mk_batch_exps!(batch_config.expect_failure, c, initial_extra_feature)
-                        })
-                    }))
-                    .chain(batch_config.change.iter().flat_map(move |change| {
-                        let fixed = change
-                            .affected_controllers
-                            .as_ref()
-                            .map_or(batch_config.baseline_controllers, |ctrl| {
-                                slice::from_ref(ctrl)
-                            });
-                        fixed.iter().flat_map(move |c| {
-                            mk_batch_exps!(!batch_config.expect_failure, c, changed_extra_feature)
-                        })
-                    }))
-            })
     }
 
     fn case_study_run(
@@ -420,7 +359,7 @@ impl Application {
                     .iter()
                     .map(|p| (p.as_ref(), Rc::new(p.runnable()) as PolicyFn<'a>)),
             ),
-            Application::Lemmy { policies } => Box::new(
+            Application::Lemmy { policies, .. } => Box::new(
                 selection_or_all(policies)
                     .iter()
                     .map(|p| (p.as_ref(), Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>)),

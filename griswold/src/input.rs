@@ -1,6 +1,7 @@
 //! Types describing data the runner ingests
 
 use indexmap::IndexMap;
+use lemmy::eval_driver::GetUserVersion;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, time::Duration};
@@ -130,6 +131,18 @@ fn const_application_flavour() -> websubmit::Flavour {
     websubmit::Flavour::Application
 }
 
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy)]
+pub enum LemmyControllerRunMode {
+    All,
+    Affected,
+}
+
+impl Default for LemmyControllerRunMode {
+    fn default() -> Self {
+        Self::Affected
+    }
+}
+
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
 #[serde(tag = "application", rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
@@ -138,6 +151,10 @@ pub enum Application {
     Lemmy {
         #[serde(default)]
         policies: Box<[lemmy::Prop]>,
+        #[serde(default)]
+        run_mode: LemmyControllerRunMode,
+        #[serde(default)]
+        bugs: Box<[GetUserVersion]>,
     },
     Hyperswitch {
         #[serde(default)]

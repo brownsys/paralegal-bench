@@ -291,8 +291,20 @@ const BUG_4_BATCH: &'static [&'static str] = &[
     "community-transfer",
 ];
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash, strum::Display, clap::ValueEnum, Debug)]
+#[derive(
+    Clone,
+    Copy,
+    Eq,
+    PartialEq,
+    Hash,
+    strum::Display,
+    clap::ValueEnum,
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+)]
 #[clap(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum GetUserVersion {
     Bug1,
     Bug2,
