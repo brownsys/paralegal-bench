@@ -160,7 +160,7 @@ pub enum Application {
     Lemmy {
         #[serde(default)]
         policies: Box<[lemmy::Prop]>,
-        #[serde(default)]
+        #[serde(default, rename = "lemmy-controller-run-mode")]
         run_mode: LemmyControllerRunMode,
         #[serde(default)]
         bugs: Box<[GetUserVersion]>,

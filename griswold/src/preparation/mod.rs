@@ -67,22 +67,28 @@ struct RunBuilder<'a> {
 
 impl<'a> RunBuilder<'a> {
     pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
-        let base = self.experiment_config.application.policies();
         match self.experiment_config.policy_mode {
-            PolicyMode::Separate => Box::new(base) as Box<dyn Iterator<Item = _> + 'a>,
-            PolicyMode::Unified => {
-                let base = base.collect::<Vec<_>>();
-                Box::new(std::iter::once((
-                    "unified",
-                    Rc::new(move |ctx: Arc<Context>| {
-                        for (_, policy) in base.iter() {
-                            policy(ctx.clone())?;
-                        }
-                        Ok(())
-                    }) as _,
-                )))
-            }
+            PolicyMode::Separate => Box::new(self.experiment_config.application.policies())
+                as Box<dyn Iterator<Item = _> + 'a>,
+            PolicyMode::Unified => Box::new(std::iter::once(self.unified_policies())),
         }
+    }
+
+    pub fn unified_policies(self) -> (&'a str, PolicyFn<'a>) {
+        let base = self
+            .experiment_config
+            .application
+            .policies()
+            .collect::<Vec<_>>();
+        (
+            "unified",
+            Rc::new(move |ctx: Arc<Context>| {
+                for (_, policy) in base.iter() {
+                    policy(ctx.clone())?;
+                }
+                Ok(())
+            }) as _,
+        )
     }
 
     pub fn into_experiments<'b>(self, target_path: &'b Path) -> impl Iterator<Item = Run<'a>> + 'b
@@ -206,11 +212,8 @@ impl<'a> RunBuilder<'a> {
                 policies,
                 bugs,
                 run_mode,
-            } => Box::new(self.lemmy_case_study(
-                selection_or_all(policies),
-                selection_or_all(bugs),
-                *run_mode,
-            )) as Box<dyn Iterator<Item = _> + 'a>,
+            } => Box::new(self.lemmy_case_study(selection_or_all(policies), bugs, *run_mode))
+                as Box<dyn Iterator<Item = _> + 'a>,
             _ => Box::new(
                 self.experiment_config
                     .application

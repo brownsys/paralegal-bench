@@ -3,11 +3,11 @@ use std::{rc::Rc, slice};
 use lemmy::eval_driver::{BatchConfig, GetUserVersion};
 
 use crate::{
-    input::{LemmyControllerRunMode, PolicyResult},
+    input::{LemmyControllerRunMode, PolicyMode, PolicyResult},
     run::Run,
 };
 
-use super::RunBuilder;
+use super::{selection_or_all, RunBuilder};
 
 impl<'a> RunBuilder<'a> {
     pub(super) fn lemmy_case_study(
@@ -16,6 +16,7 @@ impl<'a> RunBuilder<'a> {
         bugs: &'a [GetUserVersion],
         run_mode: LemmyControllerRunMode,
     ) -> impl Iterator<Item = Run<'a>> {
+        let bugs = selection_or_all(bugs);
         bugs.iter()
             .map(|v| v.to_config())
             .filter(|c| policies.contains(&c.property))
@@ -53,9 +54,13 @@ impl<'a> BatchConfigPreparer<'a> {
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
         let prop = &self.batch_config.property;
+        let (policy_name, policy_fn) = match self.builder.experiment_config.policy_mode {
+            PolicyMode::Unified => self.builder.unified_policies(),
+            PolicyMode::Separate => (prop.as_ref(), Rc::new(|ctx| prop.run(ctx)) as _),
+        };
         let mut exp = self.builder.case_study_run(
-            prop.as_ref(),
-            Rc::new(|ctx| prop.run(ctx)),
+            policy_name,
+            policy_fn,
             if expect_fail {
                 PolicyResult::Fail
             } else {
