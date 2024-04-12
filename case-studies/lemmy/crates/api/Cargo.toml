@@ -30,6 +30,7 @@ base64 = "0.13.0"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 async-trait = "0.1.53"
 captcha = "0.0.9"
+cfg-if = "1.0.0"
 anyhow = "1.0.56"
 tracing = "0.1.32"
 url = { version = "2.2.2", features = ["serde"] }

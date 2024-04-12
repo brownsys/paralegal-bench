@@ -10,6 +10,7 @@ use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for MarkCommentAsRead {
@@ -33,15 +34,16 @@ impl Perform for MarkCommentAsRead {
             })
             .await??,
         );
-
-        if #[cfg(feature = "hypothetical-fix")] {
-            check_community_ban(
-                local_user_view.person.id,
-                orig_comment.community.id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                check_community_ban(
+                    local_user_view.person.id,
+                    orig_comment.community.id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+            }
         }
 
         // Verify that only the recipient can mark as read

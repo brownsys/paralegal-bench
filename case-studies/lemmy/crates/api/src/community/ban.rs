@@ -26,6 +26,7 @@ use crate::lemmy_utils::{error::LemmyError, utils::naive_from_unix, ConnectionId
 use crate::lemmy_websocket::{messages::SendCommunityRoomMessage, LemmyContext, UserOperation};
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for BanFromCommunity {
@@ -71,14 +72,16 @@ impl Perform for BanFromCommunity {
         )
         .into();
 
-        if #[cfg(feature = "hypothetical-fix")] {
-            check_community_ban(
-                local_user_view.person.id,
-                community_id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                check_community_ban(
+                    local_user_view.person.id,
+                    community_id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            }
         }
 
         if data.ban {

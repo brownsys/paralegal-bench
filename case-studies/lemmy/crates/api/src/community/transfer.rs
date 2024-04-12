@@ -18,6 +18,7 @@ use crate::location_info;
 use crate::Perform;
 use actix_web::web::Data;
 use anyhow::Context;
+use cfg_if::cfg_if;
 
 // TODO: we dont do anything for federation here, it should be updated the next time the community
 //       gets fetched. i hope we can get rid of the community creator role soon.
@@ -68,14 +69,16 @@ impl Perform for TransferCommunity {
 
         // Delete all the mods
         let community_id = data.community_id;
-        if #[cfg(feature = "hypothetical-fix")] {
-            check_community_ban(
-                local_user_view.person.id,
-                community_id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                check_community_ban(
+                    local_user_view.person.id,
+                    community_id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            }
         }
 
         apply_label_community_write(

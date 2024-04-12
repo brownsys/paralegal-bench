@@ -14,6 +14,7 @@ use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for SavePost {
@@ -35,17 +36,19 @@ impl Perform for SavePost {
             person_id: local_user_view.person.id,
         };
 
-        if #[cfg(feature = "hypothetical-fix")] {
-            let orig_post = apply_label_read(
-                blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
-            );
-            check_community_ban(
-                local_user_view.person.id,
-                orig_post.community_id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                let orig_post = apply_label_read(
+                    blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
+                );
+                check_community_ban(
+                    local_user_view.person.id,
+                    orig_post.community_id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+            }
         }
 
         if data.save {

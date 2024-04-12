@@ -20,6 +20,7 @@ use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for FollowCommunity {
@@ -62,10 +63,12 @@ impl Perform for FollowCommunity {
                     |e| LemmyError::from_error_message(e, "community_follower_already_exists"),
                 )?;
             } else {
-                if #[cfg(feature = "hypothetical-fix")] {
-                    check_community_ban(local_user_view.person.id, community_id, context.pool())
-                        .await?;
-                    check_community_deleted_or_removed(community_id, context.pool()).await?;
+                cfg_if! {
+                    if #[cfg(feature = "hypothetical-fix")] {
+                        check_community_ban(local_user_view.person.id, community_id, context.pool())
+                            .await?;
+                        check_community_deleted_or_removed(community_id, context.pool()).await?;
+                    }
                 }
 
                 let unfollow =
@@ -84,10 +87,12 @@ impl Perform for FollowCommunity {
                 .await?;
             let unfollow =
                 move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
-            if #[cfg(feature = "hypothetical-fix")] {
-                check_community_ban(local_user_view.person.id, community_id, context.pool())
-                        .await?;
-                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            cfg_if! {
+                if #[cfg(feature = "hypothetical-fix")] {
+                    check_community_ban(local_user_view.person.id, community_id, context.pool())
+                            .await?;
+                    check_community_deleted_or_removed(community_id, context.pool()).await?;
+                }
             }
             apply_label_community_write(blocking(context.pool(), unfollow).await?).map_err(
                 |e| LemmyError::from_error_message(e, "community_follower_already_exists"),

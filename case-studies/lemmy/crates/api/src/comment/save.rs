@@ -13,6 +13,7 @@ use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for SaveComment {
@@ -34,22 +35,24 @@ impl Perform for SaveComment {
             person_id: local_user_view.person.id,
         };
 
-        if #[cfg(feature = "hypothetical-fix")] {
-            let comment_id = data.comment_id;
-            let orig_comment = apply_label_read(
-                blocking(context.pool(), move |conn| {
-                    CommentView::read(conn, comment_id, None)
-                })
-                .await??,
-            );
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                let comment_id = data.comment_id;
+                let orig_comment = apply_label_read(
+                    blocking(context.pool(), move |conn| {
+                        CommentView::read(conn, comment_id, None)
+                    })
+                    .await??,
+                );
 
-            check_community_ban(
-                local_user_view.person.id,
-                orig_comment.community.id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+                check_community_ban(
+                    local_user_view.person.id,
+                    orig_comment.community.id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+            }
         }
 
         if data.save {

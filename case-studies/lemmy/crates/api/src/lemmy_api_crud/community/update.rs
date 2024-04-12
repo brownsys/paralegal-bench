@@ -16,6 +16,7 @@ use crate::lemmy_db_views_actor::structs::CommunityModeratorView;
 use crate::lemmy_utils::{error::LemmyError, utils::check_slurs_opt, ConnectionId};
 use crate::lemmy_websocket::{send::send_community_ws_message, LemmyContext, UserOperationCrud};
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 #[async_trait::async_trait(?Send)]
 impl PerformCrud for EditCommunity {
@@ -57,14 +58,16 @@ impl PerformCrud for EditCommunity {
             .await??,
         );
 
-        if #[cfg(feature = "hypothetical-fix")] {
-            check_community_ban(
-                local_user_view.person.id,
-                community_id,
-                context.pool(),
-            )
-            .await?;
-            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                check_community_ban(
+                    local_user_view.person.id,
+                    community_id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            }
         }
 
         let community_form = CommunityForm {
