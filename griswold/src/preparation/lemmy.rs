@@ -18,10 +18,10 @@ impl<'a> RunBuilder<'a> {
     ) -> impl Iterator<Item = Run<'a>> {
         let bugs = selection_or_all(bugs);
         bugs.iter()
-            .map(|v| v.to_config())
-            .filter(|c| policies.contains(&c.property))
-            .flat_map(move |batch_config| {
-                self.lemmy_prepare_for_batch_confg(batch_config, run_mode)
+            .map(|v| (v, v.to_config()))
+            .filter(|(_, c)| policies.contains(&c.property))
+            .flat_map(move |(bug, batch_config)| {
+                self.lemmy_prepare_for_batch_confg(batch_config, run_mode, bug)
             })
     }
 
@@ -29,11 +29,13 @@ impl<'a> RunBuilder<'a> {
         self,
         batch_config: &'a BatchConfig<'static>,
         run_mode: LemmyControllerRunMode,
+        bug: &'a GetUserVersion,
     ) -> impl Iterator<Item = Run<'a>> {
         let preparer = BatchConfigPreparer {
             builder: self,
             batch_config,
             run_mode,
+            bug,
         };
         preparer.runs()
     }
@@ -44,6 +46,7 @@ struct BatchConfigPreparer<'a> {
     builder: RunBuilder<'a>,
     batch_config: &'a BatchConfig<'static>,
     run_mode: LemmyControllerRunMode,
+    bug: &'a GetUserVersion,
 }
 
 impl<'a> BatchConfigPreparer<'a> {
@@ -68,6 +71,7 @@ impl<'a> BatchConfigPreparer<'a> {
             },
         );
         exp.controller = Some(controller);
+        exp.bug = Some(self.bug.as_ref());
         exp.extra_cargo_args = vec![
             "--features",
             controller,

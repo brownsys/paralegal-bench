@@ -33,6 +33,8 @@ pub struct RunMeasurements {
     ablation_feature: Option<String>,
     /// Only set in roll-forward experiments. Indicates the commit this was run on.
     commit: Option<String>,
+    /// Used by lemmy to identify the bug that was tested
+    bug: Option<String>,
     run: String,
     policy: String,
     expectation: PolicyResult,
@@ -73,6 +75,7 @@ impl RunMeasurements {
             controller: exp.controller.map(ToOwned::to_owned),
             ablation_feature: exp.ablation_feature.map(ToOwned::to_owned),
             commit: exp.commit.clone(),
+            bug: exp.bug.map(ToOwned::to_owned),
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,

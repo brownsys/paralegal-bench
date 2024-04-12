@@ -302,9 +302,11 @@ const BUG_4_BATCH: &'static [&'static str] = &[
     Debug,
     serde::Deserialize,
     serde::Serialize,
+    strum::AsRefStr,
 )]
 #[clap(rename_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum GetUserVersion {
     Bug1,
     Bug2,

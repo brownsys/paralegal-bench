@@ -40,6 +40,7 @@ pub struct Run<'c> {
     /// Only set in roll-forward experiments. Denotes the commit this run is
     /// performed on.
     pub commit: Option<String>,
+    pub bug: Option<&'c str>,
     pub expectation: PolicyResult,
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
@@ -81,6 +82,7 @@ impl<'a> Run<'a> {
             policy,
             expectation,
             prepare: None,
+            bug: None,
             ablation_feature: None,
             commit: None,
             controller: None,
