@@ -1,0 +1,16 @@
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+pdg-timeout = "10min"
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy"
+flow-args = ["--target", "lemmy_api"]
+external-annotations = "external-annotations.toml"
+
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "lemmy"
+policy-mode = "unified"
+lemmy-controller-run-mode = "all"
+bugs = ["bug4"]
