@@ -1612,6 +1612,7 @@ dependencies = [
  "base64",
  "bcrypt",
  "captcha",
+ "cfg-if",
  "chrono",
  "comrak",
  "deser-hjson",
