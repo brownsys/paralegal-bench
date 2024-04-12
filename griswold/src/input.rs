@@ -62,6 +62,7 @@ pub struct EvaluationConfig {
 }
 
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize, Copy, Clone)]
+#[serde(rename_all = "kebab-case")]
 pub enum PolicyMode {
     #[default]
     Separate,
@@ -141,6 +142,7 @@ fn const_application_flavour() -> websubmit::Flavour {
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy)]
+#[serde(rename_all = "kebab-case")]
 pub enum LemmyControllerRunMode {
     All,
     Affected,
