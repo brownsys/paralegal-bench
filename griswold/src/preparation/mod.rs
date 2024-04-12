@@ -6,12 +6,13 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
+use std::sync::Arc;
 
 use clap::ValueEnum;
 use paralegal_policy::{Context, SPDGGenCommand};
 
 use crate::input::{
-    Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyResult,
+    Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyMode, PolicyResult,
     RollForwardCutoff,
 };
 use crate::output::RunMeasurements;
@@ -65,6 +66,25 @@ struct RunBuilder<'a> {
 }
 
 impl<'a> RunBuilder<'a> {
+    pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
+        let base = self.experiment_config.application.policies();
+        match self.experiment_config.policy_mode {
+            PolicyMode::Separate => Box::new(base) as Box<dyn Iterator<Item = _> + 'a>,
+            PolicyMode::Unified => {
+                let base = base.collect::<Vec<_>>();
+                Box::new(std::iter::once((
+                    "unified",
+                    Rc::new(move |ctx: Arc<Context>| {
+                        for (_, policy) in base.iter() {
+                            policy(ctx.clone())?;
+                        }
+                        Ok(())
+                    }) as _,
+                )))
+            }
+        }
+    }
+
     pub fn into_experiments<'b>(self, target_path: &'b Path) -> impl Iterator<Item = Run<'a>> + 'b
     where
         'a: 'b,
@@ -76,16 +96,14 @@ impl<'a> RunBuilder<'a> {
             ExperimentMode::Ablation {
                 feature_space_success,
                 feature_space_fail,
-            } => Box::new(self.experiment_config.application.policies().flat_map(
-                move |(name, policy)| {
-                    self.ablation_runs_for_policy(
-                        feature_space_success,
-                        feature_space_fail,
-                        name,
-                        policy,
-                    )
-                },
-            )),
+            } => Box::new(self.policies().flat_map(move |(name, policy)| {
+                self.ablation_runs_for_policy(
+                    feature_space_success,
+                    feature_space_fail,
+                    name,
+                    policy,
+                )
+            })),
             ExperimentMode::RollForward { cutoff } => {
                 Box::new(self.roll_forward_runs(target_path, cutoff))
             }
@@ -135,22 +153,19 @@ impl<'a> RunBuilder<'a> {
             .enumerate()
             .flat_map(move |(idx, (commit, (current, expectation)))| {
                 let commit_range = commit_range.clone();
-                self.experiment_config
-                    .application
-                    .policies()
-                    .map(move |(policy_name, policy)| {
-                        let mut run = self.case_study_run(policy_name, policy, *expectation);
-                        run.external_annotations =
-                            current.external_annotations.as_ref().map(|pb| pb.as_path());
-                        run.prepare = Some(Rc::new(checkout(&commit)));
-                        run.post_process = Some(Rc::new(diff_analyzed(
-                            idx,
-                            commit_range.clone(),
-                            target_path,
-                        )));
-                        run.commit = Some(commit.clone());
-                        run
-                    })
+                self.policies().map(move |(policy_name, policy)| {
+                    let mut run = self.case_study_run(policy_name, policy, *expectation);
+                    run.external_annotations =
+                        current.external_annotations.as_ref().map(|pb| pb.as_path());
+                    run.prepare = Some(Rc::new(checkout(&commit)));
+                    run.post_process = Some(Rc::new(diff_analyzed(
+                        idx,
+                        commit_range.clone(),
+                        target_path,
+                    )));
+                    run.commit = Some(commit.clone());
+                    run
+                })
             })
             .collect::<Vec<_>>()
             .into_iter()
@@ -203,13 +218,11 @@ impl<'a> RunBuilder<'a> {
                     .iter()
                     .copied()
                     .flat_map(move |(expectation, cargo_args)| {
-                        self.experiment_config.application.policies().map(
-                            move |(name, policy_fn)| {
-                                let mut run = self.case_study_run(name, policy_fn, expectation);
-                                run.extra_cargo_args.extend(cargo_args);
-                                run
-                            },
-                        )
+                        self.policies().map(move |(name, policy_fn)| {
+                            let mut run = self.case_study_run(name, policy_fn, expectation);
+                            run.extra_cargo_args.extend(cargo_args);
+                            run
+                        })
                     }),
             ),
         }

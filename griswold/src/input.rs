@@ -61,11 +61,20 @@ pub struct EvaluationConfig {
     pub pdg_timeout: Option<Duration>,
 }
 
+#[derive(Default, Debug, serde::Serialize, serde::Deserialize, Copy, Clone)]
+pub enum PolicyMode {
+    #[default]
+    Separate,
+    Unified,
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ExperimentConfig {
     #[serde(flatten)]
     pub mode: ExperimentMode,
+    #[serde(default)]
+    pub policy_mode: PolicyMode,
     #[serde(default = "const_true")]
     pub adaptive_depth: bool,
     #[serde(flatten)]
