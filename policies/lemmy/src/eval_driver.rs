@@ -241,8 +241,12 @@ const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
     expect_failure: true,
     property: Prop::Community,
     description: "Bug 4 - Additional missing community man/delete checks that Paralegal found",
-    baseline_controllers: &[BUG_4_BATCH],
-    change: None,
+    baseline_controllers: &[],
+    change: Some(Change {
+        change_feature: "hypothetical-fix",
+        add_feature: true,
+        affected_controllers: Some(BUG_4_BATCH),
+    }),
 };
 
 // Bug 1 all fail
