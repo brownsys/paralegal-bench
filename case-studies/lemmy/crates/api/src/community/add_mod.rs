@@ -52,6 +52,8 @@ impl Perform for AddModToCommunity {
             return Err(LemmyError::from_message("not_a_moderator"));
         }
 
+        
+
         // Update in local database
         let community_moderator_form = CommunityModeratorForm {
             community_id: data.community_id,

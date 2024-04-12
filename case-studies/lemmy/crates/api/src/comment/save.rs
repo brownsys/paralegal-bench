@@ -34,6 +34,24 @@ impl Perform for SaveComment {
             person_id: local_user_view.person.id,
         };
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            let comment_id = data.comment_id;
+            let orig_comment = apply_label_read(
+                blocking(context.pool(), move |conn| {
+                    CommentView::read(conn, comment_id, None)
+                })
+                .await??,
+            );
+
+            check_community_ban(
+                local_user_view.person.id,
+                orig_comment.community.id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+        }
+
         if data.save {
             let save_comment = move |conn: &'_ _| CommentSaved::save(conn, &comment_saved_form);
             apply_label_community_write(

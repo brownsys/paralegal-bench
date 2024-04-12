@@ -71,6 +71,16 @@ impl Perform for BanFromCommunity {
         )
         .into();
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            check_community_ban(
+                local_user_view.person.id,
+                community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
+
         if data.ban {
             let ban = move |conn: &'_ _| CommunityPersonBan::ban(conn, &community_user_ban_form);
             apply_label_community_write(

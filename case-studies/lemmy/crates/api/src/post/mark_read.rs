@@ -29,6 +29,19 @@ impl Perform for MarkPostAsRead {
         let post_id = data.post_id;
         let person_id = local_user_view.person.id;
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            let orig_post = apply_label_read(
+                blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
+            );
+            check_community_ban(
+                local_user_view.person.id,
+                orig_post.community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+        }
+
         // Mark the post as read / unread
         if data.read {
             apply_label_community_write(

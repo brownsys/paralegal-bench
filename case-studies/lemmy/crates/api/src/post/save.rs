@@ -35,6 +35,19 @@ impl Perform for SavePost {
             person_id: local_user_view.person.id,
         };
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            let orig_post = apply_label_read(
+                blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
+            );
+            check_community_ban(
+                local_user_view.person.id,
+                orig_post.community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+        }
+
         if data.save {
             let save = move |conn: &'_ _| PostSaved::save(conn, &post_saved_form);
             apply_label_community_write(

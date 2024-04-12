@@ -36,11 +36,21 @@ impl PerformCrud for DeleteCommunity {
             .await??,
         );
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            check_community_ban(
+                local_user_view.person.id,
+                community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
+
         // Make sure deleter is the top mod
         if local_user_view.person.id != community_mods[0].moderator.id {
             return Err(LemmyError::from_message("no_community_edit_allowed"));
         }
-
+        
         // Do the delete
         let community_id = data.community_id;
         let deleted = data.deleted;

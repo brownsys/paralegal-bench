@@ -62,6 +62,17 @@ impl Perform for HideCommunity {
         };
 
         let community_id = data.community_id;
+
+        if #[cfg(feature = "hypothetical-fix")] {
+            check_community_ban(
+                local_user_view.person.id,
+                community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
+
         let updated_community = apply_label_community_write(
             blocking(context.pool(), move |conn| {
                 Community::update(conn, community_id, &community_form)

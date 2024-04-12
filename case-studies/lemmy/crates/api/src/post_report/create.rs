@@ -52,6 +52,8 @@ impl Perform for CreatePostReport {
         );
 
         check_community_ban(person_id, post_view.community.id, context.pool()).await?;
+        #[cfg(feature = "hypothetical-fix")]
+        check_community_deleted_or_removed(post_view.community_id, context.pool()).await?;
 
         let report_form = PostReportForm {
             creator_id: person_id,

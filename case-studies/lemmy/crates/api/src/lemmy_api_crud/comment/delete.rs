@@ -53,6 +53,8 @@ impl PerformCrud for DeleteComment {
             context.pool(),
         )
         .await?;
+        #[cfg(feature = "hypothetical-fix")]
+        check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
 
         // Verify that only the creator can delete
         if local_user_view.person.id != orig_comment.creator.id {

@@ -62,6 +62,12 @@ impl Perform for FollowCommunity {
                     |e| LemmyError::from_error_message(e, "community_follower_already_exists"),
                 )?;
             } else {
+                if #[cfg(feature = "hypothetical-fix")] {
+                    check_community_ban(local_user_view.person.id, community_id, context.pool())
+                        .await?;
+                    check_community_deleted_or_removed(community_id, context.pool()).await?;
+                }
+
                 let unfollow =
                     move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
                 apply_label_community_write(blocking(context.pool(), unfollow).await?).map_err(
@@ -78,6 +84,11 @@ impl Perform for FollowCommunity {
                 .await?;
             let unfollow =
                 move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
+            if #[cfg(feature = "hypothetical-fix")] {
+                check_community_ban(local_user_view.person.id, community_id, context.pool())
+                        .await?;
+                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            }
             apply_label_community_write(blocking(context.pool(), unfollow).await?).map_err(
                 |e| LemmyError::from_error_message(e, "community_follower_already_exists"),
             )?;

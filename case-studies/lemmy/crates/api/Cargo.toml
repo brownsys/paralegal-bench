@@ -90,6 +90,9 @@ post-bug-1 = []
 # for bugs 2/3, where they found/fixed (some of) the bug themselves
 correct = []
 
+# for bugs 3/4, for bugs Paralegal found, if they had fixed the bugs themselves
+hypothetical-fix = []
+
 # api
 comment-like = []
 comment-mark-as-read = []

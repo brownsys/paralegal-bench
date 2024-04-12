@@ -40,6 +40,16 @@ impl Perform for BlockCommunity {
             community_id,
         };
 
+        if #[cfg(feature = "hypothetical-fix")] {
+            check_community_ban(
+                local_user_view.person.id,
+                community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
+
         if data.block {
             let block = move |conn: &'_ _| CommunityBlock::block(conn, &community_block_form);
             apply_label_community_write(blocking(context.pool(), block).await?.map_err(|e| {
