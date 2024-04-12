@@ -52,7 +52,15 @@ impl Perform for AddModToCommunity {
             return Err(LemmyError::from_message("not_a_moderator"));
         }
 
-        
+        if #[cfg(feature = "hypothetical-fix")] {
+            check_community_ban(
+                local_user_view.person.id,
+                community_id,
+                context.pool(),
+            )
+            .await?;
+            check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
 
         // Update in local database
         let community_moderator_form = CommunityModeratorForm {
