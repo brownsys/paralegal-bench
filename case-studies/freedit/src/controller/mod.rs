@@ -126,6 +126,7 @@ use self::tantivy::{ToDoc, FIELDS};
 use crate::{controller::meta_handler::into_response, error::AppError};
 use bincode::config::standard;
 use bincode::{Decode, Encode};
+use cfg_if::cfg_if;
 use chrono::{Days, Utc};
 use serde::{Deserialize, Serialize};
 use sled::Db;
@@ -200,9 +201,17 @@ impl User {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             .timestamp();
-        let key = format!("{expire:x}_{uid}_{stat_type}");
-        #[cfg(not(feature = "buggy"))]
-        incr_id(&db.open_tree(user_stats())?, key)?;
+
+        cfg_if! {
+            if #[cfg(feature = "buggy")] {
+                let key = format!("{uid}_{stat_type}");
+                incr_id(&db.open_tree(user_stats())?, key)?;
+            } else {
+                let key = format!("{expire:x}_{uid}_{stat_type}");
+                incr_id(&db.open_tree(user_stats())?, key)?;
+            }
+        }
+        
         Ok(())
     }
 }

@@ -23,6 +23,7 @@ cached = { version = "0.44.0", default-features = false, features = [
     "proc_macro",
 ] }
 captcha = { version = "0.0", default-features = false }
+cfg-if = { version = "1.0.0" }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 data-encoding = "*"
 fast2s = "0.3"
