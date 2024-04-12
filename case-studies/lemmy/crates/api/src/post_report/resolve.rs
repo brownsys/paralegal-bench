@@ -11,6 +11,7 @@ use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 /// Resolves or unresolves a post report and notifies the moderators of the community
 #[async_trait::async_trait(?Send)]
@@ -48,6 +49,24 @@ impl Perform for ResolvePostReport {
                 PostReport::unresolve(conn, report_id, person_id)
             }
         };
+
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                let post_report_view = apply_label_read(
+                    blocking(context.pool(), move |conn| {
+                        PostReportView::read(conn, report_id, person_id)
+                    })
+                    .await??,
+                );
+                check_community_ban(
+                    local_user_view.person.id,
+                    post_report_view.community.id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(post_report_view.community_id, context.pool()).await?;
+            }
+        }
 
         apply_label_community_write(blocking(context.pool(), resolve_fun).await?)
             .map_err(|e| LemmyError::from_error_message(e, "couldnt_resolve_report"))?;

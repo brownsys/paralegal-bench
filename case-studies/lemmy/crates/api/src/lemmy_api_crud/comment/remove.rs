@@ -53,6 +53,8 @@ impl PerformCrud for RemoveComment {
             context.pool(),
         )
         .await?;
+        #[cfg(feature = "hypothetical-fix")]
+        check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
 
         // Verify that only a mod or admin can remove
         is_mod_or_admin(

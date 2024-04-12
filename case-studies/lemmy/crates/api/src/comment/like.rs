@@ -59,6 +59,9 @@ impl Perform for CreateCommentLike {
         )
         .await?;
 
+        #[cfg(feature = "hypothetical-fix")]
+        check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
+
         // Add parent user to recipients
         let recipient_id = orig_comment.get_recipient_id();
         if let Ok(local_recipient) = apply_label_read(

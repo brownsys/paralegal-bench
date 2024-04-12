@@ -46,6 +46,9 @@ impl PerformCrud for RemovePost {
         )
         .await?;
 
+        #[cfg(feature = "hypothetical-fix")]
+        check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+
         // Verify that only the mods can remove
         is_mod_or_admin(
             context.pool(),
