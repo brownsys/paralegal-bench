@@ -6,6 +6,8 @@ use crate::lemmy_api_common::{
     },
 };
 use crate::lemmy_db_views::structs::PostView;
+use crate::lemmy_db_schema::source::post::Post;
+use crate::lemmy_db_schema::traits::Crud;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;

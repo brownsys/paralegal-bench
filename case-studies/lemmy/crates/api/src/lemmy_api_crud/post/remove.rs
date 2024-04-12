@@ -1,7 +1,7 @@
 use crate::lemmy_api_common::{
     post::{PostResponse, RemovePost},
     utils::{
-        apply_label_community_write, apply_label_read, blocking, check_community_ban,
+        apply_label_community_write, apply_label_read, blocking, check_community_ban, check_community_deleted_or_removed,
         get_local_user_view_from_jwt, is_mod_or_admin,
     },
 };

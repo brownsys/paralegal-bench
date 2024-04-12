@@ -6,8 +6,8 @@ use crate::lemmy_api_common::{
     },
 };
 use crate::lemmy_db_schema::{
-    source::post::{PostSaved, PostSavedForm},
-    traits::Saveable,
+    source::post::{Post, PostSaved, PostSavedForm},
+    traits::{Crud, Saveable},
 };
 use crate::lemmy_db_views::structs::PostView;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
@@ -38,6 +38,7 @@ impl Perform for SavePost {
 
         cfg_if! {
             if #[cfg(feature = "hypothetical-fix")] {
+                let post_id = data.post_id;
                 let orig_post = apply_label_read(
                     blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??,
                 );
