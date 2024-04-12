@@ -40,14 +40,19 @@ pub struct RunMeasurements {
     expectation: PolicyResult,
     adaptive_depth: bool,
     result: Option<PolicyResult>,
+    /// Total time takes by the `cargo paralegal-flow` command
     pdg_time: TimeMeasurement,
     pdg_timed_out: bool,
     rustc_time: Option<TimeMeasurement>,
+    /// Total time spent executing the policy
     policy_time: Option<TimeMeasurement>,
     deserialization_time: Option<TimeMeasurement>,
+    /// Time spent preparing the `Context`
     precomputation_time: Option<TimeMeasurement>,
+    /// Time spent in graph queries
     traversal_time: Option<TimeMeasurement>,
     num_controllers: Option<u16>,
+    /// How many PDG nodes have markers assigned.
     num_markers: Option<u32>,
     /// How many of the analyzed lines changed vs the previous commit. Used in
     /// roll-forward only
