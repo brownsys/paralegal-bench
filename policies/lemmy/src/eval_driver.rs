@@ -243,7 +243,7 @@ const BUG_4_CONFIG: BatchConfig<'static> = BatchConfig {
     description: "Bug 4 - Additional missing community man/delete checks that Paralegal found",
     baseline_controllers: &[],
     change: Some(Change {
-        change_feature: "hypothetical-fix",
+        change_feature: "correct,hypothetical-fix",
         add_feature: true,
         affected_controllers: Some(BUG_4_BATCH),
     }),
