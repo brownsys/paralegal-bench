@@ -2,7 +2,7 @@ use crate::lemmy_api_common::{
     community::{BanFromCommunity, BanFromCommunityResponse},
     utils::{
         apply_label_community_write, apply_label_read, blocking, get_local_user_view_from_jwt,
-        is_mod_or_admin, remove_user_data_in_community,
+        is_mod_or_admin, remove_user_data_in_community, check_community_deleted_or_removed, check_community_ban
     },
 };
 use crate::lemmy_apub::{

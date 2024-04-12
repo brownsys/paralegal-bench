@@ -2,7 +2,7 @@ use crate::lemmy_api_common::{
     post::{MarkPostAsRead, PostResponse},
     utils::{
         apply_label_community_write, apply_label_read, blocking, get_local_user_view_from_jwt,
-        mark_post_as_read, mark_post_as_unread,
+        mark_post_as_read, mark_post_as_unread, check_community_deleted_or_removed, check_community_ban
     },
 };
 use crate::lemmy_db_views::structs::PostView;

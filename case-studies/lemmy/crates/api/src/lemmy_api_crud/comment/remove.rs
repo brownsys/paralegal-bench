@@ -2,7 +2,7 @@ use crate::lemmy_api_common::{
     comment::{CommentResponse, RemoveComment},
     utils::{
         apply_label_community_write, apply_label_read, blocking, check_community_ban,
-        get_local_user_view_from_jwt, is_mod_or_admin,
+        get_local_user_view_from_jwt, is_mod_or_admin, check_community_deleted_or_removed
     },
 };
 use crate::lemmy_api_crud::PerformCrud;
