@@ -11,7 +11,8 @@ use std::iter::Rev;
 fn compare_timestamp<T: std::cmp::Ord>(one: T, other:T) -> bool {
     one < other
 }
-[paralegal::marker(expiration_check, return)]
+
+#[paralegal::marker(expiration_check, return)]
 fn is_expired<T: std::cmp::Ord>(expiration_date: T, current_time:T) -> bool {
     compare_timestamp(expiration_date, current_time)
 }
