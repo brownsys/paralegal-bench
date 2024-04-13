@@ -67,11 +67,12 @@ fn main() -> anyhow::Result<()> {
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
     let config_file = std::fs::read_to_string(&args.config_path)?;
     let config: EvaluationConfig = toml::from_str(&config_file)?;
+    let rust_log_var = std::env::var("RUST_LOG");
     let verbosity = if args.trace {
         LevelFilter::TRACE
     } else if args.debug {
         LevelFilter::DEBUG
-    } else if let Ok(lvl_str) = std::env::var("RUST_LOG") {
+    } else if let Ok(lvl_str) = rust_log_var.as_ref() {
         lvl_str
             .parse()
             .map_err(anyhow::Error::from)
@@ -81,6 +82,10 @@ fn main() -> anyhow::Result<()> {
     } else {
         LevelFilter::WARN
     };
+
+    if rust_log_var.is_err() {
+        std::env::set_var("RUST_LOG", "error");
+    }
 
     tracing::subscriber::set_global_default(
         tracing_subscriber::FmtSubscriber::builder()
