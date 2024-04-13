@@ -1,6 +1,7 @@
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
-pdg-timeout = "10min"
+# Bumped because lemmy without adaptive depth takes ~10min in analysis
+pdg-timeout = "15min"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy"
@@ -176,7 +177,7 @@ application = "contile"
 policy-mode = "unified"
 adaptive-depth = false
 
-[[experiment.case-studies]]
+[[experiment.adaptive-depth]]
 mode = "case-study"
 application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
