@@ -104,9 +104,19 @@ impl<'a> BatchConfigPreparer<'a> {
                 });
                 Box::new(iter)
             }
-            LemmyControllerRunMode::AffectedMerged => Box::new(std::iter::once(
-                self.case_study_run(controllers, expect_fail, extra_feature),
-            )),
+            LemmyControllerRunMode::AffectedMerged => {
+                // If this batch happens to be empty we must return no run.
+                // Otherwise this can cause spuriously succeeding runs.
+                if controllers.iter().flat_map(|s| s.iter()).next().is_none() {
+                    Box::new(std::iter::empty())
+                } else {
+                    Box::new(std::iter::once(self.case_study_run(
+                        controllers,
+                        expect_fail,
+                        extra_feature,
+                    )))
+                }
+            }
             LemmyControllerRunMode::All => unreachable!(),
         }
     }
