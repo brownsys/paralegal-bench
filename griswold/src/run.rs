@@ -267,17 +267,17 @@ impl EvaluationConfig {
                 Some(e) if e.success() => {
                     let policy = exp.policy;
                     let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
-                        let ctx = Arc::new(
-                            GraphLocation::std(".")
-                                .build_context(paralegal_policy::Config::default())?,
-                        );
+                        let graph_loc = GraphLocation::std(".");
+                        let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
+                        let ctx =
+                            Arc::new(graph_loc.build_context(paralegal_policy::Config::default())?);
                         let policy_start = Instant::now();
                         (policy)(ctx.clone())?;
                         writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
                         let success = ctx.emit_diagnostics(&mut policy_out)?;
-                        anyhow::Ok((ctx, success, policy_start.elapsed()))
+                        anyhow::Ok((ctx, success, file_size, policy_start.elapsed()))
                     });
-                    let (ctx, success, traversal_time) = res?;
+                    let (ctx, success, file_size, traversal_time) = res?;
                     run_stats.add_policy_stat(
                         cmd_stat,
                         ctx.as_ref(),
@@ -287,6 +287,7 @@ impl EvaluationConfig {
                             PolicyResult::Fail
                         },
                         traversal_time,
+                        file_size,
                     );
                     for ctrl in ctx.desc().controllers.values() {
                         output

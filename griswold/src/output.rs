@@ -59,6 +59,8 @@ pub struct RunMeasurements {
     /// How many of the analyzed lines changed vs the previous commit. Used in
     /// roll-forward only
     changed_lines: Option<u32>,
+    /// Size of the SPDG file in bytes
+    file_size: Option<u64>,
     peak_mem_usage_pdg: u64,
     mean_mem_usage_pdg: u64,
     peak_cpu_usage_pdg: f32,
@@ -97,6 +99,7 @@ impl RunMeasurements {
             num_markers: None,
             seen_locs: None,
             seen_functions: None,
+            file_size: None,
             peak_cpu_usage_pdg: pdg_stat.peak_cpu_usage,
             peak_cpu_usage_policy: None,
             mean_cpu_usage_pdg: pdg_stat.mean_cpu_usage,
@@ -114,6 +117,7 @@ impl RunMeasurements {
         ctx: &Context,
         success: PolicyResult,
         traversal_time: Duration,
+        file_size: u64,
     ) {
         macro_rules! set {
             ($field:ident, $target:expr) => {
@@ -138,6 +142,7 @@ impl RunMeasurements {
         set!(num_markers, ctx.desc().marker_annotation_count);
         set!(seen_locs, ctx.desc().seen_locs);
         set!(seen_functions, ctx.desc().seen_functions);
+        set!(file_size, file_size);
     }
 
     pub fn add_changed_lines(&mut self, l: u32) {
