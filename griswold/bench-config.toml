@@ -95,8 +95,6 @@ flow-args = [
 cargo-args = ["--lib", "--features", "db"]
 
 
-
-
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
@@ -120,6 +118,7 @@ policy-mode = "unified"
 [[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
+lemmy-controller-run-mode = "all"
 policy-mode = "unified"
 
 # Does not run on this machine sadly
@@ -135,7 +134,6 @@ mode = "case-study"
 application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
-
 
 
 [[experiment.adaptive-depth]]
@@ -163,8 +161,6 @@ mode = "case-study"
 lemmy-controller-run-mode = "all"
 application = "lemmy"
 policy-mode = "unified"
-
-
 
 
 [[experiment.ablation]]
@@ -358,7 +354,6 @@ expectation = "pass"
 commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "fail"
-
 
 
 [[experiment.correctness]]

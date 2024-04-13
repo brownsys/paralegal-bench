@@ -52,7 +52,7 @@ struct BatchConfigPreparer<'a> {
 impl<'a> BatchConfigPreparer<'a> {
     fn case_study_run(
         self,
-        controller: &'static [&'static str],
+        controller_features: &[&[&'a str]],
         expect_fail: bool,
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
@@ -70,12 +70,16 @@ impl<'a> BatchConfigPreparer<'a> {
                 PolicyResult::Pass
             },
         );
-        exp.controller = Some(controller);
+        exp.controller = match controller_features {
+            [[f]] => Some(f),
+            _ => None,
+        };
         exp.bug = Some(self.bug.as_ref());
-        exp.extra_cargo_args = controller
+        exp.extra_cargo_args = controller_features
             .iter()
-            .flat_map(|c| ["--feature", c])
-            .chain(["--feature", self.batch_config.baseline_feature])
+            .flat_map(|s| s.iter())
+            .flat_map(|c| ["--features", c])
+            .chain(["--features", self.batch_config.baseline_feature])
             .collect();
         if let Some(f) = extra_feature {
             exp.extra_cargo_args.extend(["--features", &f])
@@ -86,18 +90,22 @@ impl<'a> BatchConfigPreparer<'a> {
     fn mk_batch_exps(
         self,
         expect_fail: bool,
-        controllers: &'static [&'static str],
+        controllers: &'a [&'static [&'static str]],
         extra_feature: Option<&'static str>,
     ) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
         match self.run_mode {
             LemmyControllerRunMode::Affected => {
-                let iter = controllers.iter().map(move |c| {
-                    self.case_study_run(slice::from_ref(c), expect_fail, extra_feature)
+                let iter = controllers.iter().flat_map(|s| s.iter()).map(move |c| {
+                    self.case_study_run(
+                        slice::from_ref(&slice::from_ref(c)),
+                        expect_fail,
+                        extra_feature,
+                    )
                 });
                 Box::new(iter)
             }
             LemmyControllerRunMode::All => Box::new(std::iter::once(self.case_study_run(
-                slice::from_ref(&"all-controllers"),
+                slice::from_ref(&slice::from_ref(&"all-controllers")),
                 expect_fail,
                 extra_feature,
             ))),
@@ -123,19 +131,18 @@ impl<'a> BatchConfigPreparer<'a> {
         let (initial_extra_feature, changed_extra_feature) = self.extra_features();
         let change = &self.batch_config.change;
         let iter = self
-            .batch_config
-            .baseline_controllers
-            .iter()
-            .flat_map(move |ctrl| {
-                self.mk_batch_exps(
-                    self.batch_config.expect_failure,
-                    ctrl,
-                    initial_extra_feature,
-                )
-            })
+            .mk_batch_exps(
+                self.batch_config.expect_failure,
+                self.batch_config.baseline_controllers,
+                initial_extra_feature,
+            )
             .chain(change.iter().flat_map(move |change| {
-                change.affected_controllers.into_iter().flat_map(move |c| {
-                    self.mk_batch_exps(self.batch_config.expect_failure, c, initial_extra_feature)
+                change.affected_controllers.iter().flat_map(move |c| {
+                    self.mk_batch_exps(
+                        self.batch_config.expect_failure,
+                        slice::from_ref(c),
+                        initial_extra_feature,
+                    )
                 })
             }))
             .chain(change.iter().flat_map(move |change| {
@@ -145,9 +152,11 @@ impl<'a> BatchConfigPreparer<'a> {
                     .map_or(self.batch_config.baseline_controllers, |ctrl| {
                         slice::from_ref(ctrl)
                     });
-                fixed.iter().flat_map(move |c| {
-                    self.mk_batch_exps(!self.batch_config.expect_failure, c, changed_extra_feature)
-                })
+                self.mk_batch_exps(
+                    !self.batch_config.expect_failure,
+                    fixed,
+                    changed_extra_feature,
+                )
             }));
         Box::new(iter)
     }

@@ -33,7 +33,7 @@ pub struct Run<'c> {
     pub policy_name: &'c str,
     pub external_annotations: Option<&'c Path>,
     /// Only set when a single controller is selected (used in Lemmy)
-    pub controller: Option<&'static [&'static str]>,
+    pub controller: Option<&'c str>,
     /// Only set in ablation experiments. This feature is what selects the
     /// ablation configuration
     pub ablation_feature: Option<&'c str>,
@@ -91,7 +91,7 @@ impl<'a> Run<'a> {
 pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
-    bench_num: u64,
+    _bench_num: u64,
     general_output_dir: PathBuf,
     post_process_dir: PathBuf,
     pub controller_stat_out: Writer<File>,
@@ -130,7 +130,7 @@ impl Output {
         )
         .unwrap();
         Ok(Self {
-            bench_num,
+            _bench_num: bench_num,
             controller_stat_out: Writer::from_path(general_output_dir.join("controllers.csv"))?,
             run_stat_out: Writer::from_path(general_output_dir.join("results.csv"))?,
             general_output_dir,
