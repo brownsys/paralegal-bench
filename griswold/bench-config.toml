@@ -140,27 +140,47 @@ policy-mode = "unified"
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
+adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
+adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
+adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
+adaptive-depth = false
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 lemmy-controller-run-mode = "all"
 application = "lemmy"
 policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+adaptive-depth = false
 
 
 [[experiment.ablation]]
