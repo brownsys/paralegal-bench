@@ -128,8 +128,8 @@ impl Output {
         )
         .unwrap();
         Ok(Self {
-            controller_stat_out: Writer::from_path(general_output_dir.join("controllers.csv"))?,
-            run_stat_out: Writer::from_path(general_output_dir.join("results.csv"))?,
+            controller_stat_out: Writer::from_path(metrics_output_dir.join("controllers.csv"))?,
+            run_stat_out: Writer::from_path(metrics_output_dir.join("results.csv"))?,
             general_output_dir,
             post_process_dir,
         })
