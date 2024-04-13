@@ -111,17 +111,18 @@ impl Output {
         std::fs::create_dir_all(&args.result_path)?;
         let mut general_output_dir = args.result_path.canonicalize()?;
         let post_process_dir = general_output_dir.join(format!("pp-{bench_num}"));
-        general_output_dir.push(format!("run-{bench_num}"));
-        for dir in [&general_output_dir, &post_process_dir] {
+        let metrics_output_dir = general_output_dir.join(format!("run-{bench_num}"));
+        general_output_dir.push(format!("logs-{bench_num}"));
+        for dir in [&general_output_dir, &post_process_dir, &metrics_output_dir] {
             assert!(!dir.exists(), "{}", dir.display());
             std::fs::create_dir(dir)?;
         }
         std::fs::copy(
             &args.config_path,
-            general_output_dir.join("bench-config.toml"),
+            metrics_output_dir.join("bench-config.toml"),
         )?;
         let sys_stat = SystemParameters::new(paralegal_commit, repo_commit);
-        let mut sys_stat_file = File::create(general_output_dir.join("sys.toml"))?;
+        let mut sys_stat_file = File::create(metrics_output_dir.join("sys.toml"))?;
         use std::io::Write;
         write!(
             sys_stat_file,
@@ -148,16 +149,18 @@ impl Output {
     }
 }
 
-fn log_for(output: &Output, prefix: &str) -> std::io::Result<(File, File)> {
-    let stdout = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(output.path(format!("{prefix}.stdout.txt")))?;
-    let stderr = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(output.path(format!("{prefix}.stderr.txt")))?;
-    Ok((stdout, stderr))
+impl Output {
+    fn log_for(&self, prefix: &str) -> std::io::Result<(File, File)> {
+        let stdout = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(self.path(format!("{prefix}.stdout.txt")))?;
+        let stderr = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(self.path(format!("{prefix}.stderr.txt")))?;
+        Ok((stdout, stderr))
+    }
 }
 
 impl CrateOverride {
@@ -242,19 +245,19 @@ impl EvaluationConfig {
             progress.inc(1);
             progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
             if let Some(prepare) = exp.prepare.as_ref() {
-                let (stdout, stderr) = log_for(&output, "prepare")?;
+                let (stdout, stderr) = output.log_for("prepare")?;
                 (prepare)(stdout.into(), stderr.into())
             }
             for (package, overrides) in &exp.app_config.version_override {
-                let (stdout, _stderr) = log_for(&output, "prepare")?;
+                let (stdout, _stderr) = output.log_for("prepare")?;
                 overrides.enact(package, Box::new(stdout))?;
             }
             let compile_command = &mut exp.compile_cmd();
             //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
-            let (mut stdout, mut stderr) = log_for(&output, "compile")?;
+            let (mut stdout, mut stderr) = output.log_for("compile")?;
             use std::io::Write;
-            writeln!(stdout, "Run {id}: {:?}", compile_command)?;
-            writeln!(stderr, "Run {id}: {:?}", compile_command)?;
+            writeln!(stdout, "###### Run {id}: {:?}", compile_command)?;
+            writeln!(stderr, "###### Run {id}: {:?}", compile_command)?;
             let mut process = compile_command
                 .get_command()
                 .stderr(stderr)
@@ -273,6 +276,7 @@ impl EvaluationConfig {
                     );
                     let policy_start = Instant::now();
                     (policy)(ctx.clone())?;
+                    writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
                     let success = ctx.emit_diagnostics(&mut policy_out)?;
                     anyhow::Ok((ctx, success, policy_start.elapsed()))
                 });
