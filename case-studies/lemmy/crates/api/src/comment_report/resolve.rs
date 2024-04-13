@@ -2,15 +2,16 @@ use crate::lemmy_api_common::{
     comment::{CommentReportResponse, ResolveCommentReport},
     utils::{
         apply_label_community_write, apply_label_read, blocking, get_local_user_view_from_jwt,
-        is_mod_or_admin,
+        is_mod_or_admin, check_community_ban, check_community_deleted_or_removed
     },
 };
-use crate::lemmy_db_schema::{source::comment_report::CommentReport, traits::Reportable};
+use crate::lemmy_db_schema::{source::comment_report::CommentReport, traits::{Crud, Reportable}};
 use crate::lemmy_db_views::structs::CommentReportView;
 use crate::lemmy_utils::{error::LemmyError, ConnectionId};
 use crate::lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation};
 use crate::Perform;
 use actix_web::web::Data;
+use cfg_if::cfg_if;
 
 /// Resolves or unresolves a comment report and notifies the moderators of the community
 #[async_trait::async_trait(?Send)]
@@ -49,6 +50,19 @@ impl Perform for ResolveCommentReport {
                 CommentReport::unresolve(conn, report_id, person_id)
             }
         };
+
+        cfg_if! {
+            if #[cfg(feature = "hypothetical-fix")] {
+                let community_id = report.community.id;
+                check_community_ban(
+                    local_user_view.person.id,
+                    community_id,
+                    context.pool(),
+                )
+                .await?;
+                check_community_deleted_or_removed(community_id, context.pool()).await?;
+            }
+        }
 
         apply_label_community_write(blocking(context.pool(), resolve_fun).await?)
             .map_err(|e| LemmyError::from_error_message(e, "couldnt_resolve_report"))?;
