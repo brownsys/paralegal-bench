@@ -6,6 +6,7 @@ use cargo::{
     ops::{resolve_ws, UpdateOptions},
     util::important_paths::find_root_manifest_for_wd,
 };
+use chrono;
 use csv::Writer;
 use indicatif::ProgressBar;
 use paralegal_policy::{Context, GraphLocation};
@@ -15,7 +16,7 @@ use std::{
     process::{Command, Stdio},
     rc::Rc,
     sync::Arc,
-    time::{Duration, Instant, SystemTime},
+    time::{Duration, Instant},
 };
 use tracing::{info, trace, warn};
 
@@ -91,7 +92,6 @@ impl<'a> Run<'a> {
 pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
-    _bench_num: u64,
     general_output_dir: PathBuf,
     post_process_dir: PathBuf,
     pub controller_stat_out: Writer<File>,
@@ -104,15 +104,12 @@ impl Output {
         paralegal_commit: String,
         repo_commit: String,
     ) -> std::io::Result<Self> {
-        let bench_num = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+        let bench_num = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S");
         std::fs::create_dir_all(&args.result_path)?;
         let mut general_output_dir = args.result_path.canonicalize()?;
-        let post_process_dir = general_output_dir.join(format!("pp-{bench_num}"));
-        let metrics_output_dir = general_output_dir.join(format!("run-{bench_num}"));
-        general_output_dir.push(format!("logs-{bench_num}"));
+        let post_process_dir = general_output_dir.join(format!("{bench_num}-pp"));
+        let metrics_output_dir = general_output_dir.join(format!("{bench_num}-run"));
+        general_output_dir.push(format!("{bench_num}-logs"));
         for dir in [&general_output_dir, &post_process_dir, &metrics_output_dir] {
             assert!(!dir.exists(), "{}", dir.display());
             std::fs::create_dir(dir)?;
@@ -131,7 +128,6 @@ impl Output {
         )
         .unwrap();
         Ok(Self {
-            _bench_num: bench_num,
             controller_stat_out: Writer::from_path(general_output_dir.join("controllers.csv"))?,
             run_stat_out: Writer::from_path(general_output_dir.join("results.csv"))?,
             general_output_dir,
