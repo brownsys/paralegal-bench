@@ -263,43 +263,46 @@ impl EvaluationConfig {
             let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
             progress.inc(1);
             progress.set_message(format!("policy: {}", exp.policy_name));
-            if process.try_wait()?.unwrap().success() {
-                let policy = exp.policy;
-                let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
-                    let ctx = Arc::new(
-                        GraphLocation::std(".")
-                            .build_context(paralegal_policy::Config::default())?,
+            match process.try_wait()? {
+                Some(e) if e.success() => {
+                    let policy = exp.policy;
+                    let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
+                        let ctx = Arc::new(
+                            GraphLocation::std(".")
+                                .build_context(paralegal_policy::Config::default())?,
+                        );
+                        let policy_start = Instant::now();
+                        (policy)(ctx.clone())?;
+                        writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
+                        let success = ctx.emit_diagnostics(&mut policy_out)?;
+                        anyhow::Ok((ctx, success, policy_start.elapsed()))
+                    });
+                    let (ctx, success, traversal_time) = res?;
+                    run_stats.add_policy_stat(
+                        cmd_stat,
+                        ctx.as_ref(),
+                        if success {
+                            PolicyResult::Pass
+                        } else {
+                            PolicyResult::Fail
+                        },
+                        traversal_time,
                     );
-                    let policy_start = Instant::now();
-                    (policy)(ctx.clone())?;
-                    writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
-                    let success = ctx.emit_diagnostics(&mut policy_out)?;
-                    anyhow::Ok((ctx, success, policy_start.elapsed()))
-                });
-                let (ctx, success, traversal_time) = res?;
-                run_stats.add_policy_stat(
-                    cmd_stat,
-                    ctx.as_ref(),
-                    if success {
-                        PolicyResult::Pass
-                    } else {
-                        PolicyResult::Fail
-                    },
-                    traversal_time,
-                );
-                for ctrl in ctx.desc().controllers.values() {
-                    output
-                        .controller_stat_out
-                        .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
+                    for ctrl in ctx.desc().controllers.values() {
+                        output
+                            .controller_stat_out
+                            .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
+                    }
+                    if let Some(pp) = exp.post_process.as_ref() {
+                        pp(&ctx, &mut run_stats);
+                    }
                 }
-                if let Some(pp) = exp.post_process.as_ref() {
-                    pp(&ctx, &mut run_stats);
+                other => {
+                    progress.println(format!(
+                        "WARNING: Run id {} dir not successfully pass PDG construction: {other:?}",
+                        id
+                    ));
                 }
-            } else {
-                progress.println(format!(
-                    "WARNING: Run id {} dir not successfully pass PDG construction",
-                    id
-                ));
             }
             output.run_stat_out.serialize(run_stats)?;
             output.flush()?;
