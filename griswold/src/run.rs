@@ -33,7 +33,7 @@ pub struct Run<'c> {
     pub policy_name: &'c str,
     pub external_annotations: Option<&'c Path>,
     /// Only set when a single controller is selected (used in Lemmy)
-    pub controller: Option<&'static str>,
+    pub controller: Option<&'static [&'static str]>,
     /// Only set in ablation experiments. This feature is what selects the
     /// ablation configuration
     pub ablation_feature: Option<&'c str>,
@@ -53,10 +53,6 @@ pub struct Run<'c> {
 impl<'a> Run<'a> {
     pub fn name(&self) -> String {
         let mut result = format!("{}-{}", self.config.application.as_ref(), self.policy_name);
-        if let Some(comment) = self.controller {
-            result.push('-');
-            result.push_str(comment.as_ref());
-        }
         if let Some(comment) = self.ablation_feature.as_ref() {
             result.push('-');
             result.push_str(comment.as_ref());

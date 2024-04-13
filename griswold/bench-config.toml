@@ -95,25 +95,32 @@ flow-args = [
 cargo-args = ["--lib", "--features", "db"]
 
 
+
+
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "freedit"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "websubmit"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "atomic-data"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
+policy-mode = "unified"
 
 # Does not run on this machine sadly
 [[experiment.case-studies]]
@@ -121,154 +128,181 @@ mode = "case-study"
 application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
-adaptive-depth = false
+policy-mode = "unified"
+
+
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
-application = "lemmy"
-adaptive-depth = false
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
-
-[[experiment.plume-roll-forward]]
-mode = "roll-forward"
 application = "plume"
-app-config-override = "original-plume"
+policy-mode = "unified"
 
-[[experiment.plume-roll-forward.cutoff]]
-commit = "304fb740d8ba3aaae64b3eb67ecfe476841b87c4"
-external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
-expectation = "pass"
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
 
-[[experiment.plume-roll-forward.cutoff]]
-commit = "e1777e9071b1b71fc164f88c74df56462ff11904"
-external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
-expectation = "pass"
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
 
-[[experiment.plume-roll-forward.cutoff]]
-commit = "08cd777f8146c4a619a8615d091ef22901ed0b58"
-external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
-expectation = "fail"
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+
+
+
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policies = ["deletion"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "lib"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policies = ["deletion"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "strict"
+app-config-override = "websubmit-strict"
+feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
+feature-space-fail = [
+    "edit-del-1-b",
+    "edit-del-1-c",
+    "edit-del-2-b",
+    "edit-del-2-c",
+    "edit-del-3-b",
+    "edit-del-3-c",
+]
+policies = ["deletion"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policies = ["scoped-storage"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "lib"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policies = ["scoped-storage"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "strict"
+app-config-override = "websubmit-strict"
+feature-space-success = ["edit-sc-1-a"]
+feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
+policies = ["scoped-storage"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policies = ["authorized-disclosure"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "lib"
+app-config-override = "websubmit-lib"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policies = ["authorized-disclosure"]
+
+[[experiment.ablation]]
+mode = "ablation"
+application = "websubmit"
+flavour = "strict"
+app-config-override = "websubmit-strict"
+feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
+feature-space-fail = [
+    "edit-dis-1-b",
+    "edit-dis-1-c",
+    "edit-dis-2-b",
+    "edit-dis-2-c",
+    "edit-dis-3-b",
+    "edit-dis-3-c",
+]
+policies = ["authorized-disclosure"]
+
+# [[experiment.plume-roll-forward]]
+# mode = "roll-forward"
+# application = "plume"
+# app-config-override = "original-plume"
+
+# [[experiment.plume-roll-forward.cutoff]]
+# commit = "304fb740d8ba3aaae64b3eb67ecfe476841b87c4"
+# external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
+# expectation = "pass"
+
+# [[experiment.plume-roll-forward.cutoff]]
+# commit = "e1777e9071b1b71fc164f88c74df56462ff11904"
+# external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
+# expectation = "pass"
+
+# [[experiment.plume-roll-forward.cutoff]]
+# commit = "08cd777f8146c4a619a8615d091ef22901ed0b58"
+# external-annotations = "../../research/dfpp-verification/roll-forward/original-plume-external-annotations.toml"
+# expectation = "fail"
 
 
 [[experiment.atomic-roll-forward]]
@@ -324,3 +358,39 @@ expectation = "pass"
 commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../research/dfpp-verification/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "fail"
+
+
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "plume"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "freedit"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "websubmit"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "atomic-data"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "lemmy"
+lemmy-controller-run-mode = "affected-merged"
+
+# Does not run on this machine sadly
+[[experiment.correctness]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+adaptive-depth = false

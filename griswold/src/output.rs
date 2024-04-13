@@ -79,7 +79,7 @@ impl RunMeasurements {
             run: exp.name(),
             policy: exp.policy_name.to_owned(),
             expectation: exp.expectation,
-            controller: exp.controller.map(ToOwned::to_owned),
+            controller: exp.controller.map(|c| c.join(",")),
             ablation_feature: exp.ablation_feature.map(ToOwned::to_owned),
             commit: exp.commit.clone(),
             bug: exp.bug.map(ToOwned::to_owned),

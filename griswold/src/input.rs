@@ -146,6 +146,7 @@ fn const_application_flavour() -> websubmit::Flavour {
 pub enum LemmyControllerRunMode {
     All,
     Affected,
+    AffectedMerged,
 }
 
 impl Default for LemmyControllerRunMode {

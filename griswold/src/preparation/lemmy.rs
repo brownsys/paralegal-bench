@@ -52,7 +52,7 @@ struct BatchConfigPreparer<'a> {
 impl<'a> BatchConfigPreparer<'a> {
     fn case_study_run(
         self,
-        controller: &'static str,
+        controller: &'static [&'static str],
         expect_fail: bool,
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
@@ -72,12 +72,11 @@ impl<'a> BatchConfigPreparer<'a> {
         );
         exp.controller = Some(controller);
         exp.bug = Some(self.bug.as_ref());
-        exp.extra_cargo_args = vec![
-            "--features",
-            controller,
-            "--features",
-            self.batch_config.baseline_feature,
-        ];
+        exp.extra_cargo_args = controller
+            .iter()
+            .flat_map(|c| ["--feature", c])
+            .chain(["--feature", self.batch_config.baseline_feature])
+            .collect();
         if let Some(f) = extra_feature {
             exp.extra_cargo_args.extend(["--features", &f])
         }
@@ -92,16 +91,19 @@ impl<'a> BatchConfigPreparer<'a> {
     ) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
         match self.run_mode {
             LemmyControllerRunMode::Affected => {
-                let iter = controllers
-                    .iter()
-                    .map(move |c| self.case_study_run(*c, expect_fail, extra_feature));
+                let iter = controllers.iter().map(move |c| {
+                    self.case_study_run(slice::from_ref(c), expect_fail, extra_feature)
+                });
                 Box::new(iter)
             }
             LemmyControllerRunMode::All => Box::new(std::iter::once(self.case_study_run(
-                "all-controllers",
+                slice::from_ref(&"all-controllers"),
                 expect_fail,
                 extra_feature,
             ))),
+            LemmyControllerRunMode::AffectedMerged => Box::new(std::iter::once(
+                self.case_study_run(controllers, expect_fail, extra_feature),
+            )),
         }
     }
 
