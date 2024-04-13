@@ -120,6 +120,7 @@ mode = "case-study"
 application = "lemmy"
 lemmy-controller-run-mode = "all"
 policy-mode = "unified"
+bugs = ["bug4"]
 
 # Does not run on this machine sadly
 [[experiment.case-studies]]
@@ -166,6 +167,7 @@ lemmy-controller-run-mode = "all"
 application = "lemmy"
 policy-mode = "unified"
 adaptive-depth = false
+bugs = ["bug4"]
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
