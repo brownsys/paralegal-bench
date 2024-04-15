@@ -1546,7 +1546,7 @@ pub(crate) struct FormComment {
     content: String,
 }
 
-#[cfg_attr(feature = "comment-post"), paralegal::analyze)]
+#[cfg_attr(feature = "comment-post", paralegal::analyze)]
 /// `POST /post/:iid/:pid/` comment create
 pub(crate) async fn comment_post(
     cookie: Option<TypedHeader<Cookie>>,

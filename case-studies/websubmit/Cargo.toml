@@ -26,10 +26,6 @@ serde_json = "1.0"
 cfg-if = "1.0.0"
 paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 
-answers-controller=  []
-forget-user = []
-questions-submit-internal =[]
-
 
 [features]
 # Edit features as listed in https://www.notion.so/justus-adam/Set-of-edits-to-websubmit-to-evaluate-b835920560584792be72a51ffda1e372
@@ -57,6 +53,10 @@ edit-sc-1-c = []
 v-ann-lib = []
 v-ann-baseline = []
 v-ann-strict = []
+answers-controller = []
+forget-user = []
+questions-submit-internal = []
+
 
 [dependencies.rocket_dyn_templates]
 version = "0.1.0-rc.1"

@@ -54,8 +54,8 @@ pub struct RunMeasurements {
     num_controllers: Option<u16>,
     /// How many PDG nodes have markers assigned.
     num_markers: Option<u32>,
-    seen_functions: Option<u32>,
-    seen_locs: Option<u32>,
+    dedup_functions: Option<u32>,
+    dedup_locs: Option<u32>,
     /// How many of the analyzed lines changed vs the previous commit. Used in
     /// roll-forward only
     changed_lines: Option<u32>,
@@ -97,8 +97,8 @@ impl RunMeasurements {
             num_controllers: None,
             changed_lines: None,
             num_markers: None,
-            seen_locs: None,
-            seen_functions: None,
+            dedup_functions: None,
+            dedup_locs: None,
             file_size: None,
             peak_cpu_usage_pdg: pdg_stat.peak_cpu_usage,
             peak_cpu_usage_policy: None,
@@ -140,8 +140,8 @@ impl RunMeasurements {
         set!(rustc_time, ctx.desc().rustc_time.into());
         set!(policy_time, cmd_stat.elapsed);
         set!(num_markers, ctx.desc().marker_annotation_count);
-        set!(seen_locs, ctx.desc().seen_locs);
-        set!(seen_functions, ctx.desc().seen_functions);
+        set!(dedup_functions, ctx.desc().dedup_functions);
+        set!(dedup_locs, ctx.desc().dedup_locs);
         set!(file_size, file_size);
     }
 
