@@ -119,7 +119,7 @@ policy-mode = "unified"
 [[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
-lemmy-controller-run-mode = "all"
+controller-run-mode = "all"
 policy-mode = "unified"
 bugs = ["bug4"]
 

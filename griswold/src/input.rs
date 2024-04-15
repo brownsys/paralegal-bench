@@ -85,7 +85,7 @@ pub struct ExperimentConfig {
     pub cargo_args: Box<[String]>,
     /// Default to the application name
     pub app_config_override: Option<String>,
-    #[serde(default, rename = "run-mode")]
+    #[serde(default)]
     pub controller_run_mode: ControllerRunMode,
 }
 
@@ -144,8 +144,9 @@ fn const_application_flavour() -> websubmit::Flavour {
     websubmit::Flavour::Application
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy, strum::AsRefStr)]
 #[serde(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
 pub enum ControllerRunMode {
     All,
     AllSeparate,

@@ -218,7 +218,7 @@ impl<'a> BatchConfigPreparer<'a> {
             .into_iter()
         };
         match self.builder.experiment_config.controller_run_mode {
-            ControllerRunMode::All => Box::new(run_pair("all_controllers")) as Box<_>,
+            ControllerRunMode::All => Box::new(run_pair("all-controllers")) as Box<_>,
             ControllerRunMode::AllSeparate => Box::new(
                 LEMMY_CONTROLLERS
                     .iter()
