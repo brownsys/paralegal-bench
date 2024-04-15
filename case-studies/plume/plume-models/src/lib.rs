@@ -212,7 +212,7 @@ macro_rules! find_by {
 macro_rules! list_by {
     ($table:ident, $fn:ident, $($col:ident as $type:ty),+) => {
         /// Try to find a $table with a given $col
-        #[paralegal_flow::marker(user_data)]
+        //#[paralegal_flow::marker(user_data)]
         pub fn $fn(conn: &crate::Connection, $($col: $type),+) -> Result<Vec<Self>> {
             $table::table
                 $(.filter($table::$col.eq($col)))+
@@ -236,7 +236,7 @@ macro_rules! list_by {
 /// ```
 macro_rules! get {
     ($table:ident) => {
-        #[paralegal_flow::marker(user_data)]
+        //#[paralegal_flow::marker(user_data)]
         pub fn get(conn: &crate::Connection, id: i32) -> Result<Self> {
             $table::table
                 .filter($table::id.eq(id))
