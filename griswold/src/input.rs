@@ -67,6 +67,7 @@ pub enum PolicyMode {
     #[default]
     Separate,
     Unified,
+    None,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -147,6 +148,7 @@ fn const_application_flavour() -> websubmit::Flavour {
 #[serde(rename_all = "kebab-case")]
 pub enum ControllerRunMode {
     All,
+    AllSeparate,
     Affected,
     AffectedMerged,
 }

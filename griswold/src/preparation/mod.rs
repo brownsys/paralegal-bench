@@ -65,12 +65,17 @@ struct RunBuilder<'a> {
     evaluation_config: &'a EvaluationConfig,
 }
 
+fn no_policy() -> (&'static str, PolicyFn<'static>, Vec<&'static str>) {
+    ("none", Rc::new(|_| Ok(())) as Rc<_>, vec![])
+}
+
 impl<'a> RunBuilder<'a> {
     pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
         match self.experiment_config.policy_mode {
             PolicyMode::Separate => Box::new(self.experiment_config.application.policies())
                 as Box<dyn Iterator<Item = _> + 'a>,
             PolicyMode::Unified => Box::new(std::iter::once(self.unified_policies())),
+            PolicyMode::None => Box::new(std::iter::once(no_policy())),
         }
     }
 
@@ -252,6 +257,13 @@ impl<'a> RunBuilder<'a> {
                     .all_controllers()
                     .to_vec(),
             )) as Box<_>,
+            ControllerRunMode::AllSeparate => Box::new(
+                self.experiment_config
+                    .application
+                    .all_controllers()
+                    .iter()
+                    .map(|&c| vec![c]),
+            ) as Box<_>,
         }
     }
 
