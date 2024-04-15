@@ -167,6 +167,7 @@ fn get_answers(bg: &mut MySqlBackend, key: Either<u64, &str>) -> Vec<LectureAnsw
         .collect()
 }
 
+#[cfg_attr(feature = "ansers-controller", paralegal::analyze)]
 #[cfg_attr(feature = "edit-dis-3-a", paralegal::analyze)]
 #[cfg_attr(feature = "edit-dis-3-c", paralegal::analyze)]
 #[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
@@ -308,7 +309,7 @@ fn delete_my_answers_controller(
     Redirect::to("/")
 }
 
-#[paralegal::analyze]
+#[cfg_attr(feauture = "forget-user", paralegal::analyze)]
 #[post("/forget")]
 pub(crate) fn forget_user(apikey: ApiKey, backend: &State<Arc<Mutex<MySqlBackend>>>) -> Redirect {
     let mut bg = backend.lock().unwrap();
@@ -416,7 +417,7 @@ pub(crate) fn questions_submit(
 ) -> Redirect {
     questions_submit_internal(apikey, num, data, backend, config)
 }
-#[paralegal::analyze]
+#[cfg_attr(feature = "questions-submit-internal", paralegal::analyze)]
 #[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
 pub(crate) fn questions_submit_internal(
     apikey: ApiKey,

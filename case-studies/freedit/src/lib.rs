@@ -58,7 +58,7 @@ pub static DB: Lazy<Db> = Lazy::new(|| {
     db
 });
 
-#[paralegal::analyze]
+#[cfg_attr(feature = "user-chron-job", paralegal::analyze)]
 pub async fn user_chron_job() -> ! {
     use controller::{db_utils::clear_invalid, feed::cron_feed, meta_handler::shutdown_signal, tantivy::Tan };
     loop {

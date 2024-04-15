@@ -12,8 +12,8 @@ use clap::ValueEnum;
 use paralegal_policy::{Context, SPDGGenCommand};
 
 use crate::input::{
-    Application, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyMode, PolicyResult,
-    RollForwardCutoff,
+    Application, ControllerRunMode, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyMode,
+    PolicyResult, RollForwardCutoff,
 };
 use crate::output::RunMeasurements;
 use crate::run::{PolicyFn, Run};
@@ -66,7 +66,7 @@ struct RunBuilder<'a> {
 }
 
 impl<'a> RunBuilder<'a> {
-    pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
+    pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
         match self.experiment_config.policy_mode {
             PolicyMode::Separate => Box::new(self.experiment_config.application.policies())
                 as Box<dyn Iterator<Item = _> + 'a>,
@@ -74,20 +74,26 @@ impl<'a> RunBuilder<'a> {
         }
     }
 
-    pub fn unified_policies(self) -> (&'a str, PolicyFn<'a>) {
+    pub fn unified_policies(self) -> (&'a str, PolicyFn<'a>, Vec<&'a str>) {
         let base = self
             .experiment_config
             .application
             .policies()
             .collect::<Vec<_>>();
+        let affected = base
+            .iter()
+            .flat_map(|(_, _, p)| p.iter())
+            .copied()
+            .collect();
         (
             "unified",
             Rc::new(move |ctx: Arc<Context>| {
-                for (_, policy) in base.iter() {
+                for (_, policy, _) in base.iter() {
                     policy(ctx.clone())?;
                 }
                 Ok(())
             }) as _,
+            affected,
         )
     }
 
@@ -102,12 +108,13 @@ impl<'a> RunBuilder<'a> {
             ExperimentMode::Ablation {
                 feature_space_success,
                 feature_space_fail,
-            } => Box::new(self.policies().flat_map(move |(name, policy)| {
+            } => Box::new(self.policies().flat_map(move |(name, policy, affected)| {
                 self.ablation_runs_for_policy(
                     feature_space_success,
                     feature_space_fail,
                     name,
                     policy,
+                    affected,
                 )
             })),
             ExperimentMode::RollForward { cutoff } => {
@@ -159,19 +166,24 @@ impl<'a> RunBuilder<'a> {
             .enumerate()
             .flat_map(move |(idx, (commit, (current, expectation)))| {
                 let commit_range = commit_range.clone();
-                self.policies().map(move |(policy_name, policy)| {
-                    let mut run = self.case_study_run(policy_name, policy, *expectation);
-                    run.external_annotations =
-                        current.external_annotations.as_ref().map(|pb| pb.as_path());
-                    run.prepare = Some(Rc::new(checkout(&commit)));
-                    run.post_process = Some(Rc::new(diff_analyzed(
-                        idx,
-                        commit_range.clone(),
-                        target_path,
-                    )));
-                    run.commit = Some(commit.clone());
-                    run
-                })
+                self.policies()
+                    .flat_map(move |(policy_name, policy, affected)| {
+                        let commit_range = commit_range.clone();
+                        self.controllers(affected).map(move |c| {
+                            let mut run =
+                                self.case_study_run(policy_name, policy.clone(), *expectation, c);
+                            run.external_annotations =
+                                current.external_annotations.as_ref().map(|pb| pb.as_path());
+                            run.prepare = Some(Rc::new(checkout(&commit)));
+                            run.post_process = Some(Rc::new(diff_analyzed(
+                                idx,
+                                commit_range.clone(),
+                                target_path,
+                            )));
+                            run.commit = Some(commit.clone());
+                            run
+                        })
+                    })
             })
             .collect::<Vec<_>>()
             .into_iter()
@@ -183,37 +195,72 @@ impl<'a> RunBuilder<'a> {
         feature_space_fail: &'a [String],
         policy_name: &'a str,
         policy: PolicyFn<'a>,
+        affected: Vec<&'a str>,
     ) -> impl Iterator<Item = Run<'a>> {
-        let policy_clone = policy.clone();
-        // An extra run to check that with no modifications this
-        // policy version passes
-        let canary_run = self.case_study_run(policy_name, policy.clone(), PolicyResult::Pass);
-        let success_runs = feature_space_success.iter().map(move |feature| {
-            let mut run = self.case_study_run(policy_name, policy.clone(), PolicyResult::Pass);
-            run.extra_cargo_args.extend(["--features", &feature]);
-            run.ablation_feature = Some(feature.as_str());
-            run
-        });
-        let fail_runs = feature_space_fail.iter().map(move |feature| {
-            let mut run =
-                self.case_study_run(policy_name, policy_clone.clone(), PolicyResult::Fail);
-            run.extra_cargo_args.extend(["--features", &feature]);
-            run.ablation_feature = Some(feature.as_str());
-            run
-        });
-        std::iter::once(canary_run)
-            .chain(success_runs)
-            .chain(fail_runs)
+        self.controllers(affected).flat_map(move |c| {
+            let policy_clone = policy.clone();
+            let policy_clone_2 = policy.clone();
+            let c_clone_1 = c.clone();
+            let c_clone_2 = c.clone();
+            // An extra run to check that with no modifications this
+            // policy version passes
+            let canary_run =
+                self.case_study_run(policy_name, policy.clone(), PolicyResult::Pass, c);
+            let success_runs = feature_space_success.iter().map(move |feature| {
+                let mut run = self.case_study_run(
+                    policy_name,
+                    policy_clone_2.clone(),
+                    PolicyResult::Pass,
+                    c_clone_1.clone(),
+                );
+                run.extra_cargo_args.extend(["--features", &feature]);
+                run.ablation_feature = Some(feature.as_str());
+                run
+            });
+            let fail_runs = feature_space_fail.iter().map(move |feature| {
+                let mut run = self.case_study_run(
+                    policy_name,
+                    policy_clone.clone(),
+                    PolicyResult::Fail,
+                    c_clone_2.clone(),
+                );
+                run.extra_cargo_args.extend(["--features", &feature]);
+                run.ablation_feature = Some(feature.as_str());
+                run
+            });
+            std::iter::once(canary_run)
+                .chain(success_runs)
+                .chain(fail_runs)
+        })
+    }
+
+    fn controllers(self, affected: Vec<&'a str>) -> impl Iterator<Item = Vec<&'a str>> {
+        match self.experiment_config.controller_run_mode {
+            ControllerRunMode::Affected => {
+                Box::new(std::iter::once(affected)) as Box<dyn Iterator<Item = _>>
+            }
+            // Special case if no controllers are defined -> run anyway
+            ControllerRunMode::AffectedMerged if affected.is_empty() => {
+                Box::new(std::iter::once(affected))
+            }
+            ControllerRunMode::AffectedMerged => {
+                Box::new(affected.into_iter().map(|c| vec![c])) as Box<_>
+            }
+            ControllerRunMode::All => Box::new(std::iter::once(
+                self.experiment_config
+                    .application
+                    .all_controllers()
+                    .to_vec(),
+            )) as Box<_>,
+        }
     }
 
     fn case_study_runs(self) -> impl Iterator<Item = Run<'a>> {
         match &self.experiment_config.application {
-            Application::Lemmy {
-                policies,
-                bugs,
-                run_mode,
-            } => Box::new(self.lemmy_case_study(selection_or_all(policies), bugs, *run_mode))
-                as Box<dyn Iterator<Item = _> + 'a>,
+            Application::Lemmy { policies, bugs } => {
+                Box::new(self.lemmy_case_study(selection_or_all(policies), bugs))
+                    as Box<dyn Iterator<Item = _> + 'a>
+            }
             _ => Box::new(
                 self.experiment_config
                     .application
@@ -221,11 +268,19 @@ impl<'a> RunBuilder<'a> {
                     .iter()
                     .copied()
                     .flat_map(move |(expectation, cargo_args)| {
-                        self.policies().map(move |(name, policy_fn)| {
-                            let mut run = self.case_study_run(name, policy_fn, expectation);
-                            run.extra_cargo_args.extend(cargo_args);
-                            run
-                        })
+                        self.policies()
+                            .flat_map(move |(name, policy_fn, affected)| {
+                                self.controllers(affected).map(move |c| {
+                                    let mut run = self.case_study_run(
+                                        name,
+                                        policy_fn.clone(),
+                                        expectation,
+                                        c,
+                                    );
+                                    run.extra_cargo_args.extend(cargo_args);
+                                    run
+                                })
+                            })
                     }),
             ),
         }
@@ -236,6 +291,7 @@ impl<'a> RunBuilder<'a> {
         policy_name: &'a str,
         policy: PolicyFn<'a>,
         expectation: PolicyResult,
+        controllers: impl IntoIterator<Item = &'a str> + Clone,
     ) -> Run<'a> {
         let mut run = Run::new(
             self.experiment_name,
@@ -248,6 +304,18 @@ impl<'a> RunBuilder<'a> {
         if let Application::Websubmit { flavour, .. } = &self.experiment_config.application {
             run.extra_cargo_args
                 .extend(["--features", flavour.annotation_feature()]);
+        }
+        run.extra_cargo_args.extend(
+            controllers
+                .clone()
+                .into_iter()
+                .flat_map(|c| ["--features", c]),
+        );
+        let mut m = controllers.into_iter().peekable();
+        if let Some(c) = m.next() {
+            if m.peek().is_none() {
+                run.controller = Some(c);
+            }
         }
         run
     }
@@ -314,6 +382,26 @@ fn diff_analyzed(
     }
 }
 
+const ATOMIC_DEFAULT_CONTROLLERS: &[&str] = &[];
+const FREEDIT_DEFAULT_CONTROLLERS: &[&str] = &[
+    "edit-post-post",
+    "comment-post",
+    "solo-post",
+    "user-chron-job",
+];
+const PLUME_DEFAULT_CONTROLLERS: &[&str] = &[];
+const WEBUSUBMIT_DEFAULT_CONTROLLERS: &[&str] = &[
+    "answers-controller",
+    "forget-user",
+    "questions-submit-internal",
+];
+const CONTILE_DEFAULT_CONTROLLERS: &[&str] = &[];
+const HYPERSWITCH_DEFAULT_CONTROLLERS: &[&str] = &[
+    "create-api-key",
+    "payments-authorize-data",
+    "setup-mandate-router-data",
+];
+
 fn get_all_commits(path: impl AsRef<Path>, start: &str, end: &str) -> Vec<String> {
     let output = Command::new("git")
         .args(["log", &format!("{end}^..{start}^"), "--format=%H"])
@@ -358,42 +446,76 @@ impl Application {
         }
     }
 
-    fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>)> {
+    pub fn all_controllers(&self) -> &'static [&'static str] {
+        match self {
+            Application::AtomicData { .. } => ATOMIC_DEFAULT_CONTROLLERS,
+            Application::Lemmy { .. } => &[],
+            Application::Plume { .. } => PLUME_DEFAULT_CONTROLLERS,
+            Application::Websubmit { .. } => WEBUSUBMIT_DEFAULT_CONTROLLERS,
+            Application::Contile { .. } => CONTILE_DEFAULT_CONTROLLERS,
+            Application::Hyperswitch { .. } => HYPERSWITCH_DEFAULT_CONTROLLERS,
+            Application::Freedit { .. } => FREEDIT_DEFAULT_CONTROLLERS,
+        }
+    }
+
+    fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
         match self {
             Application::AtomicData => Box::new(std::iter::once((
                 "check-writes",
                 Rc::new(atomic::check_rights) as PolicyFn<'a>,
+                ATOMIC_DEFAULT_CONTROLLERS.to_owned(),
             )))
-                as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>)>>,
-            Application::Freedit { policies } => Box::new(
-                selection_or_all(policies)
-                    .iter()
-                    .map(|p| (p.as_ref(), Rc::new(move |ctx| p.check(ctx)) as PolicyFn<'a>)),
-            ),
-            Application::Hyperswitch { policies } => Box::new(
-                selection_or_all(policies)
-                    .iter()
-                    .map(|p| (p.as_ref(), Rc::new(p.runnable()) as PolicyFn<'a>)),
-            ),
-            Application::Lemmy { policies, .. } => Box::new(
-                selection_or_all(policies)
-                    .iter()
-                    .map(|p| (p.as_ref(), Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>)),
-            ),
+                as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)>>,
+            Application::Freedit { policies } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::new(move |ctx| p.check(ctx)) as PolicyFn<'a>,
+                        FREEDIT_DEFAULT_CONTROLLERS.to_vec(),
+                    )
+                }))
+            }
+            Application::Hyperswitch { policies } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::new(p.runnable()) as PolicyFn<'a>,
+                        HYPERSWITCH_DEFAULT_CONTROLLERS.to_vec(),
+                    )
+                }))
+            }
+            Application::Lemmy { policies, .. } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>,
+                        vec!["all-controllers"],
+                    )
+                }))
+            }
             Application::Plume => Box::new(std::iter::once((
                 "data-deletion",
                 Rc::new(plume::check) as PolicyFn<'a>,
+                PLUME_DEFAULT_CONTROLLERS.to_vec(),
             ))),
-            Application::Websubmit { policies, flavour } => Box::new(
-                selection_or_all(policies)
-                    .iter()
-                    .map(|p| (p.as_ref(), Rc::from(p.runnable(*flavour)) as PolicyFn<'a>)),
-            ),
-            Application::Contile { policies } => Box::new(
-                selection_or_all(policies)
-                    .iter()
-                    .map(|p| (p.as_ref(), Rc::from(p.runnable()) as PolicyFn<'a>)),
-            ),
+            Application::Websubmit { policies, flavour } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::from(p.runnable(*flavour)) as PolicyFn<'a>,
+                        WEBUSUBMIT_DEFAULT_CONTROLLERS.to_vec(),
+                    )
+                }))
+            }
+            Application::Contile { policies } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::from(p.runnable()) as PolicyFn<'a>,
+                        CONTILE_DEFAULT_CONTROLLERS.to_vec(),
+                    )
+                }))
+            }
         }
     }
 }

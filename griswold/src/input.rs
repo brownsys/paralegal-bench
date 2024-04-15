@@ -84,6 +84,8 @@ pub struct ExperimentConfig {
     pub cargo_args: Box<[String]>,
     /// Default to the application name
     pub app_config_override: Option<String>,
+    #[serde(default, rename = "run-mode")]
+    pub controller_run_mode: ControllerRunMode,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -143,15 +145,15 @@ fn const_application_flavour() -> websubmit::Flavour {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy)]
 #[serde(rename_all = "kebab-case")]
-pub enum LemmyControllerRunMode {
+pub enum ControllerRunMode {
     All,
     Affected,
     AffectedMerged,
 }
 
-impl Default for LemmyControllerRunMode {
+impl Default for ControllerRunMode {
     fn default() -> Self {
-        Self::Affected
+        Self::All
     }
 }
 
@@ -163,8 +165,6 @@ pub enum Application {
     Lemmy {
         #[serde(default)]
         policies: Box<[lemmy::Prop]>,
-        #[serde(default, rename = "lemmy-controller-run-mode")]
-        run_mode: LemmyControllerRunMode,
         #[serde(default)]
         bugs: Box<[GetUserVersion]>,
     },

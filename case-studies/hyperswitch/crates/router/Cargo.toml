@@ -36,6 +36,10 @@ detailed_errors = ["api_models/detailed_errors", "error-stack/serde"]
 payouts = []
 api_locking = []
 
+create-api-key = []
+payments-authorize-data = []
+setup-mandate-router-data = []
+
 
 [dependencies]
 actix = "0.13.0"

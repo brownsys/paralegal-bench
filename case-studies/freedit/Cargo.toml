@@ -89,5 +89,9 @@ panic = "abort"
 
 [features]
 buggy = []
+edit-post-post = []
+comment-post = []
+solo-post = []
+user-chron-job = []
 
 [workspace]

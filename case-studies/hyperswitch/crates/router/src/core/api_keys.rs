@@ -143,7 +143,7 @@ impl PlaintextApiKey {
     }
 }
 
-#[paralegal::analyze]
+#[cfg_attr(feature = "create-api-key", paralegal::analyze)]
 #[instrument(skip_all)]
 pub async fn create_api_key(
     state: AppState,

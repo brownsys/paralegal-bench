@@ -47,7 +47,7 @@ impl
     }
 }
 impl types::SetupMandateRouterData {
-    //#[paralegal::analyze]
+    #[cfg_attr(feature = "setup-mandate-router-data", paralegal::analyze)]
     async fn decide_flows_impl<'a>(
         self,
         state: &AppState,

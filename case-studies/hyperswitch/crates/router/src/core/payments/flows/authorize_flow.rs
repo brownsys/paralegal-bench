@@ -53,7 +53,7 @@ impl
 }
 
 impl types::PaymentsAuthorizeRouterData {
-    #[paralegal::analyze]
+    #[cfg_attr(feature = "payments-authorize-data", paralegal::analyze)]
     async fn decide_flows_impl<'a>(
         mut self,
         state: &AppState,

@@ -3,7 +3,7 @@ use std::{rc::Rc, slice};
 use lemmy::eval_driver::{BatchConfig, GetUserVersion};
 
 use crate::{
-    input::{LemmyControllerRunMode, PolicyMode, PolicyResult},
+    input::{ControllerRunMode, PolicyMode, PolicyResult},
     run::Run,
 };
 
@@ -14,27 +14,24 @@ impl<'a> RunBuilder<'a> {
         self,
         policies: &'a [lemmy::Prop],
         bugs: &'a [GetUserVersion],
-        run_mode: LemmyControllerRunMode,
     ) -> impl Iterator<Item = Run<'a>> {
         let bugs = selection_or_all(bugs);
         bugs.iter()
             .map(|v| (v, v.to_config()))
             .filter(|(_, c)| policies.contains(&c.property))
             .flat_map(move |(bug, batch_config)| {
-                self.lemmy_prepare_for_batch_confg(batch_config, run_mode, bug)
+                self.lemmy_prepare_for_batch_confg(batch_config, bug)
             })
     }
 
     fn lemmy_prepare_for_batch_confg(
         self,
         batch_config: &'a BatchConfig<'static>,
-        run_mode: LemmyControllerRunMode,
         bug: &'a GetUserVersion,
     ) -> impl Iterator<Item = Run<'a>> {
         let preparer = BatchConfigPreparer {
             builder: self,
             batch_config,
-            run_mode,
             bug,
         };
         preparer.runs()
@@ -45,7 +42,6 @@ impl<'a> RunBuilder<'a> {
 struct BatchConfigPreparer<'a> {
     builder: RunBuilder<'a>,
     batch_config: &'a BatchConfig<'static>,
-    run_mode: LemmyControllerRunMode,
     bug: &'a GetUserVersion,
 }
 
@@ -57,10 +53,11 @@ impl<'a> BatchConfigPreparer<'a> {
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
         let prop = &self.batch_config.property;
-        let (policy_name, policy_fn) = match self.builder.experiment_config.policy_mode {
+        let (policy_name, policy_fn, _) = match self.builder.experiment_config.policy_mode {
             PolicyMode::Unified => self.builder.unified_policies(),
-            PolicyMode::Separate => (prop.as_ref(), Rc::new(|ctx| prop.run(ctx)) as _),
+            PolicyMode::Separate => (prop.as_ref(), Rc::new(|ctx| prop.run(ctx)) as _, vec![]),
         };
+        let controllers = controller_features.iter().flat_map(|i| i.iter()).copied();
         let mut exp = self.builder.case_study_run(
             policy_name,
             policy_fn,
@@ -69,18 +66,11 @@ impl<'a> BatchConfigPreparer<'a> {
             } else {
                 PolicyResult::Pass
             },
+            controllers,
         );
-        exp.controller = match controller_features {
-            [[f]] => Some(f),
-            _ => None,
-        };
         exp.bug = Some(self.bug.as_ref());
-        exp.extra_cargo_args = controller_features
-            .iter()
-            .flat_map(|s| s.iter())
-            .flat_map(|c| ["--features", c])
-            .chain(["--features", self.batch_config.baseline_feature])
-            .collect();
+        exp.extra_cargo_args
+            .extend(["--features", self.batch_config.baseline_feature]);
         if let Some(f) = extra_feature {
             exp.extra_cargo_args.extend(["--features", &f])
         }
@@ -93,8 +83,8 @@ impl<'a> BatchConfigPreparer<'a> {
         controllers: &'a [&'static [&'static str]],
         extra_feature: Option<&'static str>,
     ) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
-        match self.run_mode {
-            LemmyControllerRunMode::Affected => {
+        match self.builder.experiment_config.controller_run_mode {
+            ControllerRunMode::Affected => {
                 let iter = controllers.iter().flat_map(|s| s.iter()).map(move |c| {
                     self.case_study_run(
                         slice::from_ref(&slice::from_ref(c)),
@@ -104,7 +94,7 @@ impl<'a> BatchConfigPreparer<'a> {
                 });
                 Box::new(iter)
             }
-            LemmyControllerRunMode::AffectedMerged => {
+            ControllerRunMode::AffectedMerged => {
                 // If this batch happens to be empty we must return no run.
                 // Otherwise this can cause spuriously succeeding runs.
                 if controllers.iter().flat_map(|s| s.iter()).next().is_none() {
@@ -117,7 +107,7 @@ impl<'a> BatchConfigPreparer<'a> {
                     )))
                 }
             }
-            LemmyControllerRunMode::All => unreachable!(),
+            ControllerRunMode::All => unreachable!(),
         }
     }
 
@@ -136,7 +126,10 @@ impl<'a> BatchConfigPreparer<'a> {
     fn runs(self) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
         let (initial_extra_feature, changed_extra_feature) = self.extra_features();
         let change = &self.batch_config.change;
-        if matches!(self.run_mode, LemmyControllerRunMode::All) {
+        if matches!(
+            self.builder.experiment_config.controller_run_mode,
+            ControllerRunMode::All
+        ) {
             Box::new(
                 [
                     self.case_study_run(
