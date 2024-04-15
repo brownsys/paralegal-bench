@@ -6,6 +6,12 @@ use paralegal_policy::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
 
+pub const DEFAULT_CONTROLLERS: &[&str] = &[
+    "create-api-key",
+    "payments-authorize-data",
+    "setup-mandate-router-data",
+];
+
 macro_rules! marker {
     ($name:ident) => {{
         lazy_static::lazy_static! {

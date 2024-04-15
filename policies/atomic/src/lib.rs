@@ -7,6 +7,8 @@ use paralegal_policy::{
 use petgraph::Direction::Outgoing;
 use std::{collections::HashSet, sync::Arc};
 
+pub const DEFAULT_CONTROLLERS: &[&str] = &[];
+
 macro_rules! marker {
     ($name:ident) => {{
         lazy_static::lazy_static! {

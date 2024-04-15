@@ -48,6 +48,11 @@ fn main() -> Result<()> {
                 .args(["--features", &format!("plume-models/{feature}")]);
         }
     }
+    cmd.get_command().args(
+        plume::DEFAULT_CONTROLLERS
+            .iter()
+            .flat_map(|c| ["--features", c]),
+    );
     let result = cmd.run(args.plume_dir)?.with_context(plume::check)?;
     println!(
         "Finished {}successfully with {}",

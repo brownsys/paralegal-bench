@@ -10,6 +10,8 @@ macro_rules! marker {
     };
 }
 
+pub const DEFAULT_CONTROLLERS: &[&str] = &[];
+
 pub fn check(ctx: Arc<Context>) -> Result<()> {
     let user_data_types = ctx.marked_type(marker!(user_data));
 

@@ -4,6 +4,7 @@ extern crate paralegal_policy;
 
 use std::{ffi::OsString, fs::File, path::PathBuf, process::exit};
 
+use atomic::DEFAULT_CONTROLLERS;
 use clap::Parser;
 
 use anyhow::Result;
@@ -44,6 +45,8 @@ fn main() -> Result<()> {
         if !args.buggy {
             cmd.get_command().args(["--features", "bug-fix"]);
         }
+        cmd.get_command()
+            .args(DEFAULT_CONTROLLERS.iter().flat_map(|c| ["--features", c]));
         cmd.run(&args.directory)?
     };
 

@@ -382,26 +382,6 @@ fn diff_analyzed(
     }
 }
 
-const ATOMIC_DEFAULT_CONTROLLERS: &[&str] = &[];
-const FREEDIT_DEFAULT_CONTROLLERS: &[&str] = &[
-    "edit-post-post",
-    "comment-post",
-    "solo-post",
-    "user-chron-job",
-];
-const PLUME_DEFAULT_CONTROLLERS: &[&str] = &[];
-const WEBUSUBMIT_DEFAULT_CONTROLLERS: &[&str] = &[
-    "answers-controller",
-    "forget-user",
-    "questions-submit-internal",
-];
-const CONTILE_DEFAULT_CONTROLLERS: &[&str] = &[];
-const HYPERSWITCH_DEFAULT_CONTROLLERS: &[&str] = &[
-    "create-api-key",
-    "payments-authorize-data",
-    "setup-mandate-router-data",
-];
-
 fn get_all_commits(path: impl AsRef<Path>, start: &str, end: &str) -> Vec<String> {
     let output = Command::new("git")
         .args(["log", &format!("{end}^..{start}^"), "--format=%H"])
@@ -448,13 +428,13 @@ impl Application {
 
     pub fn all_controllers(&self) -> &'static [&'static str] {
         match self {
-            Application::AtomicData { .. } => ATOMIC_DEFAULT_CONTROLLERS,
+            Application::AtomicData { .. } => atomic::DEFAULT_CONTROLLERS,
             Application::Lemmy { .. } => &[],
-            Application::Plume { .. } => PLUME_DEFAULT_CONTROLLERS,
-            Application::Websubmit { .. } => WEBUSUBMIT_DEFAULT_CONTROLLERS,
-            Application::Contile { .. } => CONTILE_DEFAULT_CONTROLLERS,
-            Application::Hyperswitch { .. } => HYPERSWITCH_DEFAULT_CONTROLLERS,
-            Application::Freedit { .. } => FREEDIT_DEFAULT_CONTROLLERS,
+            Application::Plume { .. } => plume::DEFAULT_CONTROLLERS,
+            Application::Websubmit { .. } => websubmit::DEFAULT_CONTROLLERS,
+            Application::Contile { .. } => contile::DEFAULT_CONTROLLERS,
+            Application::Hyperswitch { .. } => hyperswitch::DEFAULT_CONTROLLERS,
+            Application::Freedit { .. } => freedit::DEFAULT_CONTROLLERS,
         }
     }
 
@@ -463,7 +443,7 @@ impl Application {
             Application::AtomicData => Box::new(std::iter::once((
                 "check-writes",
                 Rc::new(atomic::check_rights) as PolicyFn<'a>,
-                ATOMIC_DEFAULT_CONTROLLERS.to_owned(),
+                atomic::DEFAULT_CONTROLLERS.to_owned(),
             )))
                 as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)>>,
             Application::Freedit { policies } => {
@@ -471,7 +451,7 @@ impl Application {
                     (
                         p.as_ref(),
                         Rc::new(move |ctx| p.check(ctx)) as PolicyFn<'a>,
-                        FREEDIT_DEFAULT_CONTROLLERS.to_vec(),
+                        freedit::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
@@ -480,7 +460,7 @@ impl Application {
                     (
                         p.as_ref(),
                         Rc::new(p.runnable()) as PolicyFn<'a>,
-                        HYPERSWITCH_DEFAULT_CONTROLLERS.to_vec(),
+                        hyperswitch::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
@@ -496,14 +476,14 @@ impl Application {
             Application::Plume => Box::new(std::iter::once((
                 "data-deletion",
                 Rc::new(plume::check) as PolicyFn<'a>,
-                PLUME_DEFAULT_CONTROLLERS.to_vec(),
+                plume::DEFAULT_CONTROLLERS.to_vec(),
             ))),
             Application::Websubmit { policies, flavour } => {
                 Box::new(selection_or_all(policies).iter().map(|p| {
                     (
                         p.as_ref(),
                         Rc::from(p.runnable(*flavour)) as PolicyFn<'a>,
-                        WEBUSUBMIT_DEFAULT_CONTROLLERS.to_vec(),
+                        websubmit::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
@@ -512,7 +492,7 @@ impl Application {
                     (
                         p.as_ref(),
                         Rc::from(p.runnable()) as PolicyFn<'a>,
-                        CONTILE_DEFAULT_CONTROLLERS.to_vec(),
+                        contile::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }

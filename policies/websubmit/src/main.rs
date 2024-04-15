@@ -49,6 +49,12 @@ fn main() -> Result<()> {
         .get_command()
         .args(["--features", args.flavour.annotation_feature()]);
 
+    command.get_command().args(
+        websubmit::DEFAULT_CONTROLLERS
+            .iter()
+            .flat_map(|c| ["--features", c]),
+    );
+
     let mut cfg = paralegal_policy::Config::default();
     cfg.always_happens_before_tracing = paralegal_policy::algo::ahb::TraceLevel::Full;
     let res = command

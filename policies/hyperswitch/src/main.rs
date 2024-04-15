@@ -44,6 +44,12 @@ fn main() -> Result<()> {
             assert_eq!(dashes, 1, "too many '--' in extra args");
         }
         cmd.get_command().arg("--lib");
+
+        cmd.get_command().args(
+            hyperswitch::DEFAULT_CONTROLLERS
+                .iter()
+                .flat_map(|c| ["--features", c]),
+        );
         cmd.run(&args.source_dir)?
     };
     let result = graph_loc.with_context(|ctx| {

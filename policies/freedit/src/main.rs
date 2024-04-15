@@ -36,6 +36,11 @@ fn main() -> Result<()> {
         if args.buggy {
             cmd.get_command().args(["--features", "buggy"]);
         }
+        cmd.get_command().args(
+            freedit::DEFAULT_CONTROLLERS
+                .iter()
+                .flat_map(|c| ["--features", c]),
+        );
         cmd.run(&args.repo_dir)?
     };
     let policy = if args.policy.is_empty() {

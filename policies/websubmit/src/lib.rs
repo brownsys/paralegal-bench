@@ -15,6 +15,12 @@ macro_rules! marker {
     };
 }
 
+pub const DEFAULT_CONTROLLERS: &[&str] = &[
+    "answers-controller",
+    "forget-user",
+    "questions-submit-internal",
+];
+
 /// Asserts that there exists one controller which calls a deletion
 /// function on every value (or an equivalent type) that is ever stored.
 pub struct PropRunner {

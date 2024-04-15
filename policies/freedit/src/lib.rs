@@ -8,6 +8,13 @@ use paralegal_policy::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
 
+pub const DEFAULT_CONTROLLERS: &[&str] = &[
+    "edit-post-post",
+    "comment-post",
+    "solo-post",
+    "user-chron-job",
+];
+
 macro_rules! marker {
     ($id:ident) => {{
         lazy_static::lazy_static! {

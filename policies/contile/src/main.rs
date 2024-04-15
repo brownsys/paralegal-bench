@@ -1,6 +1,6 @@
 use anyhow::{Ok, Result};
 use clap::{Parser, ValueEnum};
-use contile::Policy;
+use contile::{Policy, DEFAULT_CONTROLLERS};
 use paralegal_policy::{algo::ahb::TraceLevel, Config, GraphLocation, SPDGGenCommand};
 use std::{fs::File, path::PathBuf};
 
@@ -37,6 +37,8 @@ fn main() -> Result<()> {
         if args.buggy {
             cmd.get_command().args(["--features", "leak"]);
         }
+        cmd.get_command()
+            .args(DEFAULT_CONTROLLERS.iter().flat_map(|c| ["--features", c]));
         cmd.run(&args.repo_dir)?
     };
     let mut config = Config::default();
