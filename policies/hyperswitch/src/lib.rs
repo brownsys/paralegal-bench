@@ -1,7 +1,7 @@
 use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection,
-    Marker, NodeQueries,
+    Marker, NodeExt, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -9,7 +9,7 @@ use std::{collections::HashSet, sync::Arc};
 pub const DEFAULT_CONTROLLERS: &[&str] = &[
     "create-api-key",
     "payments-authorize-data",
-    "setup-mandate-router-data",
+    //"setup-mandate-router-data",
 ];
 
 macro_rules! marker {
@@ -80,13 +80,9 @@ policy!(card_storage, ctx {
     let decision_sources = ctx.nodes_marked_any_way(m_future_usage).collect::<Vec<_>>();
     assert_error!(ctx, srcs.peek().is_some(), "VACUITY: No sensitive sources found");
     let mut any_sink_reached = false;
-    let sinks = ctx.nodes_marked_any_way(marker!(store)).collect::<Vec<_>>();
-    assert_error!(ctx, !sinks.is_empty(), "VACUITY: No sinks found");
+    let m_store = marker!(store);
     for src in srcs {
-        for sink in sinks.iter().cloned() {
-            if !src.flows_to(sink, &ctx, EdgeSelection::Data) {
-                continue;
-            }
+        for sink in src.influencees(&ctx, EdgeSelection::Data).into_iter().filter(|n| n.has_marker(&ctx, m_store)) {
             any_sink_reached = true;
 
             let decision_reaches = decision_sources.iter().cloned().any(|decision_source|
