@@ -137,56 +137,101 @@ application = "contile"
 policy-mode = "unified"
 
 
-[[experiment.per-controller]]
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "plume"
+policy-mode = "none"
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "none"
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "none"
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "none"
+controller-run-mode = "all-separate"
+
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "lemmy"
+policy-mode = "none"
+bugs = ["bug4"]
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policy-mode = "none"
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+[[experiment.per-controller-lines]]
+mode = "case-study"
+application = "contile"
+policy-mode = "none"
+controller-run-mode = "all-separate"
+adaptive-depth = false
+
+
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "lemmy"
-lemmy-controller-run-mode = "all"
 policy-mode = "unified"
 bugs = ["bug4"]
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
 
-[[experiment.per-controller]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
-controller-run-mode = "affected"
-adaptive-depth = false
+controller-run-mode = "all-separate"
