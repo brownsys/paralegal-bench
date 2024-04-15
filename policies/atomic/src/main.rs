@@ -16,6 +16,7 @@ struct Arguments {
     buggy: bool,
     #[clap(long)]
     skip_compile: bool,
+    #[clap(default_value = "case-studies/atomic-server")]
     directory: PathBuf,
     #[clap(long, default_value = "external-annotations.toml")]
     annotations: PathBuf,

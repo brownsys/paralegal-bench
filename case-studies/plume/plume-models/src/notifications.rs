@@ -66,7 +66,7 @@ impl Notification {
             .map_err(Error::from)
     }
 
-    #[paralegal_flow::marker(noinline, arguments = [0])]
+    //#[paralegal_flow::marker(noinline, arguments = [0])]
     pub fn find_followed_by(conn: &Connection, user: &User) -> Result<Vec<Notification>> {
         notifications::table
             .inner_join(follows::table.on(notifications::object_id.eq(follows::id)))
