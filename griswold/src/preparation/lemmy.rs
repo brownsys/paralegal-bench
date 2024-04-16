@@ -203,19 +203,28 @@ impl<'a> BatchConfigPreparer<'a> {
         let (initial_extra_feature, changed_extra_feature) = self.extra_features();
         let change = &self.batch_config.change;
         let run_pair = move |ctrl| {
-            [
-                self.case_study_run(
-                    slice::from_ref(&slice::from_ref(&ctrl)),
-                    self.batch_config.expect_failure,
-                    initial_extra_feature,
-                ),
+            let succeeding = self.case_study_run(
+                slice::from_ref(&slice::from_ref(&ctrl)),
+                true,
+                if self.batch_config.expect_failure {
+                    initial_extra_feature
+                } else {
+                    changed_extra_feature
+                },
+            );
+            let failing = || {
                 self.case_study_run(
                     slice::from_ref(&slice::from_ref(&ctrl)),
                     !self.batch_config.expect_failure,
-                    changed_extra_feature,
-                ),
-            ]
-            .into_iter()
+                    if self.batch_config.expect_failure {
+                        changed_extra_feature
+                    } else {
+                        initial_extra_feature
+                    },
+                )
+            };
+            std::iter::once(succeeding)
+                .chain((!self.builder.experiment_config.policy_mode.is_none()).then(failing))
         };
         match self.builder.experiment_config.controller_run_mode {
             ControllerRunMode::All => Box::new(run_pair("all-controllers")) as Box<_>,
