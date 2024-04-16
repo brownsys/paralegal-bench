@@ -274,28 +274,34 @@ impl<'a> RunBuilder<'a> {
                 Box::new(self.lemmy_case_study(selection_or_all(policies), bugs))
                     as Box<dyn Iterator<Item = _> + 'a>
             }
-            _ => Box::new(
-                self.experiment_config
-                    .application
-                    .expectations()
-                    .iter()
-                    .copied()
-                    .flat_map(move |(expectation, cargo_args)| {
-                        self.policies()
-                            .flat_map(move |(name, policy_fn, affected)| {
-                                self.controllers(affected).map(move |c| {
-                                    let mut run = self.case_study_run(
-                                        name,
-                                        policy_fn.clone(),
-                                        expectation,
-                                        c,
-                                    );
-                                    run.extra_cargo_args.extend(cargo_args);
-                                    run
-                                })
+            _ => {
+                let expectations = if self.experiment_config.policy_mode.is_none() {
+                    Box::new(std::iter::once((
+                        PolicyResult::Pass,
+                        self.experiment_config.application.base_success(),
+                    ))) as Box<dyn Iterator<Item = _>>
+                } else {
+                    Box::new(
+                        self.experiment_config
+                            .application
+                            .expectations()
+                            .iter()
+                            .copied(),
+                    )
+                };
+
+                Box::new(expectations.flat_map(move |(expectation, cargo_args)| {
+                    self.policies()
+                        .flat_map(move |(name, policy_fn, affected)| {
+                            self.controllers(affected).map(move |c| {
+                                let mut run =
+                                    self.case_study_run(name, policy_fn.clone(), expectation, c);
+                                run.extra_cargo_args.extend(cargo_args);
+                                run
                             })
-                    }),
-            ),
+                        })
+                }))
+            }
         }
     }
 
@@ -436,6 +442,14 @@ impl Application {
                 (PolicyResult::Pass, &[]),
                 (PolicyResult::Fail, &["--features", "leak"]),
             ],
+        }
+    }
+
+    fn base_success(&self) -> &'static [&'static str] {
+        match self {
+            Application::Plume => &["--features", "plume-models/delete-comments"],
+            Application::AtomicData => &["--features", "bug-fix"],
+            _ => &[],
         }
     }
 

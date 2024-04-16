@@ -61,7 +61,7 @@ pub struct EvaluationConfig {
     pub pdg_timeout: Option<Duration>,
 }
 
-#[derive(Default, Debug, serde::Serialize, serde::Deserialize, Copy, Clone)]
+#[derive(Default, Debug, serde::Serialize, serde::Deserialize, Copy, Clone, strum::EnumIs)]
 #[serde(rename_all = "kebab-case")]
 pub enum PolicyMode {
     #[default]
