@@ -262,7 +262,7 @@ impl<'a> RunBuilder<'a> {
                 if all.is_empty() {
                     Box::new(std::iter::once(vec![])) as Box<dyn Iterator<Item = _>>
                 } else {
-                    Box::new(all.iter().map(|&c| vec![c]))
+                    Box::new(all.into_iter().map(|c| vec![c]))
                 }
             }
         }
@@ -453,16 +453,26 @@ impl Application {
         }
     }
 
-    pub fn all_controllers(&self) -> &'static [&'static str] {
+    pub fn all_controllers(&self) -> Vec<&'static str> {
+        match self {
+            Application::Hyperswitch { .. } => {
+                return hyperswitch::Controllers::value_variants()
+                    .iter()
+                    .map(|s| s.as_ref())
+                    .collect()
+            }
+            _ => (),
+        };
         match self {
             Application::AtomicData { .. } => atomic::DEFAULT_CONTROLLERS,
             Application::Lemmy { .. } => &[],
             Application::Plume { .. } => plume::DEFAULT_CONTROLLERS,
             Application::Websubmit { .. } => websubmit::DEFAULT_CONTROLLERS,
             Application::Contile { .. } => contile::DEFAULT_CONTROLLERS,
-            Application::Hyperswitch { .. } => hyperswitch::DEFAULT_CONTROLLERS,
             Application::Freedit { .. } => freedit::DEFAULT_CONTROLLERS,
+            _ => unreachable!(),
         }
+        .to_vec()
     }
 
     fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
@@ -487,7 +497,7 @@ impl Application {
                     (
                         p.as_ref(),
                         Rc::new(p.runnable()) as PolicyFn<'a>,
-                        hyperswitch::DEFAULT_CONTROLLERS.to_vec(),
+                        self.all_controllers(),
                     )
                 }))
             }
