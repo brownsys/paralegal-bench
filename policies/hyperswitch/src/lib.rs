@@ -1,4 +1,5 @@
 use anyhow::Result;
+use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection,
     Marker, NodeExt, NodeQueries,
@@ -6,11 +7,14 @@ use paralegal_policy::{
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
 
-pub const DEFAULT_CONTROLLERS: &[&str] = &[
-    "create-api-key",
-    "payments-authorize-data",
-    //"setup-mandate-router-data",
-];
+#[derive(Clone, Copy, clap::ValueEnum, strum::AsRefStr)]
+#[clap(rename_all = "kebab-case")]
+#[strum(serialize_all = "kebab-case")]
+pub enum Controllers {
+    CreateApiKey,
+    PaymentsAuthorizeData,
+    //SetupMandateRouterData,
+}
 
 macro_rules! marker {
     ($name:ident) => {{

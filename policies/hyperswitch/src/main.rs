@@ -7,7 +7,8 @@ use std::{fs::File, path::PathBuf};
 
 use anyhow::Result;
 
-use hyperswitch::Policy;
+use clap::ValueEnum;
+use hyperswitch::{Controllers, Policy};
 use paralegal_policy::GraphLocation;
 
 #[derive(clap::Parser)]
@@ -21,12 +22,14 @@ struct Args {
     skip_compile: bool,
     #[clap(long)]
     dump_analyzed_code: Option<PathBuf>,
+    #[clap(long, value_enum)]
+    controller: Vec<Controllers>,
     #[clap(last = true)]
     extra_flow_args: Vec<String>,
 }
 
 fn main() -> Result<()> {
-    use clap::{Parser, ValueEnum};
+    use clap::Parser;
     let args: &'static _ = Box::leak(Box::new(Args::parse()));
     let graph_loc = if args.skip_compile {
         GraphLocation::std(&args.source_dir)
@@ -46,9 +49,13 @@ fn main() -> Result<()> {
         cmd.get_command().arg("--lib");
 
         cmd.get_command().args(
-            hyperswitch::DEFAULT_CONTROLLERS
-                .iter()
-                .flat_map(|c| ["--features", c]),
+            if args.controller.is_empty() {
+                Controllers::value_variants()
+            } else {
+                args.controller.as_slice()
+            }
+            .iter()
+            .flat_map(|c| ["--features", c.as_ref()]),
         );
         cmd.run(&args.source_dir)?
     };

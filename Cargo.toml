@@ -2,9 +2,9 @@
 members = ["griswold", "policies/*"]
 
 [workspace.dependencies]
-paralegal-policy = { git = "https://github.com/brownsys/paralegal", rev = "068bd4c7628b56d72d3609dd2d7c0b53991f14b7"  }
+paralegal-policy = { git = "https://github.com/brownsys/paralegal", rev = "a1816394df7133ca8f6385746d7a95e418f6a1d7"  }
 #paralegal-policy = { path = "../paralegal/crates/paralegal-policy" }
-paralegal-spdg = { git = "https://github.com/brownsys/paralegal", rev = "068bd4c7628b56d72d3609dd2d7c0b53991f14b7" }
+paralegal-spdg = { git = "https://github.com/brownsys/paralegal", rev = "a1816394df7133ca8f6385746d7a95e418f6a1d7" }
 #paralegal-spdg = { path = "../paralegal/crates/paralegal-spdg" }
 clap = { version = "=4.4.18", features = ["derive"] }
 petgraph = { version = "0.6" }
