@@ -96,73 +96,68 @@ flow-args = [
 cargo-args = ["--lib", "--features", "db"]
 
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "plume"
+# policy-mode = "unified"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "freedit"
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "freedit"
+# policy-mode = "unified"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "websubmit"
+# policy-mode = "unified"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "atomic-data"
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "atomic-data"
+# policy-mode = "unified"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "lemmy"
-controller-run-mode = "all"
-policy-mode = "unified"
-bugs = ["bug4"]
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "lemmy"
+# controller-run-mode = "all"
+# policy-mode = "unified"
+# bugs = ["bug4"]
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "hyperswitch"
+# # Limiting policies for now, because only these actually make sense
+# policies = ["card-storage", "apikey-storage"]
+# policy-mode = "unified"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "contile"
-policy-mode = "unified"
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "contile"
+# policy-mode = "unified"
 
 
 [[experiment.per-controller-lines]]
 mode = "case-study"
 application = "plume"
 policy-mode = "none"
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "none"
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "none"
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "none"
-controller-run-mode = "all-separate"
-
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
@@ -170,7 +165,6 @@ mode = "case-study"
 application = "lemmy"
 policy-mode = "none"
 bugs = ["bug4"]
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
@@ -178,14 +172,12 @@ mode = "case-study"
 application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policy-mode = "none"
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 [[experiment.per-controller-lines]]
 mode = "case-study"
 application = "contile"
 policy-mode = "none"
-controller-run-mode = "all-separate"
 adaptive-depth = false
 
 

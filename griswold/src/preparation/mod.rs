@@ -257,13 +257,14 @@ impl<'a> RunBuilder<'a> {
                     .all_controllers()
                     .to_vec(),
             )) as Box<_>,
-            ControllerRunMode::AllSeparate => Box::new(
-                self.experiment_config
-                    .application
-                    .all_controllers()
-                    .iter()
-                    .map(|&c| vec![c]),
-            ) as Box<_>,
+            ControllerRunMode::AllSeparate => {
+                let all = self.experiment_config.application.all_controllers();
+                if all.is_empty() {
+                    Box::new(std::iter::once(vec![])) as Box<dyn Iterator<Item = _>>
+                } else {
+                    Box::new(all.iter().map(|&c| vec![c]))
+                }
+            }
         }
     }
 

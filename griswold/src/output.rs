@@ -1,8 +1,10 @@
 //! Types describing data the runner emits
 
+use paralegal_policy::paralegal_spdg::utils::write_sep;
 use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
 use paralegal_policy::Context;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use std::process::Child;
 use std::sync;
 use std::thread;
@@ -204,6 +206,7 @@ impl SystemParameters {
 pub struct ControllerMeasurement {
     run_id: u32,
     name: Identifier,
+    path: String,
     num_nodes: u32,
     max_inlining_depth: u16,
     mean_inlining_depth: f32,
@@ -215,6 +218,14 @@ pub struct ControllerMeasurement {
     inlinings_performed: u32,
     construction_time: TimeMeasurement,
     conversion_time: TimeMeasurement,
+}
+
+struct FmtPath<'a>(&'a [Identifier]);
+
+impl Display for FmtPath<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write_sep(f, "::", self.0.iter(), Display::fmt)
+    }
 }
 
 impl ControllerMeasurement {
@@ -232,6 +243,7 @@ impl ControllerMeasurement {
         Self {
             run_id,
             name: spdg.name,
+            path: format!("{}", FmtPath(&spdg.path)),
             num_nodes: spdg.graph.node_count() as u32,
             max_inlining_depth: spdg.graph.node_weights().map(|w| w.at.len()).max().unwrap() as u16,
             mean_inlining_depth: inlining_sum as f32 / spdg.graph.node_count() as f32,
