@@ -218,11 +218,19 @@ impl PropRunner {
                     std::iter::once(&ty)
                         .chain(self.cx.otypes(ty).iter())
                         .find_map(|&ty| {
-                            let (from, to) =
-                                self.cx.srcs_with_type(ctrl_id, ty).find_map(|node| {
-                                    let to = self.check_deletion_flow(node)?;
-                                    Some((node, to))
-                                })?;
+                            let mut sources: Box<dyn Iterator<Item = _>> =
+                                if self.flavour.is_strict() {
+                                    Box::new(
+                                        self.cx
+                                            .roots_where(|n: GlobalNode| n.has_type(ty, &self.cx)),
+                                    )
+                                } else {
+                                    Box::new(self.cx.srcs_with_type(ctrl_id, ty))
+                                };
+                            let (from, to) = sources.find_map(|node| {
+                                let to = self.check_deletion_flow(node)?;
+                                Some((node, to))
+                            })?;
                             Some((ty, from, to))
                         })
                     // If there is any src of that type

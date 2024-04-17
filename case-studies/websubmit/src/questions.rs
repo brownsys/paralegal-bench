@@ -331,9 +331,11 @@ pub(crate) fn forget_user(apikey: ApiKey, backend: &State<Arc<Mutex<MySqlBackend
                 time: None,
             }.delete_answer(&mut bg);
         } else if #[cfg(feature = "edit-del-2-a")] {
-            answers.into_iter().for_each(|ans| {
+            let mut answers = answers.into_iter().peekable();
+            while answers.peek().is_some() {
+                let ans = answers.next().unwrap();
                 ans.delete_answer(&mut bg);
-            });
+            }
         } else if #[cfg(feature = "edit-del-3-a")] {
             delete_my_answers(&mut bg, answers);
         } else if #[cfg(feature = "edit-del-3-c")] {
