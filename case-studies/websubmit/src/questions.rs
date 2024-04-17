@@ -451,22 +451,25 @@ pub(crate) fn questions_submit_internal(
 
     for (id, answer) in &data.answers {
         cfg_if! {
-            if #[cfg(feature = "edit-sc-1-c")] {
-                let dummy = ApiKey {
-                    user: "user".to_string(),
-                    key: "key".to_string(),
-                };
-                let key = &dummy.key;
+            if #[cfg(feature = "edit-sc-1-b")] {
+                let dummy = "nobody@somwhere.org";
+                let key : Value = dummy.to_string().into();
+            } else if #[cfg(feauture = "edit-sc-2-a")] {
+                let hasher = DefaultHasher::default();
+                hasher.hash(&apikey.user);
+                let key : Value = hasher.finish().into();
+            } else if #[cfg(feature = "edit-sc-2-b")] {
+                let key: Value = config.get_site_admin().into();
             } else {
-                let key = &apikey.user.to_string();
+                let key : Value = apikey.user.to_string().into();
             }
         }
         cfg_if! {
-            if #[cfg(feature = "edit-sc-1-b")] {
-                let num = key.into();
+            if #[cfg(feature = "edit-sc-1-a")] {
+                let num = key;
                 let key = vnum.clone().into();
             } else {
-                let key = key.into();
+                let key = key;
                 let num = vnum.clone().into();
             }
         }

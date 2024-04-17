@@ -18,8 +18,15 @@ pub struct Config {
     pub secret: String,
     /// Whether to send emails
     pub send_emails: bool,
-    /// Whether to reset and prime db 
+    /// Whether to reset and prime db
     pub prime: bool,
+}
+
+impl Config {
+    #[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, return))]
+    pub fn get_site_admin(&self) -> &str {
+        self.admins.first().map(String::as_str).unwrap()
+    }
 }
 
 pub(crate) fn parse(path: &str) -> Result<Config, Error> {

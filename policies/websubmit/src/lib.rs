@@ -315,6 +315,7 @@ impl PropRunner {
         let c_id = target.controller_id();
         let store_cs = cx.node_info(target).at;
         let current = &cx.desc().controllers[&c_id];
+        let m_request_gen = Identifier::new_intern("request_generated");
         let safe_source = marker!(safe_source);
         let scopes = cx
             .all_nodes_for_ctrl(c_id)
@@ -342,7 +343,8 @@ impl PropRunner {
                         current
                             .arguments
                             .iter()
-                            .map(move |&n| GlobalNode::from_local_node(c_id, n)),
+                            .map(move |&n| GlobalNode::from_local_node(c_id, n))
+                            .filter(move |n| n.has_marker(&self.cx, m_request_gen)),
                     )
                 } else {
                     Box::new(
@@ -403,11 +405,18 @@ impl PropRunner {
                 .unwrap();
             !ahb.is_vacuous() && !ahb.holds()
         } else {
-            eligible_scopes.iter().any(|&scope| {
+            let res = eligible_scopes.iter().find_map(|&scope| {
                 cx.influencers(scope, EdgeSelection::Data)
                     .chain(std::iter::once(scope))
-                    .any(|i| self.cx.has_marker(witness_marker, i))
-            })
+                    .find(|i| self.cx.has_marker(witness_marker, *i))
+            });
+            // if let Some(protect) = res {
+            //     let mut msg = self.cx.struct_node_help(store, "This store is protected");
+            //     msg.with_node_note(sens, "Stores this sensitive value");
+            //     msg.with_node_note(protect, "Reached by this authentication");
+            //     msg.emit()
+            // }
+            res.is_some()
         };
         if holds {
             return true;
