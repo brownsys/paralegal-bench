@@ -453,11 +453,7 @@ pub(crate) fn questions_submit_internal(
 
     for (id, answer) in &data.answers {
         cfg_if! {
-            if #[cfg(feature = "edit-sc-1-a")] {
-                let mut hasher = DefaultHasher::new();
-                apikey.user.hash(&mut hasher);
-                let ref key = format!("{}", std::hash::Hasher::finish(&hasher));
-            } else if #[cfg(feature = "edit-sc-1-c")] {
+            if #[cfg(feature = "edit-sc-1-c")] {
                 let dummy = ApiKey {
                     user: "user".to_string(),
                     key: "key".to_string(),

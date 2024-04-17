@@ -32,3 +32,28 @@ on_argument = [0, 1]
 # [["alloc::vec::Vec::push"]]
 # marker = "not_safe_source"
 # on_argument = [0, 1]
+
+[["std::string::ToString::to_string"]]
+marker = "benign"
+on_argument = [0]
+on_return = true
+
+[["std::clone::Clone::clone"]]
+marker = "benign"
+on_argument = [0]
+on_return = true
+
+[["std::string::String::as_str"]]
+marker = "benign"
+on_argument = [0]
+on_return = true
+
+[["std::convert::Into::into"]]
+marker = "benign"
+on_argument = [0]
+on_return = true
+
+[["slice::into_vec"]]
+marker = "benign"
+on_argument = [0]
+on_return = true

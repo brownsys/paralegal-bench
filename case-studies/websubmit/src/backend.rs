@@ -100,7 +100,7 @@ impl MySqlBackend {
         self.do_insert(table, vals, false);
     }
 
-    #[cfg_attr(not(feature = "v-ann-strict"), paralegal::marker{ scopes_store, arguments = [2] })]
+    #[paralegal::marker{ scopes_store, arguments = [2] }]
     #[paralegal::marker{ stores, arguments = [2] }]
     pub fn replace(&mut self, table: &str, vals: Vec<Value>) {
         self.do_insert(table, vals, true);

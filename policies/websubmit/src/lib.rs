@@ -3,10 +3,14 @@ use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 
 use anyhow::Result;
 use paralegal_policy::{
-    assert_error, diagnostics::ControllerContext, loc, paralegal_spdg, Context, Diagnostics,
-    IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
+    assert_error,
+    diagnostics::ControllerContext,
+    loc,
+    paralegal_spdg::{self, FunctionCallInfo, InstructionKind},
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
+use petgraph::csr;
 use serde::{Deserialize, Serialize};
 
 macro_rules! marker {
@@ -318,6 +322,7 @@ impl PropRunner {
         witnesses: &[GlobalNode],
         found_local_witnesses: &mut bool,
     ) -> bool {
+        let benign_marker = Identifier::new_intern("benign");
         // sensitive flows to store implies some scope flows to store callsite
         if !cx.flows_to(sens, store, EdgeSelection::Data) {
             return true;
@@ -325,22 +330,41 @@ impl PropRunner {
         let eligible_scopes = self
             .all_scopes(store, marker!(scopes_store))
             .collect::<Box<[_]>>();
-        let holds = match self.flavour {
-            Flavour::Strict => {
-                let ahb = cx
-                    .always_happens_before(
-                        cx.nodes_marked_any_way(witness_marker),
-                        |n| todo!(),
-                        |n| eligible_scopes.contains(&n),
-                    )
-                    .unwrap();
-                !ahb.is_vacuous() && !ahb.holds()
-            }
-            _ => eligible_scopes.iter().any(|&scope| {
+        let strict_selection = |n: GlobalNode| {
+            !n.has_marker(&cx, benign_marker)
+                && !eligible_scopes.contains(&n)
+                && matches!(
+                    n.instruction(&cx).kind,
+                    InstructionKind::FunctionCall(FunctionCallInfo { id, ..})
+                    if !cx.desc()
+                        .def_info[&id]
+                        .markers
+                        .iter()
+                        .any(|m| m.marker == benign_marker)
+                )
+        };
+        let mut checkpoints = HashSet::new();
+        let holds = if self.flavour.is_strict() {
+            let ahb = cx
+                .always_happens_before(
+                    cx.nodes_marked_any_way(witness_marker),
+                    |n| {
+                        let res = strict_selection(n);
+                        if res {
+                            checkpoints.insert(n);
+                        }
+                        res
+                    },
+                    |n| eligible_scopes.contains(&n),
+                )
+                .unwrap();
+            !ahb.is_vacuous() && !ahb.holds()
+        } else {
+            eligible_scopes.iter().any(|&scope| {
                 cx.influencers(scope, EdgeSelection::Data)
                     .chain(std::iter::once(scope))
                     .any(|i| self.cx.has_marker(witness_marker, i))
-            }),
+            })
         };
         if holds {
             return true;
@@ -362,6 +386,18 @@ impl PropRunner {
             }
             for w in witnesses.iter().copied() {
                 err.with_node_help(w, &format!("This is a local source of `{witness_marker}`"));
+            }
+        }
+        if self.flavour.is_strict() {
+            for f in checkpoints {
+                err.with_node_note(
+                    f,
+                    format!(
+                        "This node is a disallowed modification {} at {}",
+                        f.info(&cx).description,
+                        f.instruction(&cx).description
+                    ),
+                );
             }
         }
         err.emit();
@@ -425,13 +461,13 @@ impl PropRunner {
                 if scopes.is_empty() {
                     self.warning(loc!("No valid scopes were found"));
                 }
-                for a in cx.current().arguments().iter_global_nodes() {
-                    self.note(format!("{}", cx.describe_node(a)));
-                    let types = cx.current().node_types(a.local_node());
-                    for t in types {
-                        self.note(format!("{}", &cx.desc().type_info[&t].rendering))
-                    }
-                }
+                // for a in cx.current().arguments().iter_global_nodes() {
+                //     self.note(format!("{}", cx.describe_node(a)));
+                //     let types = cx.current().node_types(a.local_node());
+                //     for t in types {
+                //         self.note(format!("{}", &cx.desc().type_info[&t].rendering))
+                //     }
+                // }
             }
         }
         Ok(())
