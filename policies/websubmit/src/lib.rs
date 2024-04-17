@@ -6,11 +6,12 @@ use paralegal_policy::{
     assert_error,
     diagnostics::ControllerContext,
     loc,
-    paralegal_spdg::{self, FunctionCallInfo, InstructionKind},
-    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
+    paralegal_spdg::{self, FunctionCallInfo, InstructionKind, TypeId},
+    Context, ControllerId, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
+    PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
-use petgraph::csr;
+use petgraph::{csr, visit::EdgeRef};
 use serde::{Deserialize, Serialize};
 
 macro_rules! marker {
@@ -42,14 +43,20 @@ impl Deref for PropRunner {
 trait NodeExt {
     fn unconditional(self, ctx: &Context) -> bool;
     fn is_return(self, ctx: &Context) -> bool;
+    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode>;
 }
 
 impl NodeExt for GlobalNode {
     fn unconditional(self, ctx: &Context) -> bool {
-        !ctx.desc().controllers[&self.controller_id()]
+        self.ctrl_influencer(ctx).is_none()
+    }
+
+    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode> {
+        ctx.desc().controllers[&self.controller_id()]
             .graph
             .edges_directed(self.local_node(), petgraph::Incoming)
-            .any(|e| e.weight().is_control())
+            .find(|e| e.weight().is_control())
+            .map(|e| GlobalNode::from_local_node(self.controller_id(), e.source()))
     }
 
     fn is_return(self, ctx: &Context) -> bool {
@@ -131,26 +138,18 @@ impl PropRunner {
     }
 
     fn check_deletion_flow(&self, src: GlobalNode) -> Option<GlobalNode> {
-        let auth = marker!(auth_witness);
         let delete = marker!(deletes);
         let m_no_skip = marker!(no_skip);
-        match self.flavour {
+        let mut msg = self.struct_node_help(src, "Checking this node as a deleter");
+        let r = match self.flavour {
             Flavour::Strict => {
-                if src.unconditional(&self.cx)
-                    || !self
-                        .cx
-                        .influencers(src, EdgeSelection::Data)
-                        .any(|n| self.cx.has_marker(auth, n))
-                {
-                    return None;
-                }
-                let mut msg = self.struct_node_help(src, "Checking this node as a deleter");
                 let ahb = self
                     .cx
                     .always_happens_before(
                         [src],
                         |c| {
-                            if !self.has_marker(delete, c)
+                            if c != src
+                                && !self.has_marker(delete, c)
                                 && self.cx.instruction_at_node(c).kind.is_function_call()
                                 && !self.cx.has_marker(m_no_skip, c)
                             {
@@ -169,8 +168,19 @@ impl PropRunner {
                         |c| self.cx.has_marker(delete, c),
                     )
                     .unwrap();
-                msg.emit();
-                Some(ahb.reached().unwrap().first()?.1)
+                let reached = ahb.reached().unwrap();
+                if reached.is_empty() {
+                    self.cx.node_note(
+                        src,
+                        format!(
+                            "{} was a valid root, but did not reach delete",
+                            src.info(&self.cx).description
+                        ),
+                    );
+                    msg.emit();
+                    return None;
+                }
+                Some(reached.first()?.1)
             }
             _ => {
                 self.cx
@@ -178,7 +188,9 @@ impl PropRunner {
                     // A node with marker "deletes"
                     .find(|influencee| self.cx.has_marker(delete, *influencee))
             }
-        }
+        };
+        msg.emit();
+        r
     }
 
     pub fn check_deletion(&self) -> Result<()> {
@@ -217,22 +229,7 @@ impl PropRunner {
                 .filter_map(|&ty| {
                     std::iter::once(&ty)
                         .chain(self.cx.otypes(ty).iter())
-                        .find_map(|&ty| {
-                            let mut sources: Box<dyn Iterator<Item = _>> =
-                                if self.flavour.is_strict() {
-                                    Box::new(
-                                        self.cx
-                                            .roots_where(|n: GlobalNode| n.has_type(ty, &self.cx)),
-                                    )
-                                } else {
-                                    Box::new(self.cx.srcs_with_type(ctrl_id, ty))
-                                };
-                            let (from, to) = sources.find_map(|node| {
-                                let to = self.check_deletion_flow(node)?;
-                                Some((node, to))
-                            })?;
-                            Some((ty, from, to))
-                        })
+                        .find_map(|&ty| self.find_deleter(ty, ctrl_id))
                     // If there is any src of that type
                 })
                 .collect::<Box<[_]>>();
@@ -269,6 +266,44 @@ impl PropRunner {
         }
 
         Ok(())
+    }
+
+    fn find_deleter(
+        &self,
+        ty: TypeId,
+        ctrl_id: ControllerId,
+    ) -> Option<(TypeId, GlobalNode, GlobalNode)> {
+        let auth = marker!(auth_witness);
+        let mut sources: Box<dyn Iterator<Item = _>> = if self.flavour.is_strict() {
+            Box::new(
+                self.cx
+                    .roots_where(|n: GlobalNode| n.has_type(ty, &self.cx))
+                    .filter(|r| {
+                        let is_ctrl_influenced = r.ctrl_influencer(&self.cx).is_some();
+                        let is_auth_influenced = r
+                            .influencers(&self.cx, EdgeSelection::Data)
+                            .into_iter()
+                            .any(|n| self.cx.has_marker(auth, n));
+                        // self.cx.node_note(
+                        //     *r,
+                        //     format!(
+                        //         "{} is {}ctrl influenced and {}auth influenced",
+                        //         r.info(&self.cx).description,
+                        //         if is_ctrl_influenced { "" } else { "not " },
+                        //         if is_auth_influenced { "" } else { "not " },
+                        //     ),
+                        // );
+                        !is_ctrl_influenced && is_auth_influenced
+                    }),
+            )
+        } else {
+            Box::new(self.cx.srcs_with_type(ctrl_id, ty))
+        };
+        let (from, to) = sources.find_map(|node| {
+            let to = self.check_deletion_flow(node)?;
+            Some((node, to))
+        })?;
+        Some((ty, from, to))
     }
 
     fn all_scopes(
