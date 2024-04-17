@@ -18,7 +18,7 @@ pub(crate) fn my_send(
         .subject(subject.clone())
         .text(text.clone());
     for recipient in recipients {
-        builder = builder.to(recipient);
+        builder = builder.to(recipient.as_str());
     }
 
     //debug!(log, "Email: Subject {}\nText: {}!", subject, text);
