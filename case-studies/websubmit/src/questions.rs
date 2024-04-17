@@ -168,7 +168,6 @@ fn get_answers(bg: &mut MySqlBackend, key: Either<u64, &str>) -> Vec<LectureAnsw
 }
 
 #[cfg_attr(feature = "answers-controller", paralegal::analyze)]
-#[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
 #[get("/<num>")]
 pub(crate) fn answers(
     _admin: Admin,
@@ -418,7 +417,6 @@ pub(crate) fn questions_submit(
     questions_submit_internal(apikey, num, data, backend, config)
 }
 #[cfg_attr(feature = "questions-submit-internal", paralegal::analyze)]
-#[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
 pub(crate) fn questions_submit_internal(
     apikey: ApiKey,
     num: u8,
