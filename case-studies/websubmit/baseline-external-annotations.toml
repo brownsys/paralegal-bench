@@ -6,3 +6,6 @@ on_return = true
 marker = "sink"
 on_argument = [0]
 
+[["alloc::alloc::exchange_malloc"]]
+marker = "safe_source"
+on_return = true

@@ -168,8 +168,6 @@ fn get_answers(bg: &mut MySqlBackend, key: Either<u64, &str>) -> Vec<LectureAnsw
 }
 
 #[cfg_attr(feature = "answers-controller", paralegal::analyze)]
-#[cfg_attr(feature = "edit-dis-3-a", paralegal::analyze)]
-#[cfg_attr(feature = "edit-dis-3-c", paralegal::analyze)]
 #[cfg_attr(feature = "v-ann-lib", paralegal::marker(request_generated, arguments = [0]))]
 #[get("/<num>")]
 pub(crate) fn answers(
@@ -534,14 +532,29 @@ pub(crate) fn questions_submit_internal(
         }
         recipients.append(&mut presenter_emails);
 
-        email::my_send(
-            bg.log.clone(),
-            apikey.user.clone(),
-            recipients,
-            format!("{} meeting {} questions", config.class, num),
-            answer_log,
-        )
-        .expect("failed to send email");
+        cfg_if! {
+            if #[cfg(feature = "edit-dis-3-a")] {
+                for recipient in recipients {
+                    email::my_send(
+                        bg.log.clone(),
+                        apikey.user.clone(),
+                        &[recipient],
+                        format!("{} meeting {} questions", config.class, num),
+                        answer_log.clone(),
+                    )
+                    .expect("failed to send email");
+                }
+            } else {
+                email::my_send(
+                    bg.log.clone(),
+                    apikey.user.clone(),
+                    &recipients,
+                    format!("{} meeting {} questions", config.class, num),
+                    answer_log,
+                )
+                .expect("failed to send email");
+            }
+        }
     }
     //drop(bg);
     //presenter_emails.push("".to_string());

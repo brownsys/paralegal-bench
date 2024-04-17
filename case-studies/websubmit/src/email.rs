@@ -7,7 +7,7 @@ use lettre_email::Email;
 pub(crate) fn my_send(
     log: slog::Logger,
     sender: String,
-    recipients: Vec<String>,
+    recipients: &[String],
     subject: String,
     text: String,
 ) -> Result<(), lettre::sendmail::error::Error> {
