@@ -476,13 +476,23 @@ pub(crate) fn questions_submit_internal(
                 let num = vnum.clone().into();
             }
         }
-        let rec: Vec<Value> = vec![
-            scopes_argument(key),
-            num,
-            (*id).into(),
-            answer.clone().into(),
-            ts.clone(),
-        ];
+        cfg_if! {
+            if #[cfg(feature = "edit-sc-1-a")] {
+                let mut rec = vec![];
+                rec.push(key);
+                rec.push(num);
+                rec.push(answer.clone().into());
+                rec.push(ts.clone());
+            } else {
+                let rec: Vec<Value> = vec![
+                    key,
+                    num,
+                    (*id).into(),
+                    answer.clone().into(),
+                    ts.clone(),
+                ];
+            }
+        }
         bg.replace("answers", rec);
     }
 

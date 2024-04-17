@@ -277,19 +277,14 @@ impl PropRunner {
             .peekable();
         match self.flavour {
             Flavour::Strict => {
-                if direct_scopes.peek().is_some() {
-                    Box::new(direct_scopes)
-                } else if current.return_.contains(&target.local_node()) {
+                if current.return_.contains(&target.local_node()) {
                     Box::new(
                         cx.marked_type(safe_source)
                             .iter()
                             .flat_map(move |&t| cx.srcs_with_type(c_id, t)),
                     )
                 } else {
-                    Box::new(
-                        cx.influencers(target, EdgeSelection::Data)
-                            .filter(move |n| cx.has_marker(m_scopes, *n)),
-                    )
+                    Box::new(direct_scopes)
                 }
             }
             Flavour::Lib => {
@@ -330,11 +325,24 @@ impl PropRunner {
         let eligible_scopes = self
             .all_scopes(store, marker!(scopes_store))
             .collect::<Box<[_]>>();
-        if eligible_scopes.iter().any(|&scope| {
-            cx.influencers(scope, EdgeSelection::Data)
-                .chain(std::iter::once(scope))
-                .any(|i| self.cx.has_marker(witness_marker, i))
-        }) {
+        let holds = match self.flavour {
+            Flavour::Strict => {
+                let ahb = cx
+                    .always_happens_before(
+                        cx.nodes_marked_any_way(witness_marker),
+                        |n| todo!(),
+                        |n| eligible_scopes.contains(&n),
+                    )
+                    .unwrap();
+                !ahb.is_vacuous() && !ahb.holds()
+            }
+            _ => eligible_scopes.iter().any(|&scope| {
+                cx.influencers(scope, EdgeSelection::Data)
+                    .chain(std::iter::once(scope))
+                    .any(|i| self.cx.has_marker(witness_marker, i))
+            }),
+        };
+        if holds {
             return true;
         }
         let mut err = cx.struct_node_error(store, loc!("Sensitive value store is not scoped."));
