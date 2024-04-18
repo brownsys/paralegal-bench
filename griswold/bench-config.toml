@@ -58,6 +58,11 @@ source-dir = "case-studies/contile"
 external-annotations = "external-annotations.toml"
 cargo-args = ["--lib"]
 
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
+
 [app-config.original-plume]
 # Must point to a directory containing the https://github.com/Plume-org/Plume
 # git repository
@@ -137,6 +142,11 @@ application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
 
+[[experiment.case-studies]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -185,6 +195,11 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
 
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = "false"
 
 [[experiment.ablation]]
 mode = "ablation"
@@ -425,37 +440,43 @@ application = "contile"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 
-
-[[experiment.correctness]]
+[[experiment.case-studies]]
 mode = "case-study"
-application = "plume"
+application = "mcaptcha"
+policy-mode = "unified"
+controller-run-mode = "all-separate"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "freedit"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "websubmit"
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "plume"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "atomic-data"
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "freedit"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "lemmy"
-lemmy-controller-run-mode = "affected-merged"
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "websubmit"
 
-# Does not run on this machine sadly
-[[experiment.correctness]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "atomic-data"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-adaptive-depth = false
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "lemmy"
+# lemmy-controller-run-mode = "affected-merged"
+
+# # Does not run on this machine sadly
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "hyperswitch"
+# # Limiting policies for now, because only these actually make sense
+# policies = ["card-storage", "apikey-storage"]
+
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "contile"
+# # Otherwise we overtaint and don't pass the non-bug
+# adaptive-depth = false
