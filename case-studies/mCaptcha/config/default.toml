@@ -1,0 +1,76 @@
+debug = true
+source_code = "https://github.com/mCaptcha/mCaptcha"
+commercial = false
+allow_demo = true
+allow_registration = true
+
+[server]
+# Please set a unique value, your mCaptcha instance's security depends on this being 
+# unique
+cookie_secret = "Zae0OOxf^bOJ#zN^&k7VozgW&QAx%n02TQFXpRMG4cCU0xMzgu3dna@tQ9dvc&TlE6p*n#kXUdLZJCQsuODIV%r$@o4%770ePQB7m#dpV!optk01NpY0@615w5e2Br4d"
+# The port at which you want authentication to listen to
+# takes a number, choose from 1000-10000 if you dont know what you are doing
+port = 7000
+#IP address. Enter 0.0.0.0 to listen on all available addresses
+ip= "0.0.0.0" 
+# enter your hostname, eg: example.com
+domain = "localhost"
+# Set true if you have setup TLS with a reverse proxy like Nginx.
+# Does HTTPS redirect and sends additional headers that can only be used if
+# HTTPS available to improve security
+proxy_has_tls = false
+#url_prefix = ""
+
+[captcha]
+# Please set a unique value, your mCaptcha instance's security depends on this being 
+# unique
+salt = "asdl;kjfhjawehfpa;osdkjasdvjaksndfpoanjdfainsdfaijdsfajlkjdsaf;ajsdfweroire"
+# garbage collection period to manage mCaptcha system
+# leave untouched if you don't know what you are doing
+gc = 30
+runners = 4
+queue_length = 2000
+enable_stats = true
+
+[captcha.default_difficulty_strategy]
+avg_traffic_difficulty =  50000 # almost instant solution
+avg_traffic_time =  1 # almost instant solution
+peak_sustainable_traffic_difficulty = 3000000 # roughly 1.5s
+peak_sustainable_traffic_time = 3
+broke_my_site_traffic_difficulty = 5000000  # greater than 3.5s
+broke_my_site_traffic_time = 5
+duration = 30 # cooldown period in seconds
+
+[database]
+# This section deals with the database location and how to access it
+# Please note that at the moment, we have support for only postgresqa.
+# Example, if you are Batman, your config would be:
+# url = "postgres://batman:password@batcave.org:5432/batcave"
+# database_type = "postgres"
+# pool = 4
+url = "postgres://example.org" # hack for tests to run successfully
+pool = 4
+
+[redis]
+# This section deals with the database location and how to access it
+# Please note that at the moment, we have support for only postgresqa.
+# Example, if you are Batman, your config would be:
+# hostname = "batcave.org"
+# port = "5432"
+# username = "batman"
+# password = "somereallycomplicatedBatmanpassword"
+url = "redis://127.0.0.1"
+pool = 4
+
+[smtp]
+from = "admin@localhost"
+reply = "admin@localhost"
+url = "127.0.0.1"
+port = 10025
+username = "admin"
+password = "password"
+
+#[survey]
+#nodes = ["http://localhost:7001"]
+#rate_limit = 10 # upload every hour
+#instance_root_url = "http://localhost:7000"

@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../reset';
+@import '../../vars';
+@import '../../components/button';
+@import '../../components/inner-container';
+@import '../../components/main';
+
+.panel-main {
+  @include main;
+}
+
+.inner-container {
+  @include inner-container;
+  flex-direction: column;
+}

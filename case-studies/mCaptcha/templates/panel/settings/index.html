@@ -1,0 +1,110 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. const COPY_ALT: &str = "copy secret"; .>
+<. const COPY_CLASS: &str = "settings__secret-copy"; .>
+<. const DONE_ALT: &str = "secret copied"; .>
+<. const DONE_CLASS: &str = "settings__secret-copy-done"; .>
+
+<. let clipboard_data = ("secret", &secret); .> 
+
+<. include!("../../components/headers/index.html"); .> 
+<. include!("../navbar/index.html"); .>
+<div class="tmp-layout">
+<. include!("../header/index.html"); .>
+<main class="panel-main">
+  <. include!("../help-banner/index.html"); .>
+  <!-- Main content container -->
+  <div class="inner-container">
+  <div class="sitekey-form" action="<.= crate::V1_API_ROUTES.captcha.create .>" method="post">
+	<h1 class="form__title">
+		<.= PAGE .>
+	</h1>
+      <form class="settings__form" id="settings__username-form"
+        action="<.= crate::V1_API_ROUTES.account.update_username .>" 
+        method="post">
+        <label class="settings-form__label" for="username">
+          Username
+          <input
+            class="settings-form__input"
+            type="text"
+            name="username"
+            id="username"
+			value="<.= username .>"
+          />
+        </label>
+        <button class="settings__submit-btn" type="submit">Update</button>
+      </form>
+
+      <form class="settings__form" id="settings__email-form"
+        action="<.= crate::V1_API_ROUTES.account.update_email .>" 
+        method="post">
+        <label class="settings-form__label" for="email">
+          Email
+          <input
+            class="settings-form__input"
+            type="email"
+            name="email"
+            id="email"
+            <. if let Some(email) = email { .>
+                <. if !email.trim().is_empty() { .>
+                value="<.= email .>"
+                <. } .>
+            <. } .>
+          />
+        </label>
+        <button class="settings__submit-btn" type="submit">Update</button>
+      </form>
+
+      <form 
+        class="settings__form" id="settings__secret-form"
+        action="<.= crate::V1_API_ROUTES.account.update_secret .>"
+        method="post"> 
+        <label class="settings-form__label" for="secret">
+          <div class="settings__label-group">
+            Secret
+            <. include!("../../components/clipboard/index.html"); .>
+          </div>
+          <input
+            class="settings-form__input"
+            type="password"
+            name="secret-password"
+            readonly='readonly'
+            id="secret"
+            value="<.= secret .>"
+          />  
+        <. include!("../../components/showPassword/index.html"); .>
+      </label>
+      <button class="settings__submit-btn" type="submit">
+		Refresh
+        <img 
+          class="settings__refresh-sitekey"
+          src="<.=crate::FILES.get("./static/cache/img/svg/refresh.svg").unwrap() .>" 
+          alt="Refresh Secret"
+        />
+      </button>
+	</form>
+
+	<form 
+      class="settings__form" id="settings__delete-form"
+      action="<.= crate::V1_API_ROUTES.account.update_secret .>"
+      method="post">
+        <label class="settings-form__label--danger" for="delete-account">
+          <b>Delete your account</b>
+          <button id="delete-account" class="settings__submit-btn--danger" type="submit">
+            Delete Account
+            <img 
+              class="settings__delete-account-icon"
+              src="<.=crate::FILES.get("./static/cache/img/svg/trash.svg").unwrap() .>" 
+              alt="Delete Account"
+            />
+          </button>
+		</label>
+	</form>
+  </div>
+  </div>
+  <!-- end of container -->
+<. include!("../../components/footers.html"); .>

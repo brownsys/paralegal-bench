@@ -1,0 +1,94 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. include!("../../components/headers/index.html"); .>
+<div class="tmp-layout">
+<main class="auth-main">
+  <div class="auth-inner-container">
+
+    <img src="<.=
+    crate::FILES.get("./static/cache/img/icon-trans.png").unwrap().>"
+    class="auth__logo" alt="mcaptcha logo" />
+
+
+    <. if !crate::SETTINGS.allow_registration { .>
+      <table class="reg-closed__table">
+        <thead class="reg-closed__table-heading">
+          <tr><th colspan="4" class="reg-closed__table-title-text">Registration closed</th></tr>
+        </thead>
+        <tbody class="reg-closed__body">
+          <tr><td class="reg-closed__body-text">This mCaptcha instance is closed for registrations.</td></tr>
+        </tbody>
+      </table>
+    <. } else {.>
+  <form
+	  method="POST"
+	  action="<.= crate::V1_API_ROUTES.auth.register .>"
+	  class="sitekey-form" id="form">
+	<h1 class="form__title">
+      Join mCaptcha
+    </h1>
+
+    <label class="sitekey-form__label" for="username"
+      >Username
+      <input
+        class="sitekey-form__input"
+        id="username"
+        type="text"
+        name="username"
+        id="username"
+        required
+        autofocus="true"
+      />
+    </label>
+
+    <label  class="sitekey-form__label" for="email"
+      >Email(optional)
+      <input
+        class="sitekey-form__input"
+        id="email"
+        type="email"
+        name="email"
+        id="email"
+      />
+    </label>
+
+    <label   class="sitekey-form__label"  for="password" 
+		>Password
+      <input
+        class="sitekey-form__input"
+        type="password"
+        id="password"
+        name="password"
+        id="password"
+        required
+      />
+	  <. include!("../../components/showPassword/index.html"); .>
+	
+    </label>
+
+    <label for="password" class="sitekey-form__label"  for="password-check"
+      >Re-enter Password
+      <input
+        class="sitekey-form__input"
+        type="password"
+        id="password-check"
+        name="password-check"
+        id="password-check"
+        required
+      />
+	  <. include!("../../components/showPassword/index.html"); .>
+    </label>
+	<button type="submit" class="sitekey-form__submit">Sign up</button>
+  </form>
+    <p class="auth__secondary-action__banner">
+      Already have an account?
+      <a href="<.= crate::PAGES.auth.login .>" class="auth__secondary-action__link">Log in</a>
+    </p>
+	<. include!("../demo-user-banner.html"); .>
+  <. } .>
+</div>
+<. include!("../../components/footers.html"); .>

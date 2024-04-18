@@ -1,0 +1,146 @@
+/*
+ * Copyright © 2023 Aravinth Manivnanan <realaravinth@batsense.net>.
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: MIT OR Apache-2.0
+ */
+
+@import "../reset";
+
+body {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+.widget__container {
+	align-items: center;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	margin: auto 0;
+}
+
+.widget__inner-container {
+	align-items: center;
+	box-sizing: border-box;
+	display: flex;
+	height: 100%;
+	width: 100%;
+	background-color: #f6f6f6;
+	border: 2px solid #e5e5e5;
+}
+
+.widget__noscript-container {
+	display: flex;
+	font-size: 0.7rem;
+	line-height: 20px;
+	flex-direction: column;
+	padding: 5px;
+	box-sizing: border-box;
+	height: 100%;
+	margin: auto;
+}
+
+.widget__noscript-warning {
+	display: block;
+	margin: auto;
+	flex: 2;
+	width: 100%;
+	margin: auto;
+}
+
+.widget__source-code {
+	display: block;
+	flex: 1;
+}
+
+.widget__verification-container {
+	align-items: center;
+	display: flex;
+	flex-direction: row-reverse;
+	line-height: 30px;
+	font-size: 1rem;
+}
+
+.widget__verification-checkbox {
+	width: 30px;
+	height: 30px;
+	margin: 0 10px;
+}
+
+.widget__mcaptcha-details {
+	display: flex;
+	flex-direction: column;
+	margin-left: auto;
+	margin-right: 10px;
+}
+
+.widget__mcaptcha-brand-name {
+	font-size: 0.7rem;
+	font-weight: 600;
+	margin: auto;
+	text-align: center;
+}
+
+.widget__mcaptcha-logo {
+	display: block;
+	width: 35px;
+	margin: auto;
+}
+
+.widget__mcaptcha-info-container {
+	display: flex;
+	margin: auto;
+}
+
+.widget__mcaptcha-info-link {
+	font-size: 0.5rem;
+	margin: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+	.widget__container {
+		background-color: #1c1c1c;
+	}
+
+	.widget__inner-container {
+		background-color: #1c1c1c;
+		border: 2px solid #656569;
+	}
+
+	.widget__verification-container {
+		color: rgb(232, 230, 227);
+	}
+
+	.widget__mcaptcha-brand-name {
+		color: #7d94f9;
+	}
+
+	.widget__mcaptcha-info-link {
+		color: #7d94f9;
+	}
+}
+
+/* progress bar courtesy of https://codepen.io/Bizzy-Coding/pen/poOymVJ?editors=1111 */
+.progress__bar {
+	position: relative;
+	height: 5px;
+	width: 100%;
+	background: #fff;
+	border-radius: 15px;
+}
+
+.progress__fill {
+	background: #65a2e0;
+	border-radius: 15px;
+	height: 100%;
+	width: 0%;
+}
+
+@media (prefers-color-scheme: dark) {
+	.progress__bar {
+		background: unset;
+	}
+}

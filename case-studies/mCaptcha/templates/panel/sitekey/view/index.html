@@ -1,0 +1,56 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. const URL: &str = crate::V1_API_ROUTES.captcha.create; .>
+<. const READONLY: bool = true; .>
+<. let edit_url = crate::PAGES.panel.sitekey.get_edit_easy(&key) ;.>
+<. include!("./__form-container-setup.html"); .>
+    <h1 class="form__title">Sitekey: <.= name .> 
+    <a 
+      target="_blank"
+      href="<.= crate::WIDGET_ROUTES.verification_widget .>/?sitekey=<.= &key.>"
+    >View deployment
+      <img class="sitekey-form__widget-link" 
+        src="<.= crate::FILES.get("./static/cache/img/svg/external-link.svg").unwrap() .>"
+        alt="View widget deployment" 
+      />
+    </a> 
+
+  <. if READONLY { .>
+    <. let edit_url = crate::PAGES.panel.sitekey.get_edit_easy(&key) ;.>
+      <. include!("./__edit-sitekey-icon.html"); .>
+    <. } .>
+    <. include!("./__delete-btn.html"); .>
+
+      <. include!("./__form-body.html"); .>
+      <. for (count, level) in levels.iter().enumerate() { .>
+        <. include!("./existing-level.html"); .>
+      <. } .>
+
+    <label class="sitekey-form__label" for="publish_benchmarks">
+		Anonymously publish CAPTCHA performance statistics to help other webmasters
+     <input
+       class="sitekey-form__input"
+       type="checkbox"
+       id="publish_benchmarks"
+       readonly="readonly"
+       name="publish_benchmarks" 
+        <. if publish_benchmarks { .>
+          checked
+        <. }.>
+	  />
+	</label>
+
+
+
+<./* synchronise with "./__form-bottom.html" Lines below should break form */.>
+    </form>
+    <. include!("./stats.html"); .>
+  </div>
+  <!-- end of container -->
+
+</main>
+<. include!("../../../components/footers.html"); .>

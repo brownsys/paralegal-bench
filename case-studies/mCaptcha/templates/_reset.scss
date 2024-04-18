@@ -1,0 +1,32 @@
+/*
+ * Copyright © 2023 Aravinth Manivnanan <realaravinth@batsense.net>.
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: MIT OR Apache-2.0
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+
+  // check all layouts
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+}
+
+li {
+  //  list-style: none;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100%;
+}

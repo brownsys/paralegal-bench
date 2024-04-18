@@ -1,0 +1,24 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../_vars.scss';
+
+$footer-font-size: 14px;
+
+.details__container {
+  margin-top: 20px;
+  flex-direction: column-reverse;
+}
+
+.details__copyright {
+  flex: 1;
+  margin: auto;
+}
+
+.details {
+  margin: auto;
+}

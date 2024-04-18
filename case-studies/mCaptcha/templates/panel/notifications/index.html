@@ -1,0 +1,57 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. include!("../../components/headers/index.html"); .> <.
+include!("../navbar/index.html"); .>
+<div class="tmp-layout">
+  <. include!("../header/index.html"); .>
+  <main class="panel-main">
+    <!-- Main content container -->
+      <div class="inner-container">
+        <!-- Main menu/ important actions roaster -->
+        <table class="notification__table">
+          <thead class="notification__heading">
+            <tr>
+              <th colspan="4" class="notification__title-text">Your Notifications</th>
+            </tr>
+          </thead>
+          <tbody class="notification__body">
+            <. for notification in n.iter() { .>
+			<tr class="notification__item" id="notification__item-<.= notification.id .>">
+              <td>
+                <h3 class="notification__item-heading">
+                  <.= notification.heading .>
+                </h3>
+                <p class="notification__item-text"><.= notification.message .></p>
+				<div class="notification-data__container">
+				  <span class="notification__sender"><.= notification.name .></span>
+				  <span>&#183;</span>
+				  <span class="notification__received"><.= notification.print_date() .></span>
+				</div>
+
+              </td>
+			<td class="notification__mark-read-col">
+                <button class="notification__mark-read-btn">
+                  <img 
+                    class="notification__mark-read"
+                    src="<.= crate::FILES
+                         .get("./static/cache/img/svg/check.svg")
+                         .unwrap() .>"
+					data-id="<.= notification.id .>"
+                    alt="Mark Read" 
+                  />
+				</button>
+              </td>
+            </tr>
+            <. } .>
+          </tbody>
+        </table>
+      </div>
+      <!-- end of container -->
+      <. include!("../../components/footers.html"); .>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,25 @@
+[package]
+name = "db-core"
+version = "0.1.0"
+edition = "2021"
+homepage = "https://mcaptcha.org"
+repository = "https://github.com/mCaptcha/mCaptcha"
+documentation = "https://mcaptcha.org/docs/"
+license = "AGPLv3 or later version"
+authors = ["realaravinth <realaravinth@batsense.net>"]
+
+[dependencies]
+paralegal = { path = "../../../paralegal/crates/paralegal" } # Currently using a local version of paralegal
+anyhow = "1"                                                 # For paralegal error msgs
+async-trait = "0.1.51"
+thiserror = "1.0.30"
+serde = { version = "1", features = ["derive"] }
+url = { version = "2.2.2", features = ["serde"] }
+libmcaptcha = "0.2.4"
+
+[features]
+default = []
+test = []
+
+[dev-dependencies]
+serde_json = "1"

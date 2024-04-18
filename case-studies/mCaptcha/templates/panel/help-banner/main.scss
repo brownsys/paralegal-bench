@@ -1,0 +1,26 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../reset';
+@import '../../vars';
+
+.help-text {
+  border-radius: 4px;
+  box-shadow: $secondary-backdrop 0px 2px 6px 0px;
+  min-width: 70%;
+  max-width: 80%;
+  min-height: 70px;
+  display: flex;
+  margin-left: 15px;
+  margin-top: 40px;
+}
+
+.help-text__instructions {
+  font-size: 19px;
+  font-weight: 500;
+  margin: auto;
+}

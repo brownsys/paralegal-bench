@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../vars';
+
+$message-bg: #d63f3f;
+
+#err__container {
+  display: felx;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 350px;
+}
+
+.err__msg-container {
+  display: flex;
+  width: 100%;
+  color: $light-text;
+  background-color: $message-bg;
+  padding: 20px;
+  border-radius: 5px;
+  opacity: 0.9;
+}
+
+.err__close {
+  min-width: 10px;
+  min-height: 10px;
+  background-color: $message-bg;
+  margin-left: 20px;
+  border: none;
+}
+
+.err__close:hover {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}

@@ -1,0 +1,97 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../vars';
+
+$hamburger-menu-animation: 0.3s ease-in;
+
+.secondary-menu {
+  display: block;
+}
+
+.nav__hamburger-menu {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  padding: 13px;
+}
+
+.nav__hamburger-menu:hover {
+  cursor: pointer;
+}
+
+.nav__hamburger-menu:hover > span {
+  color: $green;
+}
+
+.nav__hamburger-menu > span {
+  display: block;
+  width: 25px;
+  height: 10px;
+  border-top: 2px solid #eee;
+}
+
+.secondary-menu__logo {
+  width: 40px;
+  height: 40px;
+}
+
+.secondary-menu__heading {
+  padding: 10px 5px;
+}
+
+.secondary-menu__brand-name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.nav-toggle:not(:checked) ~ .secondary-menu__list {
+  overflow-y: hidden;
+  max-height: 0;
+  transition: max-height $hamburger-menu-animation;
+}
+
+.nav-toggle:checked ~ .secondary-menu__list {
+  max-height: 500px;
+  overflow-y: auto;
+  transition: max-height $hamburger-menu-animation;
+}
+
+.secondary-menu__brand-name:hover {
+  color: $light-text;
+  cursor: pointer;
+}
+
+.nav-toggle:checked ~ .secondary-menu__heading {
+  .nav__hamburger-menu {
+    span:nth-child(2) {
+      border: none;
+    }
+
+    span:nth-child(3) {
+      transform: rotate(-45deg) translate(55%, -15%);
+      transition: $hamburger-menu-animation;
+    }
+
+    span:first-child {
+      transform: rotate(45deg) translate(35%, 40%);
+      transition: $hamburger-menu-animation;
+    }
+  }
+}
+
+.nav-toggle:not(checked) ~ .secondary-menu__heading {
+  .nav__hamburger-menu {
+    span:nth-child(3) {
+      transition: $hamburger-menu-animation;
+    }
+
+    span:first-child {
+      transition: $hamburger-menu-animation;
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# example:
+# [["std::fs::remove_file"]]
+# marker = "deletes"
+# on_argument = [0]

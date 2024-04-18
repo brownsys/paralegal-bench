@@ -1,0 +1,36 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. include!("../../components/headers/index.html"); .>
+<div class="tmp-layout">
+<main class="auth-main">
+  <div class="auth-inner-container">
+    <. include!("../logo.html"); .>
+  <form
+    class="sitekey-form"
+    method="POST"
+    action="<.= url .>"
+    id="form"
+  >
+    <h1 class="form__title">
+      Confirm Access
+    </h1>
+    <label class="sitekey-form__label" for="password">
+      Password
+      <input
+        class="sitekey-form__input"
+        type="password"
+        name="password"
+        id="password"
+        required
+      />
+      <. include!("../../components/showPassword/index.html"); .>
+	</label>
+	<button type="submit" class="sitekey-form__submit">Confirm access</button>
+  </form>
+</div>
+<. include!("../../components/additional-data/index.html"); .>
+<. include!("../../components/footers.html"); .>

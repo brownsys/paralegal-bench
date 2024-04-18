@@ -1,0 +1,15 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@mixin inner-container {
+  display: flex;
+  box-sizing: border-box;
+  max-width: 50%;
+  margin: 50px auto;
+  border-radius: 5px;
+  flex-direction: column;
+}

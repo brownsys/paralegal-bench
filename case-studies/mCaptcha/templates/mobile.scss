@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import "./auth/css/mobile.scss";
+@import "./components/details-footer/mobile.scss";
+@import "./panel/css/mobile.scss";
+@import "./panel/settings/mobile.scss";
+@import "./panel/header/taskbar/mobile.scss";
+@import "./panel/navbar/mobile.scss";
+@import "./panel/help-banner/mobile.scss";
+@import "./panel/sitekey/add/advance//css/mobile.scss";
+@import "./panel/sitekey/list/css/mobile.scss";
+
+html {
+	overflow-x: hidden;
+}
+
+// creadits: https://codepen.io/rachelandrew/pen/MmOvPr/?editors=1100
+.layout {
+	display: block;
+	max-width: 100vw;
+	width: 100%;
+	overflow-x: hidden;
+}

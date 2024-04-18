@@ -1,0 +1,45 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. const URL: &str = crate::V1_API_ROUTES.captcha.update; .>
+<. const READONLY: bool = false; .>
+<. let edit_url = crate::PAGES.panel.sitekey.get_edit_easy(&key); .>
+<. include!("../view/__form-container-setup.html"); .>
+  <div class="sitekey-form__advance-options-container">
+    <h1 class="form__title">Sitekey: <.= name .> </h1>
+    <a 
+      class="sitekey-form__advance-options-link"
+      href="<.= edit_url .>">
+      Easy Options
+    </a>
+  </div>
+    <. include!("../view/__form-body.html"); .>
+    <. for (count, level) in levels.iter().enumerate() { .>
+           <. include!("./existing-level.html"); .>  
+    <. } .>
+	<. let level = levels.len() + 1; .>
+	<. include!("../add/advance/add-level.html"); .>
+
+    <label class="sitekey-form__label" for="publish_benchmarks">
+		Anonymously publish CAPTCHA performance statistics to help other webmasters
+     <input
+       class="sitekey-form__input"
+       type="checkbox"
+       id="publish_benchmarks"
+       name="publish_benchmarks" 
+        <. if publish_benchmarks { .>
+          checked
+        <. }.>
+	  />
+	</label>
+
+
+
+  <button data-sitekey="<.= key .>" 
+	  id="sitekey-form__submit" class="sitekey-form__submit" type="submit">
+    Submit
+  </button>
+<. include!("../view/__form-bottom.html"); .>

@@ -1,0 +1,66 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<form class="sitekey-form" action="<.= crate::V1_API_ROUTES.captcha.create .>" method="post">
+  <div class="sitekey-form__advance-options-container">
+	<h1 class="sitekey-form__advance-options-form-title">
+		<.= form_title .>
+	</h1>
+    <a 
+      class="sitekey-form__advance-options-link"
+      href="<.= crate::PAGES.panel.sitekey.add_easy .>">
+      Easy Options
+    </a>
+  </div>
+    <label class="sitekey-form__label" for="description">
+		Description
+	  <input
+		class="sitekey-form__input"
+		type="text"
+		name="description"
+		id="description"
+		required
+		<. if !form_description.trim().is_empty() { .>
+		value="<.= form_description .>"
+		<. } .>
+	  />
+	</label>
+
+    <label class="sitekey-form__label" for="duration">
+		Cooldown Duratoin(in seconds)
+	  <input
+		class="sitekey-form__input"
+		type="number"
+		name="duration"
+		id="duration"
+		min=0
+		required
+		value="<.= form_duration .>"
+	  />
+	</label>
+
+
+  <. for level in 1..=levels { .>
+    <. if level == levels { .>
+    <. include!("./add-level.html"); .> 
+    <. } else { .> 
+    <. include!("./existing-level.html"); .> 
+    <. } .> 
+  <. } .>
+
+    <label class="sitekey-form__label" for="publish_benchmarks">
+        Anonymously publish CAPTCHA performance statistics to help other webmasters. <a href="https://mcaptcha.org/blog/introducing-mcaptcha-net">Please see here for more info</a>.
+	  <input
+		class="sitekey-form__input"
+		type="checkbox"
+		name="publish_benchmarks"
+		id="publish_benchmarks"
+	  />
+	</label>
+
+
+  <button class="sitekey-form__submit" type="submit">Submit</button>
+</form>

@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../reset';
+@import '../../vars';
+@import '../../components/inner-container';
+@import '../../components/main';
+
+body {
+  background-color: $backdrop;
+}
+
+.auth-inner-container {
+  @include inner-container;
+  flex-direction: column;
+  margin: auto;
+  width: $auth-content-width;
+  top: 50%;
+  left: 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.auth-main {
+  @include main;
+  align-items: center;
+}
+
+.auth__logo {
+  width: 160px;
+  display: block;
+  margin: 20px auto;
+  position: relative;
+}
+
+@mixin auth__secondary-action__banner-base {
+  display: block;
+  margin: auto;
+  text-align: center;
+  width: 80%;
+}
+
+.auth__secondary-action__banner {
+  @include auth__secondary-action__banner-base;
+  margin: 20px auto auto auto;
+}
+
+.auth__demo-user__banner {
+  @include auth__secondary-action__banner-base;
+  margin: 5px auto auto auto;
+  font-size: 0.7rem;
+}
+
+.auth__secondary-action__link {
+  text-decoration: none;
+  color: $blue-link;
+}

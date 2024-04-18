@@ -1,0 +1,22 @@
+/*
+ * Copyright (C) 2022 Gusted <postmaster@gusted.xyz>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../components/table/main';
+
+.reg-closed__table {
+  @include table;
+  margin: auto;
+}
+
+.reg-closed__table-title-text {
+  @include table__title-text;
+}
+
+.reg-closed__body-text {
+  display: block;
+  margin: 0.5em 0;
+}

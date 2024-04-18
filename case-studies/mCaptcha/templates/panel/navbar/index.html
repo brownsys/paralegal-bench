@@ -1,0 +1,104 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<nav class="secondary-menu">
+  <input type="checkbox" class="nav-toggle" id="nav-toggle" >
+  <div class="secondary-menu__heading">
+    <a  class="novisit" href="/">
+      <img class="secondary-menu__logo" src="<.= crate::MCAPTCHA_TRANS_ICON.0 .>" alt="<.= crate::MCAPTCHA_TRANS_ICON.1 .>" />
+    </a>
+    <a href="/" class="secondary-menu__brand-name">
+      mCaptcha
+    </a>
+    <label class="nav__hamburger-menu"for="nav-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </label>
+  </div>
+  <ul class="secondary-menu__list">
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="<.= crate::PAGES.home .>">
+        <img class="secondary-menu__icon" src="<.= crate::HOME.0 .>" alt="<.= crate::HOME.1 .>" />
+        <div class="secondary-menu__item-name">
+          Overview
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="<.= crate::PAGES.panel.sitekey.list .>">
+        <img class="secondary-menu__icon" src="<.= crate::KEY.0 .>" alt="<.= crate::KEY.1 .>" />
+        <div class="secondary-menu__item-name">
+          Site Keys
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="<.= crate::PAGES.panel.utils.percentile .>">
+        <img class="secondary-menu__icon" src="<.= crate::BAR_CHART.0 .>" alt="<.= crate::BAR_CHART.1 .>" />
+        <div class="secondary-menu__item-name">
+          Statistics
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="<.= crate::PAGES.panel.settings.home .>">
+        <img class="secondary-menu__icon" src="<.= crate::SETTINGS_ICON.0 .>" alt="<.= crate::SETTINGS_ICON.1 .>" />
+        <div class="secondary-menu__item-name">
+          Settings
+        </div>
+      </a>
+    </li>
+    <. if crate::SETTINGS.commercial { .>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="">
+        <img class="secondary-menu__icon" src="<.= crate::CREDIT_CARD.0 .>" alt="<.= crate::CREDIT_CARD.1 .>" />
+        <div class="secondary-menu__item-name">
+          Billing
+        </div>
+      </a>
+    </li>
+    <. } .>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="">
+		  <img class="secondary-menu__icon" src="<.= crate::HELP_CIRCLE.0 .>" alt="<.= crate::HELP_CIRCLE.1 .>" />
+        <div class="secondary-menu__item-name">
+          Help
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+      <a class="secondary-menu__item-link" href="">
+        <img
+          class="secondary-menu__icon"
+		  src="<.= crate::MESSAGE.0 .>"
+		  alt="<.= crate::MESSAGE.1 .>"
+        />
+        <div class="secondary-menu__item-name">
+          Support
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+        <a class="secondary-menu__item-link" href="<.= crate::DOCS.home .>">
+        <img class="secondary-menu__icon" src="<.= crate::DOCS_ICON.0 .>" alt="<.= crate::DOCS_ICON.1 .>" />
+        <div class="secondary-menu__item-name">
+          API Docs
+        </div>
+      </a>
+    </li>
+    <li class="secondary-menu__item">
+        <a class="secondary-menu__item-link" href="<.= crate::SETTINGS.source_code .>">
+        <img class="secondary-menu__icon" 
+			 src="<.= crate::GITHUB.0 .>" alt="<.= crate::GITHUB.1 .>" />
+        <div class="secondary-menu__item-name">
+          Source Code
+        </div>
+      </a>
+    </li>
+  </ul>
+</nav>
+<!-- Nav/Side/Secondary bar -->

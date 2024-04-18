@@ -1,0 +1,126 @@
+[package]
+name = "mcaptcha"
+version = "0.1.0"
+description = "mCaptcha - a PoW-based CAPTCHA system"
+homepage = "https://mcaptcha.org"
+repository = "https://github.com/mCaptcha/mCaptcha"
+documentation = "https://mcaptcha.org/docs/"
+license = "AGPLv3 or later version"
+authors = ["realaravinth <realaravinth@batsense.net>"]
+edition = "2021"
+default-run = "mcaptcha"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[workspace]
+exclude = ["db/db-migrations", "utils/cache-bust"]
+members = [".", "db/db-core", "db/db-sqlx-postgres", "db/db-sqlx-maria"]
+
+[[bin]]
+name = "mcaptcha"
+path = "./src/main.rs"
+
+[dependencies]
+paralegal = { path = "../paralegal/crates/paralegal" } # Currently using a local version of paralegal
+actix-web = "4.0.1"
+actix = "0.13"
+actix-identity = "0.4.0"
+actix-http = "3.0.4"
+actix-rt = "2"
+actix-cors = "0.6.1"
+actix-service = "2.0.0"
+async-trait = "0.1.51"
+mime_guess = "2.0.3"
+rust-embed = "6.4.0"
+libcachebust = "0.3.0"
+
+futures = "0.3.15"
+tokio = { version = "1.14", features = ["sync"] }
+
+sqlx = { version = "0.7", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "time",
+    "mysql",
+] }
+argon2-creds = { branch = "master", git = "https://github.com/realaravinth/argon2-creds" }
+#argon2-creds = { version="*", path = "../../argon2-creds/" }
+config = "0.13"
+validator = { version = "0.15", features = ["derive"] }
+
+derive_builder = "0.11"
+derive_more = "0.99"
+
+serde = "1"
+serde_json = "1"
+
+url = "2.2"
+urlencoding = "2.1.0"
+
+pretty_env_logger = "0.4"
+log = "0.4"
+
+lazy_static = "1.4"
+
+
+libmcaptcha = "0.2.4"
+
+rand = "0.8"
+
+sailfish = "0.7.0"
+
+mime = "0.3.16"
+
+num_cpus = "1.13.1"
+
+lettre = { version = "0.10.0-rc.3", features = [
+    "builder",
+    "tokio1",
+    "tokio1-native-tls",
+    "smtp-transport",
+] }
+
+openssl = { version = "0.10.48", features = ["vendored"] }
+uuid = { version = "1.4.0", features = ["v4", "serde"] }
+reqwest = { version = "0.11.18", features = ["json", "gzip"] }
+
+
+[dependencies.db-core]
+path = "./db/db-core"
+
+[dependencies.db-sqlx-postgres]
+path = "./db/db-sqlx-postgres"
+
+[dependencies.db-sqlx-maria]
+path = "./db/db-sqlx-maria"
+
+[dependencies.my-codegen]
+git = "https://github.com/realaravinth/actix-web"
+package = "actix-web-codegen"
+
+[dependencies.actix-auth-middleware]
+version = "0.2.0"
+git = "https://github.com/realaravinth/actix-auth-middleware"
+features = ["actix_identity_backend"]
+
+[build-dependencies]
+serde_json = "1"
+sqlx = { version = "0.7", features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "time",
+    "mysql",
+] }
+
+[dev-dependencies]
+mcaptcha_pow_sha256 = "0.4"
+awc = "3.0.0"
+
+
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64"
+
+[features]
+buggy = []

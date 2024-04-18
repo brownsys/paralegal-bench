@@ -1,0 +1,14 @@
+[["db_core::MCDatabase::delete_user"]]
+marker = "deletes"
+on_argument = [1]
+
+[["actix_identity::Identity"]]
+marker = "user_data"
+
+[["db_core::MCDatabase::analysis_save"]]
+marker = "save_stats_to_db"
+on_argument = [1]
+
+[["db_core::MCDatabase::analytics_captcha_is_published"]]
+marker = "verify_opt_in"
+on_return = true

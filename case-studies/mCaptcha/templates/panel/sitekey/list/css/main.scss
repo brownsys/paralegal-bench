@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../../../reset';
+@import '../../../../vars';
+@import '../../../../components/box';
+@import '../../../../components/clipboard/copy';
+@import '../../../../components/table/main';
+
+.sitekey__table {
+  @include table;
+  margin: auto;
+}
+
+.sitekey__table-title-text {
+  @include table__title-text;
+}
+
+.sitekey-list__name {
+  min-width: 450px;
+}
+
+.sitekey-list__key {
+  width: 10px;
+}
+
+.sitekey__copy-icon {
+  @include copy-icon;
+}
+
+.sitekey__copy-icon:hover,
+.sitekey__copy-done-icon:hover {
+  @include copy-icon-hover;
+}
+
+.sitekey__copy-done-icon {
+  @include copy-done-icon;
+}
+
+.sitekey__key-container {
+  border-radius: 10px;
+  background: $backdrop;
+  margin: 2px;
+  padding: 5px;
+  display: flex;
+  max-width: 150px;
+  border: 0.1px solid rgba(0, 0, 0, 0.125);
+}
+
+.sitekey__widget-link {
+  border-left: 0.1px solid $light-grey;
+  margin: 5;
+  margin: auto;
+  padding-left: 20px;
+  height: 100%;
+  padding-right: 15px;
+}
+
+.sitekey-list__sitekey-link {
+  display: inline-block;
+  width: 100%;
+  text-decoration: none;
+  color: $blue-link;
+  padding: 20px;
+}
+
+.sitekey-list__sitekey-link:visited {
+  color: $blue-link;
+}
+
+.sitekey-list__sitekey-link:hover {
+  background-color: $light-grey;
+  cursor: pointer;
+}
+
+.sitekey__widget-link {
+  color: $blue-link;
+}
+
+.sitekey__widget-link:visited {
+  color: $blue-link;
+}
+
+.sitekey-list__edit {
+  padding: 10px;
+  margin: auto;
+}

@@ -1,0 +1,19 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+.taskbar__action:first-child {
+  margin-left: 20px;
+}
+
+.taskbar__spacer {
+	display: none;
+}
+
+.taskbar__icon {
+  width: 1rem;
+  margin: auto 5px;
+}

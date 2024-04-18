@@ -1,0 +1,70 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<. const DONE_ALT: &str = "sitekey copied"; .>
+<. const DONE_CLASS: &str = "sitekey__copy-done-icon"; .>
+<. const COPY_ALT: &str = "copy sitekey"; .>
+<. const COPY_CLASS: &str = "sitekey__copy-icon"; .>
+
+<. include!("../../../components/headers/index.html"); .> <.
+include!("../../navbar/index.html"); .>
+<div class="tmp-layout">
+  <. include!("../../header/index.html"); .>
+  <main class="panel-main">
+    <.include!("../../help-banner/index.html"); .>
+    <!-- Main content container -->
+    <div class="inner-container">
+      <!-- Main menu/ important actions roaster -->
+      <. if sitekeys.is_empty() { .>
+        <. include!("./empty-sitekey.html"); .>
+      <.} else {.>
+        <table class="sitekey__table">
+          <thead class="sitekey__table-heading">
+            <tr>
+              <th colspan="4" class="sitekey__table-title-text">
+                Your Sitekeys
+              </th>
+            </tr>
+          </thead>
+          <tbody class="sitekey__body">
+            <. for sitekey in sitekeys.iter() { .>
+            <tr class="sitekey__item">
+              <td class="sitekey-list__name">
+                <a
+                  href="/sitekey/<.= sitekey.key .>/"
+                  class="sitekey-list__sitekey-link"
+                >
+                  <.= sitekey.description .>
+                </a>
+              </td>
+              <td class="sitekey-list__key">
+                <div class="sitekey__key-container">
+                  <. let clipboard_data = ("sitekey", &sitekey.key); .> 
+                  <. include!("../../../components/clipboard/index.html"); .>
+                  <a
+                    class="sitekey__widget-link"
+                    href="<.= crate::WIDGET_ROUTES.verification_widget .>/?sitekey=<.= sitekey.key .>"
+                  >
+                    <.= &sitekey.key[0..5] .>
+                  </a>
+                </div>
+              </td>
+              <td class="sitekey-list__key">
+                <div class="sitekey-list__edit">
+                  <. let edit_url = crate::PAGES.panel.sitekey.get_edit_easy(&sitekey.key) ;.>
+                  <. include!("../view/__edit-sitekey-icon.html"); .>
+                </div>
+              </td>
+            </tr>
+            <. } .>
+          </tbody>
+        </table>
+      <.}.>
+    </div>
+    <!-- end of container -->
+    <. include!("../../../components/footers.html"); .>
+  </main>
+</div>

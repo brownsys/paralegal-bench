@@ -1,0 +1,32 @@
+<!--
+SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+<ul class="taskbar">
+  <li class="taskbar__spacer"></li>
+  <li class="taskbar__action">
+    <. include!("./new-sitekey-btn.html"); .>
+  </li>
+  <li class="taskbar__action">
+    <img class="taskbar__icon" src="<.=
+    crate::FILES.get("./static/cache/img/svg/moon.svg").unwrap() .>"
+    alt="Profile" />
+  </li>
+
+  <li class="taskbar__action">
+    <a href="<.= crate::PAGES.panel.notifications .>">
+      <img class="taskbar__icon" src="<.=
+      crate::FILES.get("./static/cache/img/svg/bell.svg").unwrap() .>"
+      alt="Notifications" />
+    </a>
+  </li>
+  <li class="taskbar__action">
+    <a href="<.= crate::V1_API_ROUTES.auth.logout .>">
+      <img class="taskbar__icon" src="<.=
+      crate::FILES.get("./static/cache/img/svg/log-out.svg").unwrap() .>"
+      alt="Profile" /></a
+    >
+  </li>
+</ul>

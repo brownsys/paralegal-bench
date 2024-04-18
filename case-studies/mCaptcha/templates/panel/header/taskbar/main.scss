@@ -1,0 +1,55 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@import '../../../reset';
+@import '../../../vars';
+@import '../../../components/button';
+
+.taskbar {
+  display: flex;
+  padding: 0px;
+  margin: 0px;
+  background-color: $white;
+}
+
+.taskbar__action {
+  display: inline-block;
+  list-style: none;
+  padding: 10px 0px;
+  margin: auto;
+}
+
+.taskbar__spacer {
+  min-width: 250px;
+  list-style: none;
+  flex: 6;
+}
+
+.taskbar__icon {
+  opacity: 0.8;
+  width: 1.5rem;
+  margin: auto 20px;
+  border-radius: 50px;
+  color: $light-text;
+}
+
+.taskbar__icon:hover {
+  cursor: pointer;
+  background-color: $light-grey;
+  color: $green;
+  filter: invert(58%) sepia(60%) saturate(331%) hue-rotate(76deg)
+    brightness(91%) contrast(92%);
+}
+
+.taskbar__add-site {
+  display: inline-block;
+  @include violet-button;
+}
+
+.taskbar__add-site:hover {
+  @include violet-button-hover;
+}

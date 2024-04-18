@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2022  Aravinth Manivannan <realaravinth@batsense.net>
+ * SPDX-FileCopyrightText: 2023 Aravinth Manivannan <realaravinth@batsense.net>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+
+@mixin copy-icon-base {
+  margin: auto;
+  padding: 5px;
+}
+
+@mixin copy-icon {
+  @include copy-icon-base;
+}
+
+@mixin copy-icon-hover {
+  cursor: pointer;
+  filter: invert(17%) sepia(93%) saturate(5039%) hue-rotate(204deg)
+    brightness(100%) contrast(98%);
+}
+
+@mixin copy-done-icon {
+  @include copy-icon-base;
+  display: none;
+  filter: invert(58%) sepia(60%) saturate(331%) hue-rotate(76deg)
+    brightness(91%) contrast(92%);
+}
