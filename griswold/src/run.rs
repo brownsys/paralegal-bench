@@ -240,18 +240,11 @@ impl EvaluationConfig {
             let Run {
                 experiment_name,
                 config,
-                app_config,
                 policy_name,
-                external_annotations,
                 controller,
                 ablation_feature,
                 commit,
-                bug,
-                expectation,
-                prepare,
-                post_process,
-                policy,
-                extra_cargo_args,
+                ..
             } = exp;
             trace!(
                 "Running {id} {experiment_name} {} {} {policy_name} {controller:?} {ablation_feature:?} {commit:?}", config.application.as_ref(), config.controller_run_mode.as_ref(),

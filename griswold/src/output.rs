@@ -56,8 +56,15 @@ pub struct RunMeasurements {
     num_controllers: Option<u16>,
     /// How many PDG nodes have markers assigned.
     num_markers: Option<u32>,
+    /// The number of functions PDGs were produced for
     dedup_functions: Option<u32>,
+    /// The LoCs corresponding to [`Self::dedup_functions`]
     dedup_locs: Option<u32>,
+    /// The number of functions we performed some analysis on, e.g. either
+    /// produced a PDG for or checked for markers.
+    seen_functions: Option<u32>,
+    /// The LoCs corresponding to [`Self::seen_functions`]
+    seen_locs: Option<u32>,
     /// How many of the analyzed lines changed vs the previous commit. Used in
     /// roll-forward only
     changed_lines: Option<u32>,
@@ -101,6 +108,8 @@ impl RunMeasurements {
             num_markers: None,
             dedup_functions: None,
             dedup_locs: None,
+            seen_locs: None,
+            seen_functions: None,
             file_size: None,
             peak_cpu_usage_pdg: pdg_stat.peak_cpu_usage,
             peak_cpu_usage_policy: None,
@@ -144,6 +153,8 @@ impl RunMeasurements {
         set!(num_markers, ctx.desc().marker_annotation_count);
         set!(dedup_functions, ctx.desc().dedup_functions);
         set!(dedup_locs, ctx.desc().dedup_locs);
+        set!(seen_locs, ctx.desc().seen_locs);
+        set!(seen_functions, ctx.desc().seen_functions);
         set!(file_size, file_size);
     }
 
