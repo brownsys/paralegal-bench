@@ -48,6 +48,12 @@ fn main() -> Result<()> {
             cmd.get_command().args(["--features", "buggy"]);
         }
 
+        cmd.get_command().args(
+            mCaptcha::DEFAULT_CONTROLLERS
+                .iter()
+                .flat_map(|c| ["--features", *c]),
+        );
+
         // cmd.get_command().args(
         //     if args.controller.is_empty() {
         //         Controllers::value_variants()
