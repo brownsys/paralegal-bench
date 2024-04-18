@@ -199,7 +199,7 @@ adaptive-depth = false
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
-adaptive-depth = "false"
+adaptive-depth = false
 
 [[experiment.ablation]]
 mode = "ablation"
