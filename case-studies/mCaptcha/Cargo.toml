@@ -124,3 +124,5 @@ linker = "x86_64"
 
 [features]
 buggy = []
+verify-pow = []
+delete-account = []

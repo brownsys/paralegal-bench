@@ -21,7 +21,7 @@ pub enum Policy {
     OptInBeforeSave,
 }
 
-pub const DEFAULT_CONTROLLERS: &[&str] = &[];
+pub const DEFAULT_CONTROLLERS: &[&str] = &["verify-pow", "delete-account"];
 
 impl Policy {
     pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {

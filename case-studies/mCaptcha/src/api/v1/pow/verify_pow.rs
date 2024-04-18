@@ -53,7 +53,7 @@ fn mark_site_key(key: String) -> String {
 
 /// route handler that verifies PoW and issues a solution token
 /// if verification is successful
-#[paralegal::analyze]
+#[cfg_attr(feature = "verify-pow", paralegal::analyze)]
 #[my_codegen::post(path = "V1_API_ROUTES.pow.verify_pow()")]
 pub async fn verify_pow(
     req: HttpRequest,

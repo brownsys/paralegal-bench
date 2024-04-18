@@ -10,7 +10,7 @@ use super::auth::runners::Password;
 use crate::errors::*;
 use crate::AppData;
 
-#[paralegal::analyze]
+#[cfg_attr(feature = "delete-account", paralegal::analyze)]
 #[my_codegen::post(
     path = "crate::V1_API_ROUTES.account.delete",
     wrap = "crate::api::v1::get_middleware()"
