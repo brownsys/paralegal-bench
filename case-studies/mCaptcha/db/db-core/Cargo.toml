@@ -9,8 +9,8 @@ license = "AGPLv3 or later version"
 authors = ["realaravinth <realaravinth@batsense.net>"]
 
 [dependencies]
-paralegal = { path = "../../../paralegal/crates/paralegal" } # Currently using a local version of paralegal
-anyhow = "1"                                                 # For paralegal error msgs
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
+anyhow = "1"                                                                   # For paralegal error msgs
 async-trait = "0.1.51"
 thiserror = "1.0.30"
 serde = { version = "1", features = ["derive"] }

@@ -64,9 +64,12 @@ pub mod assets {
     }
 }
 
-#[derive(RustEmbed)]
-#[folder = "assets/"]
 struct Asset;
+
+impl RustEmbed for Asset {
+    fn get(_: &str) -> std::option::Option<rust_embed::EmbeddedFile> { todo!() }
+    fn iter() -> rust_embed::Filenames { todo!() }
+}
 
 fn handle_assets(path: &str) -> HttpResponse {
     match Asset::get(path) {

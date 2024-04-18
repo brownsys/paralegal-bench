@@ -1860,6 +1860,7 @@ dependencies = [
  "indexmap",
  "indicatif",
  "lemmy",
+ "mCaptcha",
  "paralegal-policy",
  "plume",
  "semver",

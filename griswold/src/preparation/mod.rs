@@ -442,6 +442,10 @@ impl Application {
                 (PolicyResult::Pass, &[]),
                 (PolicyResult::Fail, &["--features", "leak"]),
             ],
+            Application::Mcaptcha { .. } => &[
+                (PolicyResult::Pass, &[]),
+                (PolicyResult::Fail, &["--features", "buggy"]),
+            ],
         }
     }
 
@@ -470,6 +474,7 @@ impl Application {
             Application::Websubmit { .. } => websubmit::DEFAULT_CONTROLLERS,
             Application::Contile { .. } => contile::DEFAULT_CONTROLLERS,
             Application::Freedit { .. } => freedit::DEFAULT_CONTROLLERS,
+            Application::Mcaptcha { .. } => mCaptcha::DEFAULT_CONTROLLERS,
             _ => unreachable!(),
         }
         .to_vec()
@@ -530,6 +535,15 @@ impl Application {
                         p.as_ref(),
                         Rc::from(p.runnable()) as PolicyFn<'a>,
                         contile::DEFAULT_CONTROLLERS.to_vec(),
+                    )
+                }))
+            }
+            Application::Mcaptcha { policies } => {
+                Box::new(selection_or_all(policies).iter().map(|p| {
+                    (
+                        p.as_ref(),
+                        Rc::from(p.runnable()) as PolicyFn<'a>,
+                        mCaptcha::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }

@@ -28,6 +28,7 @@ lemmy = { path = "../policies/lemmy" }
 plume = { path = "../policies/plume" }
 websubmit = { path = "../policies/websubmit" }
 contile = { path = "../policies/contile" }
+mCaptcha = { path = "../policies/mCaptcha" }
 semver = { version = "1.0.22", features = ["serde"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"

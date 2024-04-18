@@ -50,15 +50,19 @@ mod ser_level_filter {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct EvaluationConfig {
-    #[serde(with = "humantime_serde")]
+    #[serde(with = "humantime_serde", default = "default_stat_refresh_interval")]
     pub stat_refresh_interval: Duration,
     pub paralegal_home_dir: PathBuf,
     #[serde(with = "ser_level_filter", default)]
     pub log_level: Option<LevelFilter>,
     pub app_config: HashMap<String, ApplicationConfig>,
     pub experiment: IndexMap<String, Box<[ExperimentConfig]>>,
-    #[serde(with = "humantime_serde")]
+    #[serde(with = "humantime_serde", default)]
     pub pdg_timeout: Option<Duration>,
+}
+
+fn default_stat_refresh_interval() -> Duration {
+    Duration::from_millis(500)
 }
 
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize, Copy, Clone, strum::EnumIs)]
@@ -189,6 +193,10 @@ pub enum Application {
     Contile {
         #[serde(default)]
         policies: Box<[contile::Policy]>,
+    },
+    Mcaptcha {
+        #[serde(default)]
+        policies: Box<[mCaptcha::Policy]>,
     },
 }
 

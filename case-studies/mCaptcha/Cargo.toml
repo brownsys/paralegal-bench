@@ -23,7 +23,7 @@ name = "mcaptcha"
 path = "./src/main.rs"
 
 [dependencies]
-paralegal = { path = "../paralegal/crates/paralegal" } # Currently using a local version of paralegal
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 actix-web = "4.0.1"
 actix = "0.13"
 actix-identity = "0.4.0"

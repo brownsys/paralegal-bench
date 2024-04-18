@@ -2326,6 +2326,7 @@ dependencies = [
 [[package]]
 name = "paralegal"
 version = "0.1.0"
+source = "git+https://github.com/brownsys/paralegal?rev=1f16ce2#1f16ce232370401efd58e3923cf3584db4d357f7"
 dependencies = [
  "cfg-if",
  "proc-macro2",
