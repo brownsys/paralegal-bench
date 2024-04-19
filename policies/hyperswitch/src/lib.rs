@@ -78,24 +78,32 @@ policy!(card_encryption, ctx, {
 });
 
 policy!(card_storage, ctx {
-    let m_future_usage = marker!(future_usage_decision);
-    let m_credit_card = marker!(credit_card);
-    let mut srcs = ctx.nodes_marked_any_way(m_credit_card).peekable();
-    let decision_sources = ctx.nodes_marked_any_way(m_future_usage).collect::<Vec<_>>();
-    assert_error!(ctx, srcs.peek().is_some(), "VACUITY: No sensitive sources found");
-    let mut any_sink_reached = false;
-    let m_store = marker!(store);
-    for src in srcs {
-        for sink in src.influencees(&ctx, EdgeSelection::Data).into_iter().filter(|n| n.has_marker(&ctx, m_store)) {
-            any_sink_reached = true;
+    for ctx in ctx.controller_contexts() {
+        let m_future_usage = marker!(future_usage_decision);
+        let m_credit_card = marker!(credit_card);
+        let mut srcs = ctx
+            .nodes_marked_any_way(m_credit_card)
+            .filter(|n| n.controller_id() == ctx.id())
+            .peekable();
+        let decision_sources = ctx
+            .nodes_marked_any_way(m_future_usage)
+            .filter(|n| n.controller_id() == ctx.id())
+            .collect::<Vec<_>>();
+        assert_error!(ctx, srcs.peek().is_some(), "VACUITY: No sensitive sources found");
+        let mut any_sink_reached = false;
+        let m_store = marker!(store);
+        for src in srcs {
+            for sink in src.influencees(&ctx, EdgeSelection::Data).into_iter().filter(|n| n.has_marker(&ctx, m_store)) {
+                any_sink_reached = true;
 
-            let decision_reaches = decision_sources.iter().cloned().any(|decision_source|
-                decision_source.has_ctrl_influence(sink, &ctx)
-            );
-            assert_error!(ctx, decision_reaches);
+                let decision_reaches = decision_sources.iter().cloned().any(|decision_source|
+                    decision_source.has_ctrl_influence(sink, &ctx)
+                );
+                assert_error!(ctx, decision_reaches);
+            }
         }
+        assert_warning!(ctx, any_sink_reached);
     }
-    assert_warning!(ctx, any_sink_reached);
     ctx.note("Card storage policy finished");
     Ok(())
 });
