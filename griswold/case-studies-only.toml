@@ -51,151 +51,49 @@ source-dir = "case-studies/contile"
 external-annotations = "external-annotations.toml"
 cargo-args = ["--lib"]
 
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "freedit"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "websubmit"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "atomic-data"
+policy-mode = "unified"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "lemmy"
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "contile"
+policy-mode = "unified"
 # Otherwise we overtaint and don't pass the non-bug
-adaptive-depth = false
 
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-del-1-a", "edit-del-2-a", "edit-del-3-a"]
-feature-space-fail = [
-    "edit-del-1-b",
-    "edit-del-1-c",
-    "edit-del-2-b",
-    "edit-del-2-c",
-    "edit-del-3-b",
-    "edit-del-3-c",
-]
-policies = ["deletion"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-sc-1-a"]
-feature-space-fail = ["edit-sc-1-b", "edit-sc-1-c"]
-policies = ["scoped-storage"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "lib"
-app-config-override = "websubmit-lib"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
-
-[[experiment.ablation]]
-mode = "ablation"
-application = "websubmit"
-flavour = "strict"
-app-config-override = "websubmit-strict"
-feature-space-success = ["edit-dis-1-a", "edit-dis-2-a", "edit-dis-3-a"]
-feature-space-fail = [
-    "edit-dis-1-b",
-    "edit-dis-1-c",
-    "edit-dis-2-b",
-    "edit-dis-2-c",
-    "edit-dis-3-b",
-    "edit-dis-3-c",
-]
-policies = ["authorized-disclosure"]
+[[experiment.case-studies]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"

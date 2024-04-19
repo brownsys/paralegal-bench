@@ -447,36 +447,40 @@ policy-mode = "unified"
 controller-run-mode = "all-separate"
 
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "plume"
+[[experiment.correctness]]
+mode = "case-study"
+application = "plume"
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "freedit"
+[[experiment.correctness]]
+mode = "case-study"
+application = "freedit"
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "websubmit"
+[[experiment.correctness]]
+mode = "case-study"
+application = "websubmit"
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "atomic-data"
+[[experiment.correctness]]
+mode = "case-study"
+application = "atomic-data"
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "lemmy"
-# lemmy-controller-run-mode = "affected-merged"
+[[experiment.correctness]]
+mode = "case-study"
+application = "lemmy"
+lemmy-controller-run-mode = "affected-merged"
 
-# # Does not run on this machine sadly
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "hyperswitch"
-# # Limiting policies for now, because only these actually make sense
-# policies = ["card-storage", "apikey-storage"]
+# Does not run on this machine sadly
+[[experiment.correctness]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
 
-# [[experiment.correctness]]
-# mode = "case-study"
-# application = "contile"
-# # Otherwise we overtaint and don't pass the non-bug
-# adaptive-depth = false
+[[experiment.correctness]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+adaptive-depth = false
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "mcaptcha"
