@@ -440,7 +440,7 @@ application = "contile"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 
-[[experiment.case-studies]]
+[[experiment.per-controller-time]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
