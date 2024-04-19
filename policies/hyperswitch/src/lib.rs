@@ -13,7 +13,7 @@ use std::{collections::HashSet, sync::Arc};
 pub enum Controllers {
     CreateApiKey,
     PaymentsAuthorizeData,
-    //SetupMandateRouterData,
+    SetupMandateRouterData,
 }
 
 macro_rules! marker {
