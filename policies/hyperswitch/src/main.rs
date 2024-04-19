@@ -63,6 +63,19 @@ fn main() -> Result<()> {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
             ctx.write_analyzed_code(File::create(path)?, false)?;
         }
+        let edges: usize = ctx
+            .desc()
+            .controllers
+            .values()
+            .map(|p| p.graph.edge_count())
+            .sum();
+        let nodes: usize = ctx
+            .desc()
+            .controllers
+            .values()
+            .map(|p| p.graph.node_count())
+            .sum();
+        println!("Analyzing graph with {nodes} nodes and {edges} edges");
         let policies = if args.policy.is_empty() {
             &[Policy::CardStorage, Policy::ApikeyStorage]
             // Policy::value_variants()
