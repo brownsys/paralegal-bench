@@ -21,6 +21,8 @@ struct Args {
     /// sc, del, or dis.
     #[clap(long, value_enum)]
     policy: Vec<Policy>,
+    #[clap(long)]
+    controller: Vec<String>,
 }
 
 fn main() -> Result<()> {
@@ -49,11 +51,17 @@ fn main() -> Result<()> {
         .get_command()
         .args(["--features", args.flavour.annotation_feature()]);
 
-    command.get_command().args(
+    let controllers = if args.controller.is_empty() {
         websubmit::DEFAULT_CONTROLLERS
             .iter()
-            .flat_map(|c| ["--features", c]),
-    );
+            .map(|&s| s.to_owned())
+            .collect::<Vec<_>>()
+    } else {
+        args.controller.clone()
+    };
+    command
+        .get_command()
+        .args(controllers.iter().flat_map(|c| ["--features", c]));
 
     let mut cfg = paralegal_policy::Config::default();
     cfg.always_happens_before_tracing = paralegal_policy::algo::ahb::TraceLevel::Full;

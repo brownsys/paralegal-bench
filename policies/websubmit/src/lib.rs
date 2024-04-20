@@ -553,6 +553,9 @@ impl PropRunner {
                             .any(|b| self.cx.has_marker(marker!(bless_safe_source), b))
                 }))
                 .collect::<Vec<_>>();
+            for s in &safe_scopes {
+                self.cx.node_note(*s, "this is a safe scope");
+            }
             let sinks = self
                 .cx
                 .all_nodes_for_ctrl(*c_id)
@@ -592,7 +595,7 @@ impl PropRunner {
                                 [root],
                                 |n| {
                                     if safe_scopes.contains(&n) {
-                                        msg.with_node_note(n, "Reached this checkpoint");
+                                        //msg.with_node_note(n, "Reached this checkpoint");
                                         true
                                     } else {
                                         false
@@ -654,29 +657,18 @@ impl PropRunner {
                 .filter(|s| ctx.has_marker(m_sink, *s) || s.is_return(ctx))
             {
                 for scope in self.all_scopes(sink, m_scopes) {
-                    for recipient in ctx.influencers(scope, EdgeSelection::Data) {
-                        let is_safe = is_safe_source(recipient)
-                            || ctx
-                                .always_happens_before([recipient], is_safe_source, |n| n == scope)?
-                                .holds()
-                            || ctx.influencers(recipient, EdgeSelection::Control).any(|i| {
-                                is_safe_source(i)
-                                    || ctx.influencers(i, EdgeSelection::Data).any(is_safe_source)
-                            });
-                        if !is_safe {
-                            let mut msg = ctx.struct_node_error(
-                                sink,
-                                "This data release is not sufficiently protected",
-                            );
-                            msg.with_node_note(src, "it receives this sensitive data");
-                            msg.with_node_note(
-                                recipient,
-                                "this unsafe data determines the recipient",
-                            );
-                            msg.with_node_note(scope, "This is declared as recipient");
-                            msg.emit();
-                        }
-                    }
+                    assert_error!(
+                        ctx,
+                        ctx.any_flows(
+                            ctx.all_nodes()
+                                .filter(|n| is_safe_source(*n))
+                                .collect::<Box<[_]>>()
+                                .as_ref(),
+                            &[scope],
+                            EdgeSelection::Both,
+                        )
+                        .is_some()
+                    );
                 }
             }
         }
