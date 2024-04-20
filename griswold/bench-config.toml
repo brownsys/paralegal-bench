@@ -124,7 +124,7 @@ policy-mode = "unified"
 [[experiment.case-studies]]
 mode = "case-study"
 application = "lemmy"
-lemmy-controller-run-mode = "all"
+controller-run-mode = "all"
 policy-mode = "unified"
 bugs = ["bug4"]
 
@@ -466,7 +466,7 @@ application = "atomic-data"
 [[experiment.correctness]]
 mode = "case-study"
 application = "lemmy"
-lemmy-controller-run-mode = "affected-merged"
+controller-run-mode = "affected-merged"
 
 # Does not run on this machine sadly
 [[experiment.correctness]]
@@ -481,6 +481,6 @@ application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 adaptive-depth = false
 
-[[experiment.case-studies]]
+[[experiment.correctness]]
 mode = "case-study"
 application = "mcaptcha"
