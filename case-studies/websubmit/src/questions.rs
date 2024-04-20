@@ -505,58 +505,58 @@ pub(crate) fn questions_submit_internal(
     #[cfg(feature = "edit-dis-3-b")]
     println!("{}", answer_log);
 
-    if config.send_emails {
-        let mut recipients = vec![];
-        cfg_if! {
-            if #[cfg(feature = "edit-dis-1-a")] {
-                if num < 90 {
-                    recipients.append(&mut get_staff(config));
-                } else {
-                    recipients.append(&mut get_admins(config));
-                };
-            } else if #[cfg(feature = "edit-dis-1-b")] {
-                recipients = get_staff(config);
-            } else if #[cfg(feature = "edit-dis-1-c")] {
-                recipients = if num < 90 {
-                    get_staff(config)
-                } else {
-                    get_admins(config)
-                };
-                recipients.push("evil@evil.com".to_string());
+    //if config.send_emails {
+    let mut recipients = vec![];
+    cfg_if! {
+        if #[cfg(feature = "edit-dis-1-a")] {
+            if num < 90 {
+                recipients.append(&mut get_staff(config));
             } else {
-                recipients = if num < 90 {
-                    get_staff(config)
-                } else {
-                    get_admins(config)
-                };
-            }
+                recipients.append(&mut get_admins(config));
+            };
+        } else if #[cfg(feature = "edit-dis-1-b")] {
+            recipients = get_staff(config);
+        } else if #[cfg(feature = "edit-dis-1-c")] {
+            recipients = if num < 90 {
+                get_staff(config)
+            } else {
+                get_admins(config)
+            };
+            recipients.push("evil@evil.com".to_string());
+        } else {
+            recipients = if num < 90 {
+                get_staff(config)
+            } else {
+                get_admins(config)
+            };
         }
-        recipients.append(&mut presenter_emails);
+    }
+    recipients.append(&mut presenter_emails);
 
-        cfg_if! {
-            if #[cfg(feature = "edit-dis-3-a")] {
-                for recipient in recipients {
-                    email::my_send(
-                        bg.log.clone(),
-                        apikey.user.clone(),
-                        &[recipient],
-                        format!("{} meeting {} questions", config.class, num),
-                        answer_log.clone(),
-                    )
-                    .expect("failed to send email");
-                }
-            } else {
+    cfg_if! {
+        if #[cfg(feature = "edit-dis-3-a")] {
+            for recipient in recipients {
                 email::my_send(
                     bg.log.clone(),
                     apikey.user.clone(),
-                    &recipients,
+                    &[recipient],
                     format!("{} meeting {} questions", config.class, num),
-                    answer_log,
+                    answer_log.clone(),
                 )
                 .expect("failed to send email");
             }
+        } else {
+            email::my_send(
+                bg.log.clone(),
+                apikey.user.clone(),
+                &recipients,
+                format!("{} meeting {} questions", config.class, num),
+                answer_log,
+            )
+            .expect("failed to send email");
         }
     }
+    //}
     //drop(bg);
     //presenter_emails.push("".to_string());
     Redirect::to("/leclist")
