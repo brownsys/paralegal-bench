@@ -23,16 +23,13 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::try_parse()?;
-
+    let run_dir = std::env::current_dir()?;
+    std::env::set_current_dir(&args.plume_dir)?;
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     let cmd_raw = cmd.get_command();
-    cmd_raw.args([
-        "--external-annotations",
-        "external-annotations.toml",
-        "--abort-after-analysis",
-        "--target",
-        "plume-models",
-    ]);
+    cmd_raw.arg("--external-annotations");
+    cmd_raw.arg(run_dir.join("external-annotations.toml"));
+    cmd_raw.args(["--abort-after-analysis", "--target", "plume-models"]);
     cmd_raw.args(&args.cargo_args);
     if !args.cargo_args.contains(&"--".to_owned()) {
         cmd_raw.arg("--");
@@ -53,7 +50,7 @@ fn main() -> Result<()> {
             .iter()
             .flat_map(|c| ["--features", c]),
     );
-    let result = cmd.run(args.plume_dir)?.with_context(plume::check)?;
+    let result = cmd.run(".")?.with_context(plume::check)?;
     println!(
         "Finished {}successfully with {}",
         if result.success { "" } else { "un" },

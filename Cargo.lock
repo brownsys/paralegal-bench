@@ -991,7 +991,7 @@ dependencies = [
 [[package]]
 name = "flowistry_pdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=db06704d98f39394b125cfc5d5ec2d6553f54e04#db06704d98f39394b125cfc5d5ec2d6553f54e04"
+source = "git+https://github.com/brownsys/paralegal?rev=0f56d7fa4db6e7debf6d876457d0d10845384021#0f56d7fa4db6e7debf6d876457d0d10845384021"
 dependencies = [
  "cfg-if",
  "internment",
@@ -2548,7 +2548,7 @@ dependencies = [
 [[package]]
 name = "paralegal-policy"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=db06704d98f39394b125cfc5d5ec2d6553f54e04#db06704d98f39394b125cfc5d5ec2d6553f54e04"
+source = "git+https://github.com/brownsys/paralegal?rev=0f56d7fa4db6e7debf6d876457d0d10845384021#0f56d7fa4db6e7debf6d876457d0d10845384021"
 dependencies = [
  "anyhow",
  "bitvec",
@@ -2568,7 +2568,7 @@ dependencies = [
 [[package]]
 name = "paralegal-spdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=db06704d98f39394b125cfc5d5ec2d6553f54e04#db06704d98f39394b125cfc5d5ec2d6553f54e04"
+source = "git+https://github.com/brownsys/paralegal?rev=0f56d7fa4db6e7debf6d876457d0d10845384021#0f56d7fa4db6e7debf6d876457d0d10845384021"
 dependencies = [
  "anyhow",
  "bincode",

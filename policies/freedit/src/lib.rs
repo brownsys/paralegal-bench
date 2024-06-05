@@ -2,8 +2,8 @@ use anyhow::Result;
 use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning,
-    paralegal_spdg::{CallString, GlobalNode, Identifier, InstructionKind, Node, SPDG},
-    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries,
+    paralegal_spdg::{CallString, Endpoint, GlobalNode, Identifier, InstructionKind, Node, SPDG},
+    Context, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -96,7 +96,7 @@ macro_rules! iterator_quantifiers {
 trait ContextExt {
     fn call_sites_for<'a>(
         &'a self,
-        ctr: ControllerId,
+        ctr: Endpoint,
         fun: DefId,
     ) -> Box<dyn Iterator<Item = CallString> + 'a>;
 
@@ -106,7 +106,7 @@ trait ContextExt {
 impl ContextExt for Context {
     fn call_sites_for<'a>(
         &'a self,
-        ctrl: ControllerId,
+        ctrl: Endpoint,
         fun: DefId,
     ) -> Box<dyn Iterator<Item = CallString> + 'a> {
         let locs = self
@@ -114,7 +114,7 @@ impl ContextExt for Context {
             .instruction_info
             .iter()
             .filter(|(k, v)| matches!(v.kind, InstructionKind::FunctionCall(f) if f.id == fun))
-            .map(|(k, v)| k)
+            .map(|(k, v)| k.leaf())
             .collect::<HashSet<_>>();
         let iter = self.desc().controllers[&ctrl]
             .edges()

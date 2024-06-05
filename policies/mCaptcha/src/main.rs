@@ -17,8 +17,6 @@ struct Args {
     skip_compile: bool,
     #[clap(long)]
     buggy: bool,
-    #[clap(long)]
-    dump_analyzed_code: Option<PathBuf>,
     // #[clap(long, value_enum)]
     // controller: Vec<Controllers>,
     #[clap(last = true)]
@@ -66,9 +64,6 @@ fn main() -> Result<()> {
         cmd.run(&args.source_dir)?
     };
     let result = graph_loc.with_context(|ctx| {
-        if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
-        }
         let policies = if args.policy.is_empty() {
             Policy::value_variants()
         } else {

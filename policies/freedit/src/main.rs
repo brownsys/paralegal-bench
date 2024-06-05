@@ -19,8 +19,6 @@ struct Args {
     skip_compile: bool,
     #[clap(long, conflicts_with = "skip_compile")]
     buggy: bool,
-    #[clap(long)]
-    dump_analyzed_code: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -49,9 +47,6 @@ fn main() -> Result<()> {
         args.policy.as_slice()
     };
     let res = graph_loc.with_context(|ctx| {
-        if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
-        }
         assert!(ctx.desc().controllers.len() > 1);
         assert!(ctx
             .desc()

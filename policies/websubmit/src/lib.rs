@@ -6,12 +6,11 @@ use paralegal_policy::{
     assert_error,
     diagnostics::ControllerContext,
     loc,
-    paralegal_spdg::{self, FunctionCallInfo, InstructionKind, TypeId},
-    Context, ControllerId, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
-    PolicyContext,
+    paralegal_spdg::{self, Endpoint, FunctionCallInfo, InstructionKind, TypeId},
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
-use petgraph::{csr, visit::EdgeRef};
+use petgraph::visit::EdgeRef;
 use serde::{Deserialize, Serialize};
 
 macro_rules! marker {
@@ -271,7 +270,7 @@ impl PropRunner {
     fn find_deleter(
         &self,
         ty: TypeId,
-        ctrl_id: ControllerId,
+        ctrl_id: Endpoint,
     ) -> Option<(TypeId, GlobalNode, GlobalNode)> {
         let auth = marker!(auth_witness);
         let mut sources: Box<dyn Iterator<Item = _>> = if self.flavour.is_strict() {

@@ -10,8 +10,6 @@ struct Arguments {
     repo_dir: PathBuf,
     #[clap(long)]
     skip_compile: bool,
-    #[clap(long)]
-    dump_analyzed_code: Option<PathBuf>,
     #[clap(long, short, value_enum)]
     policy: Vec<Policy>,
     #[clap(long, conflicts_with = "skip_compile")]
@@ -44,9 +42,6 @@ fn main() -> Result<()> {
     let mut config = Config::default();
     config.always_happens_before_tracing = TraceLevel::Full;
     let result = graph.with_context_configured(config, |ctx| {
-        if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
-        }
         let policy = if args.policy.is_empty() {
             Policy::value_variants()
         } else {
