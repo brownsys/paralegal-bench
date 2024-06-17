@@ -7,6 +7,7 @@ use lemmy::Prop;
 
 #[derive(Parser)]
 struct Arguments {
+    #[clap(default_value = "case-studies/lemmy")]
     path: PathBuf,
     #[clap(long)]
     skip_compile: bool,
