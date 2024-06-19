@@ -36,8 +36,14 @@ fn main() -> anyhow::Result<()> {
         if !args.extra_args.contains(&"--".to_owned()) {
             rcmd.arg("--");
         }
-        for c in &args.controller {
-            rcmd.args(["--features", c]);
+        let all_controllers = ["all-controllers".to_owned()];
+        let selected_controllers = if args.controller.is_empty() {
+            &all_controllers as &[_]
+        } else {
+            &args.controller
+        };
+        for c in selected_controllers {
+            rcmd.args(["--features", &c]);
         }
         cmd.run(&args.path)?
     };
