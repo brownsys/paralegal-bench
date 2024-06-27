@@ -1,6 +1,8 @@
 use std::fmt::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
+use std::process::Stdio;
+use clap::{Args, ValueEnum};
 
 use crate::Prop;
 
@@ -469,15 +471,17 @@ fn print_ctrler_results<W: std::io::Write>(
 
 // runs given batch of controllers on given props
 fn run_batch(
-    lemmy_prop_dir: &Path,
+    common_args: &CommonArgs,
     batch: &[impl AsRef<str>],
     features: &[impl AsRef<str>],
     props: &[Prop],
     desc: &str,
     expect_failure: bool,
-) {
+) -> bool {
     use std::process::*;
     let mut w = std::io::stdout();
+
+    let mut failed = false;
 
     print_table_header(&mut w, props, desc).unwrap();
     let ref lemmy_dir = std::env::current_dir()
@@ -488,7 +492,7 @@ fn run_batch(
 
     for ctrler in batch {
         let mut ana_cmd = Command::new("cargo");
-        ana_cmd.arg("paralegal-flow").current_dir(lemmy_dir).args([
+        ana_cmd.arg("paralegal-flow").current_dir(&common_args.path).args([
             "--abort-after-analysis",
             "--target",
             "lemmy_api",
@@ -502,6 +506,8 @@ fn run_batch(
             ana_cmd.args(["--features", feature.as_ref()]);
         }
 
+        ana_cmd.stdout(Stdio::null()).stderr(Stdio::null());
+
         let now = SystemTime::now();
         let ana_status = ana_cmd.status().unwrap();
         let analyze_time = now.elapsed().unwrap();
@@ -514,23 +520,23 @@ fn run_batch(
                     verify_time = Duration::ZERO;
                     RunError::CompilationError
                 } else {
-                    let mut cmd = Command::new("cargo");
-                    cmd.current_dir(lemmy_prop_dir)
-                        .arg("run")
-                        .arg("--release")
-                        .arg("--")
-                        .arg(lemmy_dir)
-                        .args(["--skip-compile", "--quiet"]);
-                    cmd.arg("--prop");
-                    cmd.arg(format!("{}", typ.as_ref()));
+                    let selection = SelectionArgs {
+                        skip_compile: true,
+                        quiet: true,
+                        prop: vec![*typ],
+                        controller: vec![],
+                        extra_args: vec![],
+                    };
 
                     let now = SystemTime::now();
-                    let status = cmd.status().unwrap();
+                    let status = selection.run(common_args);
                     verify_time = now.elapsed().unwrap();
-                    if status.success() {
-                        RunError::Success
-                    } else {
-                        RunError::CheckError
+                    match status {
+                        Ok(true) => RunError::Success,
+                        _ => {
+                            failed = true;
+                            RunError::CheckError
+                        }
                     }
                 };
 
@@ -545,10 +551,12 @@ fn run_batch(
 
         print_ctrler_results(&mut w, ctrler.as_ref(), results).unwrap();
     }
+    !failed
 }
 
 impl BatchConfig<'_> {
-    pub fn run(&self) {
+    pub fn run(&self, common_args: &CommonArgs) -> bool {
+        let mut failed = false;
         let initial_batches = self.baseline_controllers.iter().cloned().chain(
             self.change
                 .as_ref()
@@ -570,7 +578,7 @@ impl BatchConfig<'_> {
         for (batch_num, batch) in initial_batches.enumerate() {
             let desc = format!("Initial batch {batch_num}");
             run_batch(
-                Path::new(".."),
+                common_args,
                 batch,
                 &features,
                 &props,
@@ -593,8 +601,8 @@ impl BatchConfig<'_> {
 
             for (batch_num, batch) in second_batches.iter().copied().enumerate() {
                 let desc = format!("Changed batch {batch_num}");
-                run_batch(
-                    Path::new(".."),
+                failed |= !run_batch(
+                    common_args,
                     batch,
                     &features,
                     &props,
@@ -604,5 +612,74 @@ impl BatchConfig<'_> {
             }
         }
         println!();
+        !failed
+    }
+}
+
+#[derive(Args)]
+pub struct CommonArgs {
+    #[clap(long, default_value = "case-studies/lemmy")]
+    pub path: PathBuf,
+}
+
+#[derive(Args)]
+pub struct SelectionArgs {
+    /// Property selection. If none are selected, all are run
+    #[clap(long)]
+    pub prop: Vec<Prop>,
+    /// Controller selectoin. If none are selected, all are run
+    #[clap(long, short)]
+    pub controller: Vec<String>,
+    /// Don't run the PDG compiler. Assumes an artifact file is found in
+    /// the standard location
+    #[clap(long)]
+    pub skip_compile: bool,
+    /// Additional arguments to pass through to paralegal/cargo
+    #[clap(last = true)]
+    pub extra_args: Vec<String>,
+
+    #[clap(long, short)]
+    pub quiet: bool,
+}
+
+
+impl SelectionArgs {
+    pub fn run(&self, args: &CommonArgs) -> anyhow::Result<bool> {
+        let all_controllers = ["all_controllers".to_owned()];
+        let selected_controllers = if self.controller.is_empty() {
+            &all_controllers as &[_]
+        } else {
+            &self.controller
+        };
+        let graph_file = if self.skip_compile {
+            paralegal_policy::GraphLocation::std(&args.path)
+        } else {
+            let mut cmd = paralegal_policy::SPDGGenCommand::global();
+            cmd.external_annotations("external-annotations.toml");
+            cmd.abort_after_analysis();
+            let rcmd = cmd.get_command();
+            rcmd.arg("--target").arg("lemmy_api").args(&self.extra_args);
+            if self.quiet {
+                rcmd.stdout(Stdio::null()).stdin(Stdio::null());
+            }
+            if !self.extra_args.contains(&"--".to_owned()) {
+                rcmd.arg("--");
+            }
+            for c in selected_controllers {
+                rcmd.args(["--features", &c]);
+            }
+            cmd.run(&args.path)?
+        };
+        Ok(graph_file.with_context(|cx| {
+            for p in if self.prop.is_empty() {
+                Prop::value_variants()
+            } else {
+                self.prop.as_slice()
+            } {
+                p.run(cx.clone())?;
+            }
+
+            anyhow::Ok(())
+        })?.success)
     }
 }
