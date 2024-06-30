@@ -668,7 +668,7 @@ impl SelectionArgs {
         };
         let mut config = Config::default();
         if self.quiet {
-            config.get_output_writer = || Box::new(std::io::sink());
+            config.output_writer = Box::new(std::io::sink());
         };
         Ok(graph_file
             .with_context_configured(config, |cx| {

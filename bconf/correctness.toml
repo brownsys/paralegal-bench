@@ -1,0 +1,100 @@
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+pdg-timeout = "10min"
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy"
+flow-args = ["--target", "lemmy_api"]
+external-annotations = "external-annotations.toml"
+
+[app-config.plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+[app-config.websubmit]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+
+[app-config.websubmit-lib]
+source-dir = "case-studies/websubmit"
+external-annotations = "lib-external-annotations.toml"
+
+[app-config.websubmit-strict]
+source-dir = "case-studies/websubmit"
+external-annotations = "strict-external-annotations.toml"
+
+[app-config.freedit]
+source-dir = "case-studies/freedit"
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "router"]
+cargo-args = ["--lib"]
+
+[app-config.contile]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "lemmy"
+policy-mode = "unified"
+controller-run-mode = "affected-merged"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+# Otherwise we overtaint and don't pass the non-bug
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
