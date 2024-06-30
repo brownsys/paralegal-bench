@@ -21,23 +21,26 @@ pub mod run;
 /// argument (defaults to "bench-config.toml").
 ///
 /// Results are written to "result-path" (defaults to "results"). Each time you
-/// call this program it creates a new directory called "run-<current time in
-/// seconds>".
+/// call this program it creates a new set of directories. They all have the
+/// format "<timestamp>-<purpose>" with the following purposes:
 ///
-/// Into this directory it creates the following files:
+/// - "logs": stdout and stderr from the PDG generation (called "compile") and
+///   combined output from the policy
+/// - "pp": The source code that was involved in the analysis. The lines of code
+///   actually visited.
+/// - "run": Everything considered result data which are the following files:
 ///
-/// - "results.csv": incrementally written statistics and results for each run.
-///   Type [output::RunStat]
-/// - "controllers.csv": incrementally written statistics about individual
-///   controllers. Type [output::ControllerStat]. Multiple such statistics are
-///   written for a single run. The "run_id" field tells you which run each row
-///   belongs to.
-/// - "sys.toml": information about the system that this experiment was run on.
-///   Type [output::SysStat]
+///   - "results.csv": incrementally written statistics and results for each
+///     run. Type [output::RunStat]
+///   - "controllers.csv": incrementally written statistics about individual
+///     controllers. Type [output::ControllerStat]. Multiple such statistics are
+///     written for a single run. The "run_id" field tells you which run each
+///     row belongs to.
+///   - "sys.toml": information about the system that this experiment was run
+///     on. Type [output::SysStat]
 #[derive(clap::Parser)]
 pub struct Arguments {
     /// Where to find the configuration file for this run
-    #[clap(long, default_value = "bench-config.toml")]
     config_path: PathBuf,
     /// Umbrella folder into which results should be written
     #[clap(long, default_value = "results")]
