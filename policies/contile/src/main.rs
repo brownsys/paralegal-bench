@@ -2,7 +2,7 @@ use anyhow::{Ok, Result};
 use clap::{Parser, ValueEnum};
 use contile::{Policy, DEFAULT_CONTROLLERS};
 use paralegal_policy::{algo::ahb::TraceLevel, Config, GraphLocation, SPDGGenCommand};
-use std::{fs::File, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 struct Arguments {

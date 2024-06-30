@@ -1,7 +1,7 @@
 extern crate anyhow;
 extern crate paralegal_policy;
 
-use std::{fs::File, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::{Parser, ValueEnum};

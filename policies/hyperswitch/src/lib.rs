@@ -1,5 +1,4 @@
 use anyhow::Result;
-use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection,
     Marker, NodeExt, NodeQueries,
