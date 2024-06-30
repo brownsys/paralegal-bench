@@ -92,6 +92,7 @@ policy-mode = "unified"
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
+adaptive-depth = false
 # Otherwise we overtaint and don't pass the non-bug
 
 [[experiment.correctness]]
