@@ -1,8 +1,9 @@
+use clap::{Args, ValueEnum};
+use paralegal_policy::Config;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
 use std::process::Stdio;
-use clap::{Args, ValueEnum};
+use std::time::{Duration, SystemTime};
 
 use crate::Prop;
 
@@ -492,16 +493,19 @@ fn run_batch(
 
     for ctrler in batch {
         let mut ana_cmd = Command::new("cargo");
-        ana_cmd.arg("paralegal-flow").current_dir(&common_args.path).args([
-            "--abort-after-analysis",
-            "--target",
-            "lemmy_api",
-            "--external-annotations",
-            "external-annotations.toml",
-            "--",
-            "--features",
-            ctrler.as_ref(),
-        ]);
+        ana_cmd
+            .arg("paralegal-flow")
+            .current_dir(&common_args.path)
+            .args([
+                "--abort-after-analysis",
+                "--target",
+                "lemmy_api",
+                "--external-annotations",
+                "external-annotations.toml",
+                "--",
+                "--features",
+                ctrler.as_ref(),
+            ]);
         for feature in features {
             ana_cmd.args(["--features", feature.as_ref()]);
         }
@@ -577,14 +581,7 @@ impl BatchConfig<'_> {
 
         for (batch_num, batch) in initial_batches.enumerate() {
             let desc = format!("Initial batch {batch_num}");
-            run_batch(
-                common_args,
-                batch,
-                &features,
-                &props,
-                &desc,
-                expect_failure,
-            );
+            run_batch(common_args, batch, &features, &props, &desc, expect_failure);
         }
 
         if let Some(change) = self.change.as_ref() {
@@ -642,7 +639,6 @@ pub struct SelectionArgs {
     pub quiet: bool,
 }
 
-
 impl SelectionArgs {
     pub fn run(&self, args: &CommonArgs) -> anyhow::Result<bool> {
         let all_controllers = ["all_controllers".to_owned()];
@@ -670,16 +666,22 @@ impl SelectionArgs {
             }
             cmd.run(&args.path)?
         };
-        Ok(graph_file.with_context(|cx| {
-            for p in if self.prop.is_empty() {
-                Prop::value_variants()
-            } else {
-                self.prop.as_slice()
-            } {
-                p.run(cx.clone())?;
-            }
+        let mut config = Config::default();
+        if self.quiet {
+            config.get_output_writer = || Box::new(std::io::sink());
+        };
+        Ok(graph_file
+            .with_context_configured(config, |cx| {
+                for p in if self.prop.is_empty() {
+                    Prop::value_variants()
+                } else {
+                    self.prop.as_slice()
+                } {
+                    p.run(cx.clone())?;
+                }
 
-            anyhow::Ok(())
-        })?.success)
+                anyhow::Ok(())
+            })?
+            .success)
     }
 }

@@ -1,12 +1,8 @@
 extern crate anyhow;
 
-use clap::{ValueEnum, Parser, Subcommand};
-use std::path::PathBuf;
+use clap::{Parser, Subcommand, ValueEnum};
 
-use lemmy::Prop;
 use lemmy::eval_driver::{CommonArgs, GetUserVersion, SelectionArgs};
-
-
 
 /// Runner for individual lemmy experiments
 #[derive(Parser)]
@@ -17,7 +13,6 @@ struct Arguments {
     command: LemmyCommand,
 }
 
-
 /// How to drive the experiment
 #[derive(Subcommand)]
 enum LemmyCommand {
@@ -27,11 +22,9 @@ enum LemmyCommand {
     /// failure
     Bug {
         #[clap(long, short)]
-        bug: Vec<GetUserVersion>
+        bug: Vec<GetUserVersion>,
     },
 }
-
-
 
 fn main() -> anyhow::Result<()> {
     let args: &'static Arguments = Box::leak(Box::new(Arguments::parse()));
@@ -43,7 +36,8 @@ fn main() -> anyhow::Result<()> {
             failed |= !res;
         }
         LemmyCommand::Bug { bug } => {
-            let bugs = bug.is_empty()
+            let bugs = bug
+                .is_empty()
                 .then_some(GetUserVersion::value_variants())
                 .unwrap_or(bug.as_slice());
             for bug in bugs {
