@@ -312,8 +312,8 @@ fn check_expiration(ctx: Arc<Context>) -> Result<()> {
                 check_ctrls_delete
             )
         });
-        let (last, ctrl) = *farthest.lock().unwrap();
-        println!("Last seen {last} in controller {ctrl}", );
+        // let (last, ctrl) = *farthest.lock().unwrap();
+        // println!("Last seen {last} in controller {ctrl}", );
         assert_error!(ctx, found, "Could not find an expiration deletion for pageview data.")
     });
     Ok(())
