@@ -2,8 +2,10 @@ use anyhow::Result;
 use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning,
-    paralegal_spdg::{CallString, Endpoint, GlobalNode, Identifier, InstructionKind, Node, SPDG},
-    Context, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries,
+    paralegal_spdg::{
+        CallString, Endpoint, GlobalNode, Identifier, InstructionInfo, InstructionKind, Node, SPDG,
+    },
+    Context, DefId, Diagnostics, EdgeSelection, IntoIterGlobalNodes, Marker, NodeExt, NodeQueries,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -259,33 +261,28 @@ fn check_expiration(ctx: Arc<Context>) -> Result<()> {
         .marked(marker!(pageviews))
         .map(|d| d)
         .collect::<Vec<_>>();
+    let time_sources = ctx.marked_nodes(marker!(time)).collect::<Vec<_>>();
+    let delete_sinks = ctx.marked_nodes(marker!(deletes)).collect::<Vec<_>>();
     ctx.named_policy(Identifier::new_intern("expiration check"), |ctx| {
         assert_warning!(
             ctx,
             !pageview_data.is_empty(),
             "No pageview data found. The policy may be vacuous."
         );
-        let farthest = std::sync::atomic::AtomicI64::default();
-
-        let tick = |num| {
-            farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
-        };
+        assert_error!(ctx, !time_sources.is_empty(), "No time sources found");
+        assert_error!(ctx, !delete_sinks.is_empty(), "No delete sinks found");
+        let farthest = std::sync::Mutex::new((0, Identifier::new_intern("no controller")));
 
         let db_access_marker = marker!(db_access);
         let found = ctx.controller_contexts().any(|ctx| {
-            if ctx.current().name.as_str() != "user_chron_job" {
-                return false;
-            }
-            let delete_sinks = ctx
-                .marked_nodes(marker!(deletes))
-                .collect::<Vec<_>>();
-            let time_marker = marker!(time);
-            let time_sources = ctx
-                .current()
-                .data_sources()
-                .map(|n| GlobalNode::from_local_node(ctx.id(), n))
-                .filter(|ds| ctx.has_marker(time_marker, *ds)
-                ).collect::<Vec<_>>();
+            let name = ctx.desc().controllers[&ctx.id()].name;
+            let tick = |num| {
+                let mut lock = farthest.lock().unwrap();
+                if lock.0 < num {
+                    *lock = (num, name);
+                }
+            };
+
             iterator_quantifiers!(
                 all &type_ident = pageview_data.iter();
                 allow type_ident.controller_id() != ctx.id();
@@ -300,20 +297,23 @@ fn check_expiration(ctx: Arc<Context>) -> Result<()> {
                 tick(6);
                 any time_check = ctx.current().all_sources().map(|n| GlobalNode::from_local_node(ctx.id(), n));
                 tick(7);
-                let type_flows_to_check = ctx.flows_to(type_source, time_check, EdgeSelection::Data);
                 any &time_source = &time_sources;
+                require time_source.controller_id() == ctx.id();
                 tick(8);
+                let type_flows_to_check = ctx.flows_to(type_source, time_check, EdgeSelection::Data);
                 require type_flows_to_check;
-                let time_flows_to_check = ctx.flows_to(time_source, time_check, EdgeSelection::Data);
                 tick(9);
+                let time_flows_to_check = ctx.flows_to(time_source, time_check, EdgeSelection::Data);
                 require time_flows_to_check;
+                tick(10);
                 any delete_call_site = ctx.successors(delete);
                 let check_ctrls_delete = ctx.has_ctrl_influence(time_check, delete_call_site);
-                tick(10);
+                tick(11);
                 check_ctrls_delete
             )
         });
-        //println!("Last seen {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
+        let (last, ctrl) = *farthest.lock().unwrap();
+        println!("Last seen {last} in controller {ctrl}", );
         assert_error!(ctx, found, "Could not find an expiration deletion for pageview data.")
     });
     Ok(())
