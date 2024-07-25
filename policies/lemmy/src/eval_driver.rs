@@ -485,11 +485,6 @@ fn run_batch(
     let mut failed = false;
 
     print_table_header(&mut w, props, desc).unwrap();
-    let ref lemmy_dir = std::env::current_dir()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_owned();
 
     for ctrler in batch {
         let mut ana_cmd = Command::new("cargo");
@@ -667,9 +662,9 @@ impl SelectionArgs {
             cmd.run(&args.path)?
         };
         let mut config = Config::default();
-        if self.quiet {
-            config.output_writer = Box::new(std::io::sink());
-        };
+        // if self.quiet {
+        //     config.output_writer = Box::new(std::io::sink());
+        // };
         Ok(graph_file
             .with_context_configured(config, |cx| {
                 for p in if self.prop.is_empty() {

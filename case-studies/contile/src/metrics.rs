@@ -135,7 +135,6 @@ impl Metrics {
         });
     }
 
-    #[paralegal::marker(noinline)]
     /// Increment a counter with no tags data.
     pub fn incr(&self, label: &str) {
         self.incr_with_tags(label, None)

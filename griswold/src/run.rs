@@ -284,12 +284,12 @@ impl EvaluationConfig {
                         let graph_loc = GraphLocation::std(".");
                         let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
                         let mut config = paralegal_policy::Config::default();
-                        config.output_writer = Box::new(policy_out.clone());
+                        //config.output_writer = Box::new(policy_out.clone());
                         let ctx = Arc::new(graph_loc.build_context(config)?);
                         let policy_start = Instant::now();
                         (policy)(ctx.clone())?;
                         writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
-                        let success = ctx.emit_diagnostics()?;
+                        let success = ctx.emit_diagnostics(policy_out.clone())?;
                         anyhow::Ok((ctx, success, file_size, policy_start.elapsed()))
                     });
                     let (ctx, success, file_size, traversal_time) = res?;

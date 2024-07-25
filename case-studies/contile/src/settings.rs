@@ -262,12 +262,10 @@ impl Settings {
         format!("http://{}:{}", self.host, self.port)
     }
 
-    #[paralegal::marker(noinline)]
     pub fn tiles_ttl_with_jitter(&self) -> Duration {
         Duration::from_secs(self.add_jitter(self.tiles_ttl) as u64)
     }
 
-    #[paralegal::marker(noinline)]
     pub fn tiles_fallback_ttl_with_jitter(&self) -> Duration {
         Duration::from_secs(self.add_jitter(self.tiles_fallback_ttl) as u64)
     }

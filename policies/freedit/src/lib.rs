@@ -115,8 +115,8 @@ impl ContextExt for Context {
             .desc()
             .instruction_info
             .iter()
-            .filter(|(k, v)| matches!(v.kind, InstructionKind::FunctionCall(f) if f.id == fun))
-            .map(|(k, v)| k.leaf())
+            .filter(|(_, v)| matches!(v.kind, InstructionKind::FunctionCall(f) if f.id == fun))
+            .map(|(k, _)| k)
             .collect::<HashSet<_>>();
         let iter = self.desc().controllers[&ctrl]
             .edges()

@@ -63,9 +63,9 @@ pub async fn user_chron_job() -> ! {
     use controller::{db_utils::clear_invalid, feed::cron_feed, meta_handler::shutdown_signal, tantivy::Tan };
     loop {
         sleep_seconds(600).await;
-        // if let Err(e) = cron_feed(&DB).await {
-        //     error!(%e);
-        // }
+        if let Err(e) = cron_feed(&DB).await {
+            error!(%e);
+        }
         if let Err(e) = clear_invalid(&DB, controller::user_stats()).await {
             error!(%e);
         }

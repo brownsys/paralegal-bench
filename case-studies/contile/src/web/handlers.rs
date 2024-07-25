@@ -188,7 +188,6 @@ pub async fn get_tiles(
     }
 }
 /// Render stale (`expired`) fallback tiles
-#[paralegal::marker(noinline)]
 fn fallback_response(settings: &Settings, tiles: &cache::Tiles) -> HttpResponse {
     if tiles.fallback_expired() {
         // Totally expired so no `Cache-Control` header
@@ -206,7 +205,6 @@ fn fallback_response(settings: &Settings, tiles: &cache::Tiles) -> HttpResponse 
 ///
 /// It returns a proper response if the early response is desired.
 /// Otherwise, it returns None.
-#[paralegal::marker(noinline)]
 async fn maybe_early_respond(
     state: &web::Data<ServerState>,
     location: &Location,

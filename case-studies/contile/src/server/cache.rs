@@ -147,7 +147,6 @@ impl<F> WriteHandle<'_, F>
 where
     F: FnOnce(()),
 {
-    #[paralegal::marker(noinline)]
     /// Insert a value into the cache for our audience_key
     pub fn insert(self, tiles: TilesState) {
         self.cache.inner.insert(self.audience_key.clone(), tiles);

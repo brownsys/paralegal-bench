@@ -9,9 +9,11 @@ serde = { version = "1", features = ["derive"] }
 strum = { version = "0.26", features = ["derive"] }
 
 [workspace.dependencies.paralegal-policy]
-rev = "5b3999bc9a637ac7d7b7fd310b73151543c76071"
+# path = "../paralegal/crates/paralegal-policy"
 git = "https://github.com/brownsys/paralegal"
+rev = "d53df7e67b1ee0727a7d6c58881abe06e2862712"
 
 [workspace.dependencies.paralegal-spdg]
-rev = "5b3999bc9a637ac7d7b7fd310b73151543c76071"
+# path = "../paralegal/crates/paralegal-spdg"
 git = "https://github.com/brownsys/paralegal"
+rev = "d53df7e67b1ee0727a7d6c58881abe06e2862712"

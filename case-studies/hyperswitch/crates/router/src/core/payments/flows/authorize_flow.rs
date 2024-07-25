@@ -52,9 +52,10 @@ impl
     }
 }
 
-impl types::PaymentsAuthorizeRouterData {
+#[async_trait]
+impl Feature<api::Authorize, types::PaymentsAuthorizeData> for types::PaymentsAuthorizeRouterData {
     #[cfg_attr(feature = "payments-authorize-data", paralegal::analyze)]
-    async fn decide_flows_impl<'a>(
+    async fn decide_flows<'a>(
         mut self,
         state: &AppState,
         connector: &api::ConnectorData,
@@ -123,23 +124,6 @@ impl types::PaymentsAuthorizeRouterData {
         } else {
             Ok(self.clone())
         }
-    }
-}
-
-#[async_trait]
-impl Feature<api::Authorize, types::PaymentsAuthorizeData> for types::PaymentsAuthorizeRouterData {
-    //#[paralegal::analyze]
-    async fn decide_flows<'a>(
-        mut self,
-        state: &AppState,
-        connector: &api::ConnectorData,
-        maybe_customer: &Option<domain::Customer>,
-        call_connector_action: payments::CallConnectorAction,
-        merchant_account: &domain::MerchantAccount,
-        connector_request: Option<services::Request>,
-        key_store: &domain::MerchantKeyStore,
-    ) -> RouterResult<Self> {
-        self.decide_flows_impl(state, connector, maybe_customer, call_connector_action, merchant_account, connector_request, key_store).await
     }
 
     async fn add_access_token<'a>(
