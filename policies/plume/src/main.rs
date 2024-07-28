@@ -23,12 +23,11 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::try_parse()?;
-    let run_dir = std::env::current_dir()?;
     std::env::set_current_dir(&args.plume_dir)?;
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     let cmd_raw = cmd.get_command();
     cmd_raw.arg("--external-annotations");
-    cmd_raw.arg(run_dir.join("external-annotations.toml"));
+    cmd_raw.arg("external-annotations.toml");
     cmd_raw.args(["--abort-after-analysis", "--target", "plume-models"]);
     cmd_raw.args(&args.cargo_args);
     if !args.cargo_args.contains(&"--".to_owned()) {
