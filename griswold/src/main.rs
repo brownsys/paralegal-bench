@@ -66,6 +66,20 @@ fn get_commit_version() -> String {
         .to_owned()
 }
 
+/// Cleans the environment if we are being run as "cargo run"
+///
+/// Also disables incremental computation to reduce the size of compile
+/// artifacts generated during analys.
+fn env_setup() {
+    use std::env;
+    for (k, _) in env::vars() {
+        if k.starts_with("CARGO") || k.starts_with("RUSTUP") {
+            env::remove_var(k)
+        }
+    }
+    env::set_var("CARGO_INCREMENTAL", "false");
+}
+
 fn main() -> anyhow::Result<()> {
     let args: &'static _ = Box::leak(Box::new(Arguments::parse()));
     let config_file = std::fs::read_to_string(&args.config_path)?;
@@ -85,6 +99,8 @@ fn main() -> anyhow::Result<()> {
     } else {
         LevelFilter::WARN
     };
+
+    env_setup();
 
     if rust_log_var.is_err() {
         std::env::set_var("RUST_LOG", "error");
