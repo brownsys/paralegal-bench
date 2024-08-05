@@ -32,9 +32,10 @@ fn main() -> Result<()> {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations(&args.annotations)
             .abort_after_analysis();
-
+        // --relaxed is now require here because of the generic on the
+        // entrypoint.
         cmd.get_command()
-            .args(["--target", "atomic_lib"])
+            .args(["--target", "atomic_lib", "--relaxed"])
             .args(args.extra_args.iter());
         if !args.extra_args.contains(&"--".into()) {
             cmd.get_command().arg("--");

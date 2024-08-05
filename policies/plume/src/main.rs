@@ -28,7 +28,9 @@ fn main() -> Result<()> {
     let cmd_raw = cmd.get_command();
     cmd_raw.arg("--external-annotations");
     cmd_raw.arg("external-annotations.toml");
-    cmd_raw.args(["--abort-after-analysis", "--target", "plume-models"]);
+    // --relaxed is now required here because of the use of "Lazy", who's
+    // generics are instantiated as unresolvable function pointers.
+    cmd_raw.args(["--abort-after-analysis", "--relaxed", "--target", "plume-models"]);
     cmd_raw.args(&args.cargo_args);
     if !args.cargo_args.contains(&"--".to_owned()) {
         cmd_raw.arg("--");
@@ -49,6 +51,7 @@ fn main() -> Result<()> {
             .iter()
             .flat_map(|c| ["--features", c]),
     );
+    println!("{cmd:?}");
     let result = cmd.run(".")?.with_context(plume::check)?;
     println!(
         "Finished {}successfully with {}",

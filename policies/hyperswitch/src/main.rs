@@ -33,8 +33,10 @@ fn main() -> Result<()> {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.abort_after_analysis();
         cmd.external_annotations("external-annotations.toml");
+        // --relaxed is now required here because of the use of "Lazy", who's
+        // generics are instantiated as unresolvable function pointers.
         cmd.get_command()
-            .args(["--target", "router"])
+            .args(["--target", "router", "--relaxed"])
             .args(&args.extra_flow_args);
         let dashes = args.extra_flow_args.iter().filter(|s| *s == "--").count();
         if dashes == 0 {

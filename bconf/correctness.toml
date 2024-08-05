@@ -4,13 +4,13 @@ pdg-timeout = "20min"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy"
-flow-args = ["--target", "lemmy_api"]
+flow-args = ["--target", "lemmy_api", "--relaxed"]
 external-annotations = "external-annotations.toml"
 
 [app-config.plume]
 source-dir = "case-studies/plume"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "plume-models"]
+flow-args = ["--target", "plume-models", "--relaxed"]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.websubmit]
@@ -27,13 +27,14 @@ external-annotations = "strict-external-annotations.toml"
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
+flow-args = ["--relaxed"]
 cargo-args = ["--lib"]
 external-annotations = "external-annotations.toml"
 
 [app-config.atomic-data]
 source-dir = "case-studies/atomic-server"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "atomic_lib"]
+flow-args = ["--target", "atomic_lib", "--relaxed"]
 cargo-args = ["--lib", "--features", "db"]
 
 [app-config.atomic-data.version-override.proc-macro2]

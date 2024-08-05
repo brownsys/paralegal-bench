@@ -27,10 +27,12 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.repo_dir)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
+        // --relaxed is now required here because of the use of "Lazy", who's
+        // generics are instantiated as unresolvable function pointers.
         cmd.external_annotations("external-annotations.toml")
             .abort_after_analysis()
             .get_command()
-            .args(["--", "--lib"]);
+            .args(["--relaxed", "--", "--lib"]);
         if args.buggy {
             cmd.get_command().args(["--features", "buggy"]);
         }
