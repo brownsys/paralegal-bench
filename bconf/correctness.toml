@@ -44,7 +44,7 @@ original = "1"
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "router"]
+flow-args = ["--target", "router", "--relaxed"]
 cargo-args = ["--lib"]
 
 [app-config.contile]
