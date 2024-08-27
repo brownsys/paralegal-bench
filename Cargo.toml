@@ -11,9 +11,9 @@ strum = { version = "0.26", features = ["derive"] }
 [workspace.dependencies.paralegal-policy]
 # path = "../paralegal/crates/paralegal-policy"
 git = "https://github.com/brownsys/paralegal"
-rev = "d53df7e67b1ee0727a7d6c58881abe06e2862712"
+rev = "a4ca7a0bf108b1812dbb5e24302a2130ad3c683d"
 
 [workspace.dependencies.paralegal-spdg]
 # path = "../paralegal/crates/paralegal-spdg"
 git = "https://github.com/brownsys/paralegal"
-rev = "d53df7e67b1ee0727a7d6c58881abe06e2862712"
+rev = "a4ca7a0bf108b1812dbb5e24302a2130ad3c683d"
