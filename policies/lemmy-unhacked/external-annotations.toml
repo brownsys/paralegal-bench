@@ -1,0 +1,37 @@
+
+[["diesel::query_builder::functions::insert_into"]]
+marker = "db_access"
+on_return = true
+
+# [["lemmy_db_schema::schema::site::table"]]
+# marker = "db_access"
+
+# [["lemmy_db_schema::schema::local_user::table"]]
+# marker = "db_access"
+
+[["lemmy_db_views::local_user_view::LocalUserView::find_by_email_or_name"]]
+marker = "db_access"
+on_return = true
+
+# [["lemmy_db_views::local_user_view::LocalUserView::find_by_email_or_name"]]
+# marker = "instance_safe"
+# on_return = true
+
+[["lemmy_db_schema::impls::site::Site::read_local_site"]]
+marker = "db_access"
+on_return = true
+
+[["lemmy_db_schema::impls::site::Site::read_local_site"]]
+marker = "instance"
+on_return = true
+
+[["lemmy_db_schema::source::comment::CommentSaved"]]
+marker = "instance"
+
+[["lemmy_api_common::utils::check_user_valid"]]
+marker = "instance_ban_check"
+on_return = true
+
+[["lemmy_api_common::utils::check_user_valid"]]
+marker = "instance_delete_check"
+on_return = true

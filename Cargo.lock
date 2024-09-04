@@ -2216,6 +2216,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "lemmy-unhacked"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "humantime",
+ "paralegal-policy",
+ "serde",
+ "strum 0.26.2",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"

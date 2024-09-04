@@ -1,0 +1,12 @@
+include = [
+    "lemmy_api_common",
+    "lemmy_utils",
+    "lemmy_db_views",
+    "lemmy_api_crud",
+    "lemmy_db_views_actor",
+    "lemmy_websocket",
+]
+
+[stubs."actix_web::web::block"]
+mode = "sub-closure"
+generic-name = "F"

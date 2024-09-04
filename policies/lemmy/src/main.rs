@@ -26,8 +26,24 @@ enum LemmyCommand {
     },
 }
 
+/// Cleans the environment if we are being run as "cargo run"
+///
+/// Also disables incremental computation to reduce the size of compile
+/// artifacts generated during analys.
+fn env_setup() {
+    use std::env;
+    for (k, _) in env::vars() {
+        if k.starts_with("CARGO") || k.starts_with("RUSTUP") {
+            env::remove_var(k)
+        }
+    }
+    env::set_var("CARGO_INCREMENTAL", "false");
+}
+
 fn main() -> anyhow::Result<()> {
     let args: &'static Arguments = Box::leak(Box::new(Arguments::parse()));
+
+    env_setup();
 
     let mut failed = false;
     match &args.command {
