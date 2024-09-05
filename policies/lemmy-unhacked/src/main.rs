@@ -17,12 +17,11 @@ fn env_setup() {
     env::set_var("CARGO_INCREMENTAL", "false");
 }
 
-//const TARGET: &str = "<lemmy_api_common::comment::SaveComment as lemmy_api::Perform>::perform";
-const TARGET: &str = "<lemmy_api_common::person::Login as lemmy_api::Perform>::perform";
-
 #[derive(clap::Parser)]
 struct Args {
     dir: PathBuf,
+    #[clap(last = true)]
+    flow_args: Vec<String>,
 }
 
 fn main() -> Result<()> {
@@ -31,7 +30,8 @@ fn main() -> Result<()> {
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     cmd.external_annotations("external-annotations.toml")
         .get_command()
-        .args(["--relaxed", "--analyze", TARGET, "--target", "lemmy_api"]);
+        .args(["--relaxed", "--target", "lemmy_api"])
+        .args(args.flow_args.iter());
     cmd.run(&args.dir)?.with_context(lemmy_unhacked::check)?;
     println!("Policy successful");
     Ok(())
