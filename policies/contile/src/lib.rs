@@ -27,7 +27,7 @@ impl Policy {
 pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
     let m_sink = Identifier::new_intern("sink");
     let m_sensitive = Identifier::new_intern("sensitive");
-    ctx.clone().named_policy(
+    ctx.named_policy(
         Identifier::new_intern("personal tags not sent to adm"),
         |ctx| {
             let mut sink_nodes = ctx.nodes_marked_any_way(m_sink).peekable();
@@ -78,23 +78,29 @@ pub fn send_to_metrics(ctx: Arc<Context>) -> Result<()> {
                 "VACUITY: No personal data nodes found"
             );
             assert_error!(ctx, !sends.is_empty(), "VACUITY: No sending nodes found");
-            for personal in personals.iter() {
-                for send in sends.iter() {
-                    if let Some(path) = personal.shortest_path(*send, &ctx, EdgeSelection::Data) {
-                        let mut msg = ctx.struct_node_error(
-                            *send,
-                            "this call sends personal data to the metrics server",
-                        );
-                        msg.with_node_note(*personal, "personal data originates here");
-                        for p in path.iter() {
-                            msg.with_node_note(
-                                *p,
-                                format!("Passes through this {}", p.info(&ctx).description),
-                            );
-                        }
-                        msg.emit();
-                    }
-                }
+            // Could be useful for debugging, but shortest path is currently buggy
+            // for personal in personals.iter() {
+            //     for send in sends.iter() {
+            //         if let Some(path) = personal.shortest_path(*send, &ctx, EdgeSelection::Data) {
+            //             let mut msg = ctx.struct_node_error(
+            //                 *send,
+            //                 "this call sends personal data to the metrics server",
+            //             );
+            //             msg.with_node_note(*personal, "personal data originates here");
+            //             for p in path.iter() {
+            //                 msg.with_node_note(
+            //                     *p,
+            //                     format!("Passes through this {}", p.info(&ctx).description),
+            //                 );
+            //             }
+            //             msg.emit();
+            //         }
+            //     }
+            // }
+            if let Some((from, to)) = ctx.any_flows(&personals, &sends, EdgeSelection::Data) {
+                let mut msg = ctx.struct_node_error(to, "This sink leaks personal data");
+                msg.with_node_note(from, "Personal data originates here");
+                msg.emit();
             }
             Ok(())
         },

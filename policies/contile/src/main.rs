@@ -14,6 +14,8 @@ struct Arguments {
     policy: Vec<Policy>,
     #[clap(long, conflicts_with = "skip_compile")]
     buggy: bool,
+    #[clap(long)]
+    verbose: bool,
     #[clap(last = true)]
     extra_args: Vec<String>,
 }
@@ -40,7 +42,9 @@ fn main() -> Result<()> {
         cmd.run(&args.repo_dir)?
     };
     let mut config = Config::default();
-    config.always_happens_before_tracing = TraceLevel::Full;
+    if args.verbose {
+        config.always_happens_before_tracing = TraceLevel::Full;
+    }
     let result = graph.with_context_configured(config, |ctx| {
         let policy = if args.policy.is_empty() {
             Policy::value_variants()
