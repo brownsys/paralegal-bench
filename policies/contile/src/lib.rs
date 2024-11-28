@@ -42,22 +42,31 @@ pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
                 !sensitive_nodes.is_empty(),
                 "VACUITY: No sensitive nodes found"
             );
-            for sink in sink_nodes {
-                for src in sensitive_nodes.iter().copied() {
-                    if let Some(path) = src.shortest_path(sink, &ctx, EdgeSelection::Data) {
-                        let mut msg =
-                            ctx.struct_node_error(sink, "this call sends personal data to the adm");
-                        msg.with_node_help(src, "personal data originates here");
-                        for n in path.iter() {
-                            msg.with_node_note(
-                                *n,
-                                format!("Passes through this {}", n.info(&ctx).description),
-                            );
-                        }
-                        msg.emit();
-                    }
-                }
+            if let Some((from, to)) = ctx.any_flows(
+                &sensitive_nodes,
+                &sink_nodes.collect::<Box<_>>(),
+                EdgeSelection::Data,
+            ) {
+                let mut msg = ctx.struct_node_error(to, "This sink leaks personal data to the adm");
+                msg.with_node_note(from, "Personal data originates here");
+                msg.emit();
             }
+            // for sink in sink_nodes {
+            //     for src in sensitive_nodes.iter().copied() {
+            //         if let Some(path) = src.shortest_path(sink, &ctx, EdgeSelection::Data) {
+            //             let mut msg =
+            //                 ctx.struct_node_error(sink, "this call sends personal data to the adm");
+            //             msg.with_node_help(src, "personal data originates here");
+            //             for n in path.iter() {
+            //                 msg.with_node_note(
+            //                     *n,
+            //                     format!("Passes through this {}", n.info(&ctx).description),
+            //                 );
+            //             }
+            //             msg.emit();
+            //         }
+            //     }
+            // }
 
             Ok(())
         },

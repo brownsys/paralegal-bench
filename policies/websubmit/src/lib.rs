@@ -236,21 +236,21 @@ impl PropRunner {
         });
 
         if let Some((deleter, deletions)) = found_deleter.as_ref() {
-            let mut msg = self.cx.struct_help(format!(
-                "The function {} is found to delete all types",
-                self.cx.desc().controllers[deleter].name
-            ));
-            for (ty, from, to) in deletions.iter() {
-                msg.with_node_note(
-                    *from,
-                    format!(
-                        "This node returns type {}",
-                        &self.cx.desc().type_info[ty].rendering
-                    ),
-                );
-                msg.with_node_note(*to, "Which is deleted here");
-            }
-            msg.emit();
+            // let mut msg = self.cx.struct_help(format!(
+            //     "The function {} is found to delete all types",
+            //     self.cx.desc().controllers[deleter].name
+            // ));
+            // for (ty, from, to) in deletions.iter() {
+            //     msg.with_node_note(
+            //         *from,
+            //         format!(
+            //             "This node returns type {}",
+            //             &self.cx.desc().type_info[ty].rendering
+            //         ),
+            //     );
+            //     msg.with_node_note(*to, "Which is deleted here");
+            // }
+            // msg.emit();
         } else {
             let mut msg = self
                 .cx
@@ -424,33 +424,33 @@ impl PropRunner {
         err.with_node_note(sens, loc!("Sensitive value originates here"));
         if eligible_scopes.is_empty() {
             err.with_warning(loc!("No scopes were found to flow to this node"));
-            for &scope in scopes.iter() {
-                err.with_node_help(scope, "This node would have been a valid scope");
-            }
+            // for &scope in scopes.iter() {
+            //     err.with_node_help(scope, "This node would have been a valid scope");
+            // }
         } else {
-            for &scope in eligible_scopes.iter() {
-                err.with_node_help(scope, "This scope would have been eligible but is not influenced by an `auth_whitness`");
-            }
-            if witnesses.is_empty() {
-                *found_local_witnesses = false;
-                err.with_warning(format!("No local `{witness_marker}` sources found."));
-            }
-            for w in witnesses.iter().copied() {
-                err.with_node_help(w, &format!("This is a local source of `{witness_marker}`"));
-            }
+            // for &scope in eligible_scopes.iter() {
+            //     err.with_node_help(scope, "This scope would have been eligible but is not influenced by an `auth_whitness`");
+            // }
+            // if witnesses.is_empty() {
+            //     *found_local_witnesses = false;
+            //     err.with_warning(format!("No local `{witness_marker}` sources found."));
+            // }
+            // for w in witnesses.iter().copied() {
+            //     err.with_node_help(w, &format!("This is a local source of `{witness_marker}`"));
+            // }
         }
-        if self.flavour.is_strict() {
-            for f in checkpoints {
-                err.with_node_note(
-                    f,
-                    format!(
-                        "This node is a disallowed modification {} at {}",
-                        f.info(&cx).description,
-                        f.instruction(&cx).description
-                    ),
-                );
-            }
-        }
+        // if self.flavour.is_strict() {
+        //     for f in checkpoints {
+        //         err.with_node_note(
+        //             f,
+        //             format!(
+        //                 "This node is a disallowed modification {} at {}",
+        //                 f.info(&cx).description,
+        //                 f.instruction(&cx).description
+        //             ),
+        //         );
+        //     }
+        // }
         err.emit();
         false
     }

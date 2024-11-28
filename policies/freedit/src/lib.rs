@@ -209,7 +209,7 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
         let farthest = std::sync::atomic::AtomicI64::default();
 
         let tick = |num| {
-            farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
+            //farthest.fetch_max(num, std::sync::atomic::Ordering::Relaxed);
         };
         let mut storing_controller = 0;
         ctx.controller_contexts().all(|ctx|{
@@ -277,10 +277,10 @@ fn check_expiration(ctx: Arc<Context>) -> Result<()> {
         let found = ctx.controller_contexts().any(|ctx| {
             let name = ctx.desc().controllers[&ctx.id()].name;
             let tick = |num| {
-                let mut lock = farthest.lock().unwrap();
-                if lock.0 < num {
-                    *lock = (num, name);
-                }
+                // let mut lock = farthest.lock().unwrap();
+                // if lock.0 < num {
+                //     *lock = (num, name);
+                // }
             };
 
             iterator_quantifiers!(

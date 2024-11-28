@@ -2,7 +2,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error,
     paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
-    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeQueries,
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
 };
 use petgraph::Direction::Outgoing;
 use std::{collections::HashSet, sync::Arc};
@@ -66,6 +66,8 @@ impl NodeExt for GlobalNode {
 policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     let check_rights = marker!(check_rights);
+    let m_sink = marker!(sink);
+    let m_new_resource = marker!(new_resource);
     for ctx in ctx.controller_contexts() {
         let commit = NodeCluster::new(
             ctx.id(),
@@ -77,7 +79,7 @@ policy!(check_rights, ctx {
         // If commit is stored
         let stores = ctx
             .influencees(&commit, EdgeSelection::Both)
-            .filter(|s| ctx.has_marker(marker!(sink), *s))
+            .filter(|&s| s.has_marker(&ctx, m_sink))
             .collect::<Box<[_]>>();
         if stores.is_empty() {
             continue;
@@ -89,7 +91,7 @@ policy!(check_rights, ctx {
         let new_resources = commit_influencees
             .iter()
             .copied()
-            .filter(|n| ctx.has_marker(marker!(new_resource), *n))
+            .filter(|n| n.has_marker(&ctx, m_new_resource))
             .filter(|n| {
                 // Hackery
                 //
@@ -121,16 +123,8 @@ policy!(check_rights, ctx {
         // All checks that flow from the commit but not from a new_resource
         let valid_checks = commit_influencees.iter().copied()
             .filter(|check| {
-                ctx.has_marker(check_rights, *check)
-                    && if let Some((from, to)) = ctx
-                        .any_flows(&new_resources, &[*check], EdgeSelection::Data) {
-                            // let mut msg = ctx.struct_node_note(to, "This is could be a check but");
-                            // msg.with_node_help(from, "it is influenced by this new_resource");
-                            // msg.emit();
-                            false
-                        } else {
-                            true
-                        }
+                check.has_marker(&ctx, check_rights)
+                    && ctx.any_flows(&new_resources, &[*check], EdgeSelection::Data).is_none()
             })
             .collect::<Box<[_]>>();
 
@@ -145,8 +139,7 @@ policy!(check_rights, ctx {
                 (
                     store,
                     valid_checks.iter().copied().find_map(|check| {
-                        let store_cs = ctx
-                            .successors(store)
+                        let store_cs = store.successors(&ctx)
                             .find(|cs| ctx.has_ctrl_influence(check, *cs))?;
                         Some((check, store_cs))
                     }),
@@ -156,50 +149,50 @@ policy!(check_rights, ctx {
 
         for (store, check) in checks.iter() {
             if check.is_none() {
-                let store_influencing = ctx.influencers(*store, EdgeSelection::Control).chain(
-                    ctx.influencers(*store, EdgeSelection::Control).flat_map(|i| ctx.influencers(i, EdgeSelection::Data))
-                ).collect::<HashSet<_>>();
-
                 ctx.node_error(*store, "This store is not protected");
+                // let store_influencing = ctx.influencers(*store, EdgeSelection::Control).chain(
+                //     ctx.influencers(*store, EdgeSelection::Control).flat_map(|i| ctx.influencers(i, EdgeSelection::Data))
+                // ).collect::<HashSet<_>>();
 
-                let mut msg = ctx.struct_node_help(*store, "This store");
-                for influencer in store_influencing.iter().copied() {
-                    msg.with_node_note(influencer, "Is ctrl-influenced by this");
-                }
-                msg.emit();
-                for c in valid_checks.iter().copied() {
-                    let mut msg = ctx.struct_node_help(c, "This is a valid check");
 
-                    let check_influenced =
-                        ctx.influencees(c, EdgeSelection::Control).chain(
-                            ctx.influencees(c, EdgeSelection::Data).flat_map(|i| ctx.influencees(i, EdgeSelection::Control))
-                        ).collect::<HashSet<_>>();
-                    for i in check_influenced.iter().copied() {
-                        msg.with_node_note(i, "that ctrl-influences this node");
-                    }
-                    msg.emit();
+                // let mut msg = ctx.struct_node_help(*store, "This store");
+                // for influencer in store_influencing.iter().copied() {
+                //     msg.with_node_note(influencer, "Is ctrl-influenced by this");
+                // }
+                // msg.emit();
+                // for c in valid_checks.iter().copied() {
+                //     let mut msg = ctx.struct_node_help(c, "This is a valid check");
 
-                    for i in store_influencing.intersection(&check_influenced) {
-                        ctx.node_help(*i, "This is where influence intersects");
-                    }
+                //     let check_influenced =
+                //         ctx.influencees(c, EdgeSelection::Control).chain(
+                //             ctx.influencees(c, EdgeSelection::Data).flat_map(|i| ctx.influencees(i, EdgeSelection::Control))
+                //         ).collect::<HashSet<_>>();
+                //     for i in check_influenced.iter().copied() {
+                //         msg.with_node_note(i, "that ctrl-influences this node");
+                //     }
+                //     msg.emit();
 
-                    for i in store_influencing.iter().copied() {
-                        let mut msg = ctx.struct_node_help(i, "This store influence intersects");
-                        let mut emit = false;
-                        for intersection in ctx.influencers(i, EdgeSelection::Data) {
-                            if check_influenced.contains(&intersection) {
-                                msg.with_node_note(intersection, "via this intermediary");
-                                emit = true;
-                            }
-                        }
-                        if emit {
-                            msg.emit();
-                        }
-                    }
+                //     for i in store_influencing.intersection(&check_influenced) {
+                //         ctx.node_help(*i, "This is where influence intersects");
+                //     }
 
-                    ctx.always_happens_before(Some(c), |_| false, |t| t == *store).unwrap().report(ctx.clone());
+                //     for i in store_influencing.iter().copied() {
+                //         let mut msg = ctx.struct_node_help(i, "This store influence intersects");
+                //         let mut emit = false;
+                //         for intersection in ctx.influencers(i, EdgeSelection::Data) {
+                //             if check_influenced.contains(&intersection) {
+                //                 msg.with_node_note(intersection, "via this intermediary");
+                //                 emit = true;
+                //             }
+                //         }
+                //         if emit {
+                //             msg.emit();
+                //         }
+                //     }
 
-                }
+                //     ctx.always_happens_before(Some(c), |_| false, |t| t == *store).unwrap().report(ctx.clone());
+
+                // }
             }
         }
     }

@@ -23,13 +23,13 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
         user_data_types.iter().all(|&t| {
             let sources = ctx.srcs_with_type(*deleter_id, t).collect::<Vec<_>>();
             if let Some((from, to)) = ctx.any_flows(&sources, &delete_sinks, EdgeSelection::Data) {
-                let mut note = ctx.struct_note(format!(
-                    "The type {} is being deleted",
-                    ctx.desc().type_info[&t].rendering,
-                ));
-                note.with_node_note(from, "Sourced here");
-                note.with_node_note(to, "deleted here");
-                note.emit();
+                // let mut note = ctx.struct_note(format!(
+                //     "The type {} is being deleted",
+                //     ctx.desc().type_info[&t].rendering,
+                // ));
+                // note.with_node_note(from, "Sourced here");
+                // note.with_node_note(to, "deleted here");
+                // note.emit();
                 true
             } else {
                 let mut note = ctx.struct_note(format!(
@@ -37,12 +37,12 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
                     ctx.desc().type_info[&t].rendering,
                     ctrl.name
                 ));
-                for src in sources {
-                    note.with_node_note(src, "This is a source for that type");
-                }
-                for snk in &delete_sinks {
-                    note.with_node_note(*snk, "This is a potential delete sink");
-                }
+                // for src in sources {
+                //     note.with_node_note(src, "This is a source for that type");
+                // }
+                // for snk in &delete_sinks {
+                //     note.with_node_note(*snk, "This is a potential delete sink");
+                // }
                 note.emit();
                 false
             }
