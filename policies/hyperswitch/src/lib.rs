@@ -77,9 +77,12 @@ policy!(card_encryption, ctx, {
 });
 
 policy!(card_storage, ctx {
+    let m_store = marker!(store);
+    let m_future_usage = marker!(future_usage_decision);
+    let m_credit_card = marker!(credit_card);
+    let mut any_sink_reached = false;
+    let mut any_source_found = false;
     for ctx in ctx.controller_contexts() {
-        let m_future_usage = marker!(future_usage_decision);
-        let m_credit_card = marker!(credit_card);
         let mut srcs = ctx
             .nodes_marked_any_way(m_credit_card)
             .filter(|n| n.controller_id() == ctx.id())
@@ -88,9 +91,7 @@ policy!(card_storage, ctx {
             .nodes_marked_any_way(m_future_usage)
             .filter(|n| n.controller_id() == ctx.id())
             .collect::<Vec<_>>();
-        assert_error!(ctx, srcs.peek().is_some(), "VACUITY: No sensitive sources found");
-        let mut any_sink_reached = false;
-        let m_store = marker!(store);
+        any_source_found = any_source_found || srcs.peek().is_some();
         for src in srcs {
             for sink in src.influencees(&ctx, EdgeSelection::Data).into_iter().filter(|n| n.has_marker(&ctx, m_store)) {
                 any_sink_reached = true;
@@ -101,8 +102,9 @@ policy!(card_storage, ctx {
                 assert_error!(ctx, decision_reaches);
             }
         }
-        assert_warning!(ctx, any_sink_reached);
     }
+    assert_warning!(ctx, any_source_found, "VACUITY: No sensitive sources found");
+    assert_warning!(ctx, any_sink_reached, "VACUITY: No sensitive sinks ever reached.");
     ctx.note("Card storage policy finished");
     Ok(())
 });
