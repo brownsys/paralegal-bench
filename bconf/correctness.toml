@@ -80,15 +80,7 @@ policy-mode = "unified"
 [[experiment.correctness]]
 mode = "case-study"
 application = "lemmy"
-policy-mode = "unified"
 controller-run-mode = "affected-merged"
-# Since we're running in `unified` policy mode this is the only one that can
-# succeed so we skip the others.
-#
-# The actualyl correct thing would be to run all bugs separately and with only
-# the relevant policy but this is pretty much good enough for the purposes of
-# this config.
-bugs = ["bug4"]
 
 [[experiment.correctness]]
 mode = "case-study"
