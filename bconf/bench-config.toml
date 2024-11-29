@@ -5,13 +5,13 @@ pdg-timeout = "15min"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy"
-flow-args = ["--target", "lemmy_api"]
+flow-args = ["--target", "lemmy_api", "--relaxed"]
 external-annotations = "external-annotations.toml"
 
 [app-config.plume]
 source-dir = "case-studies/plume"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "plume-models"]
+flow-args = ["--target", "plume-models", "--relaxed"]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.websubmit]
@@ -28,13 +28,14 @@ external-annotations = "strict-external-annotations.toml"
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
+flow-args = ["--relaxed"]
 cargo-args = ["--lib"]
 external-annotations = "external-annotations.toml"
 
 [app-config.atomic-data]
 source-dir = "case-studies/atomic-server"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "atomic_lib"]
+flow-args = ["--target", "atomic_lib", "--relaxed"]
 cargo-args = ["--lib", "--features", "db"]
 
 [app-config.atomic-data.version-override.proc-macro2]
@@ -44,13 +45,7 @@ original = "1"
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
-# There is a linker bug which triggers on transitive invocation of our
-# plugin in Hyperswitches build script. The --rustc-reset-for-linux overrides
-# environment variables set by cargo to use the "stock rustc" on such repeat
-# invocations. This is a hack that we only do here, becaus it could have other
-# incpatibility issues in other libraries if they rely on the rustc to be the
-# same version.
-flow-args = ["--target", "router", "--rustc-reset-for-linux"]
+flow-args = ["--target", "router", "--relaxed"]
 cargo-args = ["--lib"]
 
 [app-config.contile]
@@ -76,6 +71,7 @@ flow-args = [
     "plume-models",
     "--analyze",
     "crate::users::User::delete",
+    "--relaxed",
 ]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
@@ -97,6 +93,7 @@ flow-args = [
     "atomic_lib",
     "--analyze",
     "crate::commit::Commit::apply_opts",
+    "--relaxed",
 ]
 cargo-args = ["--lib", "--features", "db"]
 
