@@ -106,6 +106,8 @@ pub struct ApplicationConfig {
     pub abort: bool,
     #[serde(default)]
     pub flow_args: Box<[String]>,
+    #[serde(default)]
+    pub env: HashMap<String, String>,
     pub external_annotations: Option<PathBuf>,
     /// Overwrites will be enacted in the same order that they are specified
     /// here.
