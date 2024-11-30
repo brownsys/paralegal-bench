@@ -106,6 +106,12 @@ fn main() -> anyhow::Result<()> {
         std::env::set_var("RUST_LOG", "error");
     }
 
+    // Force our toolchain for all compilations. We already force a specific
+    // version of the stdlib in paralegal, but this also forces a specific
+    // version for the tools. This is to work around the interface for the tools
+    // changing, which we have observe with newer cargos passing "--check-cfg".
+    std::env::set_var("RUSTUP_TOOLCHAIN", "nightly-2023-08-25");
+
     tracing::subscriber::set_global_default(
         tracing_subscriber::FmtSubscriber::builder()
             .with_max_level(verbosity)
