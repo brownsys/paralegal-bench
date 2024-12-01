@@ -45,6 +45,7 @@ pub struct RunMeasurements {
     /// Total time takes by the `cargo paralegal-flow` command
     pdg_time: TimeMeasurement,
     pdg_timed_out: bool,
+    flow_time: Option<TimeMeasurement>,
     rustc_time: Option<TimeMeasurement>,
     /// Total time spent executing the policy
     policy_time: Option<TimeMeasurement>,
@@ -97,6 +98,7 @@ impl RunMeasurements {
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,
+            flow_time: None,
             rustc_time: None,
             policy_time: None,
             pdg_timed_out: pdg_stat.timed_out,
@@ -135,6 +137,7 @@ impl RunMeasurements {
                 assert!(self.$field.replace($target).is_none());
             };
         }
+        let desc_stats = &ctx.desc().stats;
         set!(mean_cpu_usage_policy, cmd_stat.mean_cpu_usage);
         set!(peak_mem_usage_policy, cmd_stat.peak_mem_usage);
         set!(
@@ -148,14 +151,15 @@ impl RunMeasurements {
         );
         set!(traversal_time, traversal_time.into());
         set!(num_controllers, ctx.desc().controllers.len() as u16);
-        set!(rustc_time, ctx.desc().rustc_time.into());
+        set!(rustc_time, desc_stats.rustc_time.into());
         set!(policy_time, cmd_stat.elapsed);
-        set!(num_markers, ctx.desc().marker_annotation_count);
-        set!(dedup_functions, ctx.desc().dedup_functions);
-        set!(dedup_locs, ctx.desc().dedup_locs);
-        set!(seen_locs, ctx.desc().seen_locs);
-        set!(seen_functions, ctx.desc().seen_functions);
+        set!(num_markers, desc_stats.marker_annotation_count);
+        set!(dedup_functions, desc_stats.dedup_functions);
+        set!(dedup_locs, desc_stats.dedup_locs);
+        set!(seen_locs, desc_stats.seen_locs);
+        set!(seen_functions, desc_stats.seen_functions);
         set!(file_size, file_size);
+        set!(flow_time, desc_stats.time.into());
     }
 
     pub fn add_changed_lines(&mut self, l: u32) {
