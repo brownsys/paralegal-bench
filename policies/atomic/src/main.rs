@@ -20,6 +20,8 @@ struct Arguments {
     directory: PathBuf,
     #[clap(long, default_value = "external-annotations.toml")]
     annotations: PathBuf,
+    #[clap(long)]
+    dump_code: Option<PathBuf>,
     #[clap(last = true)]
     extra_args: Vec<OsString>,
 }
@@ -53,7 +55,17 @@ fn main() -> Result<()> {
     let mut config = paralegal_policy::Config::default();
     config.always_happens_before_tracing = ahb::TraceLevel::Full;
 
-    let result = graph_loc.with_context_configured(config, |ctx| atomic::check_rights(ctx))?;
+    let result = graph_loc.with_context_configured(config, |ctx| {
+        if let Some(p) = &args.dump_code {
+            if let Err(e) = File::create(p).and_then(|f| ctx.write_analyzed_code(f, false)) {
+                eprintln!(
+                    "Could dump code to {} due to error {e}, skipped.",
+                    p.display()
+                )
+            }
+        }
+        atomic::check_rights(ctx)
+    })?;
     println!(
         "Policy {}successful with {}",
         if result.success { "" } else { "un" },
