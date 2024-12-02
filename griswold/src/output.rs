@@ -58,9 +58,9 @@ pub struct RunMeasurements {
     /// How many PDG nodes have markers assigned.
     num_markers: Option<u32>,
     /// The number of functions PDGs were produced for
-    dedup_functions: Option<u32>,
+    pdg_functions: Option<u32>,
     /// The LoCs corresponding to [`Self::dedup_functions`]
-    dedup_locs: Option<u32>,
+    pdg_locs: Option<u32>,
     /// The number of functions we performed some analysis on, e.g. either
     /// produced a PDG for or checked for markers.
     seen_functions: Option<u32>,
@@ -108,8 +108,8 @@ impl RunMeasurements {
             num_controllers: None,
             changed_lines: None,
             num_markers: None,
-            dedup_functions: None,
-            dedup_locs: None,
+            pdg_functions: None,
+            pdg_locs: None,
             seen_locs: None,
             seen_functions: None,
             file_size: None,
@@ -154,8 +154,8 @@ impl RunMeasurements {
         set!(rustc_time, desc_stats.rustc_time.into());
         set!(policy_time, cmd_stat.elapsed);
         set!(num_markers, desc_stats.marker_annotation_count);
-        set!(dedup_functions, desc_stats.dedup_functions);
-        set!(dedup_locs, desc_stats.dedup_locs);
+        set!(pdg_functions, desc_stats.pdg_functions);
+        set!(pdg_locs, desc_stats.pdg_locs);
         set!(seen_locs, desc_stats.seen_locs);
         set!(seen_functions, desc_stats.seen_functions);
         set!(file_size, file_size);
