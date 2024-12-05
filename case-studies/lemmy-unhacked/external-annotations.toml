@@ -105,7 +105,6 @@ on_return = true
 markers = ["db_access", "instance", "community"]
 on_return = true
 
-
 [["<lemmy_db_schema::source::moderator::ModBanFromCommunity as lemmy_db_schema::traits::Crud>::create"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
@@ -116,4 +115,16 @@ on_return = true
 
 [["lemmy_api_common::utils::remove_user_data_in_community"]]
 markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::community_block::CommunityBlock as lemmy_db_schema::traits::Blockable>::block"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::community_block::CommunityBlock as lemmy_db_schema::traits::Blockable>::unblock"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["lemmy_db_views_actor::structs::CommunityView::read"]]
+markers = ["db_access", "instance"]
 on_return = true

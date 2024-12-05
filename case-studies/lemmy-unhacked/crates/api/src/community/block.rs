@@ -2,7 +2,9 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{BlockCommunity, BlockCommunityResponse},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::protocol::activities::following::undo_follow::UndoFollowCommunity;
 use lemmy_db_schema::{
@@ -21,6 +23,7 @@ impl Perform for BlockCommunity {
   type Response = BlockCommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "community-block", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -36,6 +39,11 @@ impl Perform for BlockCommunity {
       person_id,
       community_id,
     };
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
 
     if data.block {
       let block = move |conn: &'_ _| CommunityBlock::block(conn, &community_block_form);
