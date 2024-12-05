@@ -68,3 +68,27 @@ on_return = true
 [["lemmy_db_views::comment_report_view::CommentReportQueryBuilder::create"]]
 markers = ["db_access", "instance"]
 on_return = true
+
+[["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::read"]]
+markers = ["db_access", "instance"]
+on_return = true
+
+[["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::join"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::leave"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::moderator::ModAddCommunity as lemmy_db_schema::traits::Crud>::create"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::read"]]
+markers = ["db_access", "instance"]
+on_return = true
+
+[["lemmy_db_views_actor::structs::CommunityModeratorView::for_community"]]
+markers = ["db_access", "instance"]
+on_return = true

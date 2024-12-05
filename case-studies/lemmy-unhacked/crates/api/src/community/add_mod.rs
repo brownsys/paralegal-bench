@@ -2,7 +2,10 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{AddModToCommunity, AddModToCommunityResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_mod_or_admin,
+  },
 };
 use lemmy_apub::{
   objects::{community::ApubCommunity, person::ApubPerson},
@@ -25,6 +28,7 @@ impl Perform for AddModToCommunity {
   type Response = AddModToCommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-add-mod", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -44,6 +48,12 @@ impl Perform for AddModToCommunity {
     .await??;
     if local_user_view.person.admin && !community.local {
       return Err(LemmyError::from_message("not_a_moderator"));
+    }
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
     }
 
     // Update in local database

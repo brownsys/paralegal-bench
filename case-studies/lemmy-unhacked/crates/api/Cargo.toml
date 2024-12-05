@@ -48,6 +48,9 @@ tracing = "0.1.32"
 paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 
 [features]
+bug-1-code = ["lemmy_api_common/bug-1-code"]
+bug-1-fix = ["lemmy_api_common/bug-1-fix"]
+post-bug-1 = ["lemmy_api_common/post-bug-1"]
 
 # for bugs 2/3, where they found/fixed (some of) the bug themselves
 correct = []
