@@ -44,3 +44,15 @@ on_return = true
 [["lemmy_api_common::utils::check_community_ban"]]
 marker = "community_ban_check"
 on_return = true
+
+[["lemmy_db_schema::source::comment::Comment::update_read"]]
+on_return = true
+markers = ["db_access", "community", "instance"]
+
+[["<lemmy_db_schema::source::comment::CommentSaved as lemmy_db_schema::traits::Saveable>::save"]]
+markers = ["db_access", "community", "instance"]
+on_return = true
+
+[["<lemmy_db_schema::source::comment::CommentSaved as lemmy_db_schema::traits::Saveable>::unsave"]]
+markers = ["db_access", "community", "instance"]
+on_return = true
