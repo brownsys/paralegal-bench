@@ -1,3 +1,1 @@
-mod policy;
-
-pub use policy::check;
+include!(concat!(env!("OUT_DIR"), "/policy.rs"));
