@@ -3,7 +3,9 @@ use activitypub_federation::core::object_id::ObjectId;
 use actix_web::web::Data;
 use lemmy_api_common::{
   comment::{CommentReportResponse, CreateCommentReport},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::protocol::activities::community::report::Report;
 use lemmy_db_schema::{
@@ -19,6 +21,7 @@ use lemmy_websocket::{messages::SendModRoomMessage, LemmyContext, UserOperation}
 impl Perform for CreateCommentReport {
   type Response = CommentReportResponse;
 
+  #[cfg_attr(feature = "comment-report-create", paralegal::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,
@@ -46,6 +49,8 @@ impl Perform for CreateCommentReport {
     .await??;
 
     check_community_ban(person_id, comment_view.community.id, context.pool()).await?;
+    #[cfg(feature = "hypothetical-fix")]
+    check_community_deleted_or_removed(comment_view.community.id, context.pool()).await?;
 
     let report_form = CommentReportForm {
       creator_id: person_id,

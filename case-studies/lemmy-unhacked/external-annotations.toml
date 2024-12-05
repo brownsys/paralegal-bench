@@ -56,3 +56,12 @@ on_return = true
 [["<lemmy_db_schema::source::comment::CommentSaved as lemmy_db_schema::traits::Saveable>::unsave"]]
 markers = ["db_access", "community", "instance"]
 on_return = true
+
+[["<lemmy_db_schema::source::comment_report::CommentReport as lemmy_db_schema::traits::Reportable>::report"]]
+markers = ["db_access", "community", "instance"]
+on_return = true
+
+
+[["lemmy_db_views::structs::CommentReportView::read"]]
+markers = ["db_access", "instance"]
+on_return = true
