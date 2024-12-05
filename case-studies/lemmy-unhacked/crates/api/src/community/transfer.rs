@@ -3,7 +3,9 @@ use actix_web::web::Data;
 use anyhow::Context;
 use lemmy_api_common::{
   community::{GetCommunityResponse, TransferCommunity},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_db_schema::{
   source::{
@@ -22,6 +24,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for TransferCommunity {
   type Response = GetCommunityResponse;
 
+  #[cfg_attr(feature = "community-transfer", paralegal::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
@@ -62,6 +65,12 @@ impl Perform for TransferCommunity {
 
     // Delete all the mods
     let community_id = data.community_id;
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
+
     blocking(context.pool(), move |conn| {
       CommunityModerator::delete_for_community(conn, community_id)
     })

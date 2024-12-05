@@ -73,11 +73,19 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
+[["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::update"]]
+markers = ["db_access", "instance"]
+on_return = true
+
 [["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::join"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::leave"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["lemmy_db_schema::source::community::CommunityModerator::delete_for_community"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
 
@@ -117,6 +125,10 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
+[["lemmy_db_views_actor::structs::PersonViewSafe::admins"]]
+markers = ["db_access", "instance"]
+on_return = true
+
 [["lemmy_api_common::utils::remove_user_data_in_community"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
@@ -131,4 +143,12 @@ on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityView::read"]]
 markers = ["db_access", "instance"]
+on_return = true
+
+[["<lemmy_db_schema::source::moderator::ModHideCommunity as lemmy_db_schema::traits::Crud>::create"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::moderator::ModTransferCommunity as lemmy_db_schema::traits::Crud>::create"]]
+markers = ["db_access", "instance", "community"]
 on_return = true

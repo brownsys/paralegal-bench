@@ -2,7 +2,10 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, HideCommunity},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_admin,
+  },
 };
 use lemmy_apub::protocol::activities::community::update::UpdateCommunity;
 use lemmy_db_schema::{
@@ -20,6 +23,7 @@ use lemmy_websocket::{send::send_community_ws_message, LemmyContext, UserOperati
 impl Perform for HideCommunity {
   type Response = CommunityResponse;
 
+  #[cfg_attr(feature = "community-hide", paralegal::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,
@@ -56,6 +60,13 @@ impl Perform for HideCommunity {
     };
 
     let community_id = data.community_id;
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
+
     let updated_community = blocking(context.pool(), move |conn| {
       Community::update(conn, community_id, &community_form)
     })
