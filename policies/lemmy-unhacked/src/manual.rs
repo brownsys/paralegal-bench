@@ -95,7 +95,7 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
         let Some(ban_checks) =
             NodeCluster::try_from_iter(ctx.nodes_marked_any_way(marker_community_ban_check))
         else {
-            ctx.error("No ban checks found");
+            ctx.error("No community ban checks found");
             continue;
         };
 

@@ -1904,6 +1904,7 @@ dependencies = [
  "lemmy_db_views_actor",
  "lemmy_db_views_moderator",
  "lemmy_utils",
+ "paralegal",
  "percent-encoding",
  "reqwest",
  "reqwest-middleware",

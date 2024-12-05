@@ -14,6 +14,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for ListCommentReports {
   type Response = ListCommentReportsResponse;
 
+  #[cfg_attr(feature = "comment-report-list", paralegal::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,

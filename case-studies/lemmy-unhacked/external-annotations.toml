@@ -61,7 +61,10 @@ on_return = true
 markers = ["db_access", "community", "instance"]
 on_return = true
 
-
 [["lemmy_db_views::structs::CommentReportView::read"]]
+markers = ["db_access", "instance"]
+on_return = true
+
+[["lemmy_db_views::comment_report_view::CommentReportQueryBuilder::create"]]
 markers = ["db_access", "instance"]
 on_return = true

@@ -33,8 +33,9 @@ fn main() -> Result<()> {
         .get_command()
         .args(["--relaxed", "--target", "lemmy_api"])
         .args(args.flow_args.iter());
-    cmd.run(&args.dir)?
+    let result = cmd
+        .run(&args.dir)?
         .with_context(lemmy_unhacked::manual::check)?;
-    println!("Policy successful");
+    assert!(result.success, "Policy failed");
     Ok(())
 }

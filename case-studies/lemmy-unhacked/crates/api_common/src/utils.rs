@@ -24,9 +24,7 @@ use lemmy_db_views::{
   structs::{LocalUserSettingsView, LocalUserView},
 };
 use lemmy_db_views_actor::structs::{
-  CommunityModeratorView,
-  CommunityPersonBanView,
-  CommunityView,
+  CommunityModeratorView, CommunityPersonBanView, CommunityView,
 };
 use lemmy_utils::{
   claims::Claims,
@@ -119,6 +117,15 @@ pub async fn mark_post_as_unread(
   .map_err(|e| LemmyError::from_error_message(e, "couldnt_mark_post_as_read"))
 }
 
+#[paralegal::marker(instance_ban_check, return)]
+pub fn apply_label_banned<T>(t: T) -> T {
+  t
+}
+#[paralegal::marker(instance_delete_check, return)]
+pub fn apply_label_deleted<T>(t: T) -> T {
+  t
+}
+
 #[tracing::instrument(skip_all)]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,
@@ -131,6 +138,20 @@ pub async fn get_local_user_view_from_jwt(
   let local_user_id = LocalUserId(claims.sub);
   let local_user_view =
     blocking(pool, move |conn| LocalUserView::read(conn, local_user_id)).await??;
+
+  #[cfg(feature = "bug-1-code")]
+  // Check for a site ban
+  if apply_label_banned(local_user_view.person.banned) {
+    return Err(LemmyError::from_message("site_ban"));
+  }
+
+  // Check for user deletion
+  #[cfg(feature = "bug-1-fix")]
+  if apply_label_deleted(local_user_view.person.deleted) {
+    return Err(LemmyError::from_message("deleted"));
+  }
+
+  #[cfg(feature = "post-bug-1")]
   check_user_valid(
     local_user_view.person.banned,
     local_user_view.person.ban_expires,
