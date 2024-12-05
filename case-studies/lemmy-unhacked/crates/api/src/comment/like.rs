@@ -2,7 +2,10 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   comment::{CommentResponse, CreateCommentLike},
-  utils::{blocking, check_community_ban, check_downvotes_enabled, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, check_downvotes_enabled,
+    get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::{
   fetcher::post_or_comment::PostOrComment,
@@ -25,6 +28,7 @@ use std::convert::TryInto;
 impl Perform for CreateCommentLike {
   type Response = CommentResponse;
 
+  #[cfg_attr(feature = "comment-like", paralegal::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,
@@ -52,6 +56,9 @@ impl Perform for CreateCommentLike {
       context.pool(),
     )
     .await?;
+
+    #[cfg(feature = "hypothetical-fix")]
+    check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
 
     // Add parent user to recipients
     let recipient_id = orig_comment.get_recipient_id();

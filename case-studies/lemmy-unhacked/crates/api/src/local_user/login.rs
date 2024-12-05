@@ -40,6 +40,7 @@ impl Perform for Login {
     if !valid {
       return Err(LemmyError::from_message("password_incorrect"));
     }
+    #[cfg(feature = "correct")]
     check_user_valid(
       local_user_view.person.banned,
       local_user_view.person.ban_expires,

@@ -13,13 +13,34 @@ on_return = true
 markers = ["db_access", "instance", "instance_safe"]
 on_return = true
 
+[["lemmy_db_views::structs::LocalUserView::read_person"]]
+markers = ["db_access", "instance"]
+on_return = true
+
 [["lemmy_db_schema::impls::site::Site::read_local_site"]]
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::comment::CommentSaved"]]
-marker = "instance"
-
 [["lemmy_api_common::utils::check_user_valid"]]
 markers = ["instance_ban_check", "instance_delete_check"]
+on_return = true
+
+[["lemmy_db_views::structs::CommentView::read"]]
+markers = ["db_access", "instance"]
+on_return = true
+
+[["<lemmy_db_schema::source::comment::CommentLike as lemmy_db_schema::traits::Likeable>::remove"]]
+markers = ["db_access", "community", "instance"]
+on_return = true
+
+[["<lemmy_db_schema::source::comment::CommentLike as lemmy_db_schema::traits::Likeable>::like"]]
+markers = ["db_access", "community", "instance"]
+on_return = true
+
+[["lemmy_api_common::utils::check_community_deleted_or_removed"]]
+marker = "community_delete_check"
+on_return = true
+
+[["lemmy_api_common::utils::check_community_ban"]]
+marker = "community_ban_check"
 on_return = true
