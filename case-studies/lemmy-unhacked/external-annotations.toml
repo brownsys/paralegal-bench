@@ -105,6 +105,10 @@ on_return = true
 markers = ["db_access", "instance", "community"]
 on_return = true
 
+[["<lemmy_db_schema::source::community::CommunityFollower as lemmy_db_schema::traits::Followable>::follow"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
 [["<lemmy_db_schema::source::moderator::ModBanFromCommunity as lemmy_db_schema::traits::Crud>::create"]]
 markers = ["db_access", "instance", "community"]
 on_return = true

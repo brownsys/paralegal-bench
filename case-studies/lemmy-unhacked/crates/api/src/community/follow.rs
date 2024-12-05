@@ -3,17 +3,13 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, FollowCommunity},
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
   },
 };
 use lemmy_apub::{
   objects::community::ApubCommunity,
   protocol::activities::following::{
-    follow::FollowCommunity as FollowCommunityApub,
-    undo_follow::UndoFollowCommunity,
+    follow::FollowCommunity as FollowCommunityApub, undo_follow::UndoFollowCommunity,
   },
 };
 use lemmy_db_schema::{
@@ -29,6 +25,7 @@ impl Perform for FollowCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "community-follow", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -60,6 +57,11 @@ impl Perform for FollowCommunity {
           .await?
           .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
       } else {
+        #[cfg(feature = "hypothetical-fix")]
+        {
+          check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+          check_community_deleted_or_removed(community_id, context.pool()).await?;
+        }
         let unfollow =
           move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
         blocking(context.pool(), unfollow)
@@ -75,6 +77,11 @@ impl Perform for FollowCommunity {
       UndoFollowCommunity::send(&local_user_view.person.clone().into(), &community, context)
         .await?;
       let unfollow = move |conn: &'_ _| CommunityFollower::unfollow(conn, &community_follower_form);
+      #[cfg(feature = "hypothetical-fix")]
+      {
+        check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+        check_community_deleted_or_removed(community_id, context.pool()).await?;
+      }
       blocking(context.pool(), unfollow)
         .await?
         .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
