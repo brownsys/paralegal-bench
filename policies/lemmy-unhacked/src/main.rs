@@ -37,5 +37,6 @@ fn main() -> Result<()> {
         .run(&args.dir)?
         .with_context(lemmy_unhacked::manual::check)?;
     assert!(result.success, "Policy failed");
+    println!("policy succeeded");
     Ok(())
 }
