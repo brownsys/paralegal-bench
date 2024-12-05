@@ -16,11 +16,21 @@ doctest = false
 [dependencies]
 lemmy_apub = { version = "=0.16.5", path = "../apub" }
 lemmy_utils = { version = "=0.16.5", path = "../utils" }
-lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = ["full"] }
-lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = ["full"] }
-lemmy_db_views_moderator = { version = "=0.16.5", path = "../db_views_moderator", features = ["full"] }
-lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = ["full"] }
-lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = ["full"] }
+lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = [
+    "full",
+] }
+lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = [
+    "full",
+] }
+lemmy_db_views_moderator = { version = "=0.16.5", path = "../db_views_moderator", features = [
+    "full",
+] }
+lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = [
+    "full",
+] }
+lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = [
+    "full",
+] }
 lemmy_websocket = { version = "=0.16.5", path = "../websocket" }
 activitypub_federation = "0.2.0"
 diesel = "1.4.8"
@@ -35,3 +45,174 @@ async-trait = "0.1.53"
 captcha = "0.0.9"
 anyhow = "1.0.56"
 tracing = "0.1.32"
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
+
+[features]
+
+# for bug 1, get_local_user_view_from_jwt versions
+bug-1-code = []
+bug-1-fix = []
+post-bug-1 = []
+
+# for bugs 2/3, where they found/fixed (some of) the bug themselves
+correct = []
+
+# for bugs 3/4, for bugs Paralegal found, if they had fixed the bugs themselves
+hypothetical-fix = []
+
+# api
+comment-like = []
+comment-mark-as-read = []
+comment-save = []
+comment-report-create = []
+comment-report-list = []
+comment-report-resolve = []
+community-add-mod = []
+community-ban = []
+community-block = []
+community-follow = []
+community-hide = []
+community-transfer = []
+notification-list-mentions = []
+notification-list-replies = []
+notification-mark-all-read = []
+notification-mark-mention-read = []
+notification-unread-count = []
+user-add-admin = []
+user-ban-person = []
+user-block = []
+user-change-password = []
+user-list-banned = []
+user-login = []
+user-report-count = []
+user-save-settings = []
+post-like = []
+post-lock = []
+post-mark-read = []
+post-save = []
+post-sticky = []
+post-report-create = []
+post-report-list = []
+post-report-resolve = []
+private-message-mark-read = []
+purge-comment = []
+purge-community = []
+purge-person = []
+purge-post = []
+registration-approve = []
+registration-list = []
+registration-unread-counts = []
+site-leave-admin = []
+site-mod-log = []
+site-resolve-object = []
+site-search = []
+
+
+# api crud
+comment-create = []
+comment-delete = []
+comment-list = []
+comment-read = []
+comment-remove = []
+comment-update = []
+community-create = []
+community-delete = []
+community-list = []
+community-read = []
+community-remove = []
+community-update = []
+post-create = []
+post-delete = []
+post-list = []
+post-read = []
+post-remove = []
+post-update = []
+private-message-create = []
+private-message-delete = []
+private-message-read = []
+private-message-update = []
+site-create = []
+site-read = []
+site-update = []
+user-create = []
+user-delete = []
+user-read = []
+
+
+full = []
+default = ["full"]
+
+all-controllers = [
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "notification-list-mentions",
+    "notification-list-replies",
+    "notification-mark-all-read",
+    "notification-mark-mention-read",
+    "notification-unread-count",
+    "user-add-admin",
+    "user-ban-person",
+    "user-block",
+    "user-change-password",
+    "user-list-banned",
+    "user-login",
+    "user-report-count",
+    "user-save-settings",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
+    "comment-create",
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    "site-read",
+    "site-update",
+    "user-delete",
+    "user-read",
+]

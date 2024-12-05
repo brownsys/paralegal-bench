@@ -15,8 +15,13 @@ doctest = false
 debug = 0
 
 [features]
-console = ["console-subscriber", "opentelemetry", "opentelemetry-otlp", "tracing-opentelemetry",
-    "reqwest-tracing/opentelemetry_0_16"]
+console = [
+    "console-subscriber",
+    "opentelemetry",
+    "opentelemetry-otlp",
+    "tracing-opentelemetry",
+    "reqwest-tracing/opentelemetry_0_16",
+]
 default = []
 
 [workspace]
@@ -31,7 +36,7 @@ members = [
     "crates/db_views_actor",
     "crates/db_views_actor",
     "crates/websocket",
-    "crates/routes"
+    "crates/routes",
 ]
 
 [dependencies]
@@ -48,7 +53,10 @@ diesel = "1.4.8"
 diesel_migrations = "1.4.0"
 serde = { version = "1.0.136", features = ["derive"] }
 actix = "0.13.0"
-actix-web = { version = "4.0.1", default-features = false, features = ["macros", "rustls"] }
+actix-web = { version = "4.0.1", default-features = false, features = [
+    "macros",
+    "rustls",
+] }
 tracing = "0.1.32"
 tracing-actix-web = { version = "0.5.1", default-features = false }
 tracing-error = "0.2.0"

@@ -14,6 +14,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for Login {
   type Response = LoginResponse;
 
+  #[cfg_attr(feature = "user-login", paralegal::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,
