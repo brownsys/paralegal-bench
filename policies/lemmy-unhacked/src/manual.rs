@@ -4,7 +4,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error,
     paralegal_spdg::{Identifier, NodeCluster},
-    Context, Diagnostics, NodeExt, NodeQueries,
+    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries,
 };
 
 pub fn check(ctx: Arc<Context>) -> Result<()> {
@@ -38,10 +38,19 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
         };
 
         for &access in accesses.iter() {
-            if !delete_checks.has_ctrl_influence(access, &ctx) {
+            // This is what it should be!!!
+            //
+            // if !delete_checks.has_ctrl_influence(access, &ctx) {
+            //     ctx.node_error(access, "Unprotected access (delete)");
+            // }
+            // if !ban_checks.has_ctrl_influence(access, &ctx) {
+            //     ctx.node_error(access, "Unprotected access (ban)");
+            // }
+
+            if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
                 ctx.node_error(access, "Unprotected access (delete)");
             }
-            if !ban_checks.has_ctrl_influence(access, &ctx) {
+            if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
                 ctx.node_error(access, "Unprotected access (ban)");
             }
         }

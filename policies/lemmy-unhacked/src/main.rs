@@ -29,6 +29,7 @@ fn main() -> Result<()> {
     env_setup();
     let mut cmd = paralegal_policy::SPDGGenCommand::global();
     cmd.external_annotations("external-annotations.toml")
+        .abort_after_analysis()
         .get_command()
         .args(["--relaxed", "--target", "lemmy_api"])
         .args(args.flow_args.iter());
