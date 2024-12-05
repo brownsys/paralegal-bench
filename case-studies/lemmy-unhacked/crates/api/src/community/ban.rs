@@ -2,7 +2,10 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{BanFromCommunity, BanFromCommunityResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin, remove_user_data_in_community},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_mod_or_admin, remove_user_data_in_community,
+  },
 };
 use lemmy_apub::{
   activities::block::SiteOrCommunity,
@@ -12,10 +15,7 @@ use lemmy_apub::{
 use lemmy_db_schema::{
   source::{
     community::{
-      Community,
-      CommunityFollower,
-      CommunityFollowerForm,
-      CommunityPersonBan,
+      Community, CommunityFollower, CommunityFollowerForm, CommunityPersonBan,
       CommunityPersonBanForm,
     },
     moderator::{ModBanFromCommunity, ModBanFromCommunityForm},
@@ -31,6 +31,7 @@ use lemmy_websocket::{messages::SendCommunityRoomMessage, LemmyContext, UserOper
 impl Perform for BanFromCommunity {
   type Response = BanFromCommunityResponse;
 
+  #[cfg_attr(feature = "community-ban", paralegal::analyze)]
   #[tracing::instrument(skip(context, websocket_id))]
   async fn perform(
     &self,
@@ -65,6 +66,12 @@ impl Perform for BanFromCommunity {
     })
     .await??
     .into();
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
 
     if data.ban {
       let ban = move |conn: &'_ _| CommunityPersonBan::ban(conn, &community_user_ban_form);

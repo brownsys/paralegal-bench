@@ -92,3 +92,28 @@ on_return = true
 [["lemmy_db_views_actor::structs::CommunityModeratorView::for_community"]]
 markers = ["db_access", "instance"]
 on_return = true
+
+[["<lemmy_db_schema::source::community::CommunityPersonBan as lemmy_db_schema::traits::Bannable>::ban"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::community::CommunityPersonBan as lemmy_db_schema::traits::Bannable>::unban"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["<lemmy_db_schema::source::community::CommunityFollower as lemmy_db_schema::traits::Followable>::unfollow"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+
+[["<lemmy_db_schema::source::moderator::ModBanFromCommunity as lemmy_db_schema::traits::Crud>::create"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
+
+[["lemmy_db_views_actor::structs::PersonViewSafe::read"]]
+markers = ["db_access", "instance"]
+on_return = true
+
+[["lemmy_api_common::utils::remove_user_data_in_community"]]
+markers = ["db_access", "instance", "community"]
+on_return = true
