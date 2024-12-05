@@ -47,6 +47,16 @@ mod ser_level_filter {
     }
 }
 
+#[derive(Serialize, Deserialize, Default, Clone, Copy)]
+#[serde(rename_all = "kebab-case")]
+pub enum DumpCodeOption {
+    #[default]
+    None,
+    Analyzed,
+    Seen,
+    Both,
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct EvaluationConfig {
@@ -59,6 +69,8 @@ pub struct EvaluationConfig {
     pub experiment: IndexMap<String, Box<[ExperimentConfig]>>,
     #[serde(with = "humantime_serde", default)]
     pub pdg_timeout: Option<Duration>,
+    #[serde(default)]
+    pub dump_analyzed_code: DumpCodeOption,
 }
 
 fn default_stat_refresh_interval() -> Duration {

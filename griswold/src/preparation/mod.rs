@@ -363,7 +363,7 @@ fn diff_analyzed(
     let code_path = move |commit: &str| target_path.join(format!("{commit}.code.rs"));
     let current_code_path = code_path(&current);
     move |ctx, measurement| {
-        ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false)
+        ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false, true)
             .unwrap();
         for predecessor in (current_idx != 0)
             .then(|| &range[0..current_idx])

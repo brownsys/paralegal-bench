@@ -12,6 +12,7 @@ use indicatif::ProgressBar;
 use paralegal_policy::{Context, GraphLocation};
 use std::{
     fs::{File, OpenOptions},
+    io::{BufRead, BufReader, Seek},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     rc::Rc,
@@ -21,7 +22,10 @@ use std::{
 use tracing::{info, trace, warn};
 
 use crate::{
-    input::{ApplicationConfig, CrateOverride, EvaluationConfig, ExperimentConfig, PolicyResult},
+    input::{
+        ApplicationConfig, CrateOverride, DumpCodeOption, EvaluationConfig, ExperimentConfig,
+        PolicyResult,
+    },
     output::{CommandMeasurement, ControllerMeasurement, RunMeasurements, SystemParameters},
     Arguments,
 };
@@ -309,7 +313,7 @@ impl EvaluationConfig {
                     progress.set_message(format!("policy: {}", exp.policy_name));
                     match process.try_wait()? {
                         Some(e) if e.success() => {
-                            let policy = exp.policy;
+                            let policy = exp.policy.clone();
                             let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
                                 let graph_loc = GraphLocation::std(".");
                                 let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
@@ -342,6 +346,15 @@ impl EvaluationConfig {
                             if let Some(pp) = exp.post_process.as_ref() {
                                 pp(&ctx, &mut run_stats);
                             }
+
+                            dump_code(
+                                id,
+                                &ctx,
+                                self.dump_analyzed_code,
+                                &output.post_process_dir,
+                                &exp,
+                                &progress,
+                            )?;
                         }
                         other => {
                             progress.println(format!(
@@ -359,4 +372,55 @@ impl EvaluationConfig {
         }
         Ok(())
     }
+}
+
+fn dump_code_for(
+    id: usize,
+    ctx: &Context,
+    out_dir: &Path,
+    exp: &Run<'_>,
+    include_elided_code: bool,
+    progress: &ProgressBar,
+) -> Result<()> {
+    use std::io::Write;
+    let postfix = if include_elided_code { "seen" } else { "pdg" };
+    let code_out_path = out_dir.join(format!("{id}-{}-{}.rs", exp.name(), postfix));
+    let mut out_file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .read(true)
+        .write(true)
+        .open(code_out_path)?;
+    ctx.write_analyzed_code(&mut out_file, false, include_elided_code)?;
+    out_file.flush()?;
+    out_file.rewind()?;
+    let lcount = BufReader::new(out_file).lines().count();
+    let ctx_locs = if include_elided_code {
+        ctx.desc().stats.seen_locs
+    } else {
+        ctx.desc().stats.pdg_locs
+    };
+    if ctx_locs != lcount as u32 {
+        progress.println(
+            format!("Warnings: Lines counted by context ({ctx_locs:?}) and lines written ({lcount:?}) are not the same.")
+        );
+    }
+    Ok(())
+}
+
+fn dump_code(
+    id: usize,
+    ctx: &Context,
+    what: DumpCodeOption,
+    out_dir: &Path,
+    exp: &Run<'_>,
+    progress: &ProgressBar,
+) -> Result<()> {
+    if matches!(what, DumpCodeOption::Analyzed | DumpCodeOption::Both) {
+        dump_code_for(id, ctx, out_dir, exp, false, progress)?;
+    }
+    if matches!(what, DumpCodeOption::Both | DumpCodeOption::Seen) {
+        dump_code_for(id, ctx, out_dir, exp, true, progress)?;
+    }
+    Ok(())
 }
