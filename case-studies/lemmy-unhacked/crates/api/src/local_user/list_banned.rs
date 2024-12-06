@@ -12,6 +12,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for GetBannedPersons {
   type Response = BannedPersonsResponse;
 
+  #[cfg_attr(feature = "user-list-banned", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

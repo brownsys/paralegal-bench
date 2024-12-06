@@ -13,6 +13,7 @@ impl Perform for GetReplies {
   type Response = GetRepliesResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-list-replies", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

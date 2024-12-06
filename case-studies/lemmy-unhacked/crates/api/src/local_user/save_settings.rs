@@ -26,6 +26,7 @@ impl Perform for SaveUserSettings {
   type Response = LoginResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "user-save-settings", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

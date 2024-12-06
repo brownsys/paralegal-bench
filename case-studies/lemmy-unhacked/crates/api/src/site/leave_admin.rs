@@ -21,6 +21,7 @@ impl Perform for LeaveAdmin {
   type Response = GetSiteResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-leave-admin", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

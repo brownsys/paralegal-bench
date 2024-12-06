@@ -17,6 +17,7 @@ impl Perform for BlockPerson {
   type Response = BlockPersonResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "user-block", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

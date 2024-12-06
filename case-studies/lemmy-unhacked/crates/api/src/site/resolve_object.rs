@@ -17,6 +17,7 @@ impl Perform for ResolveObject {
   type Response = ResolveObjectResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-resolve-object", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

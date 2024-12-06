@@ -20,6 +20,8 @@ fn env_setup() {
 #[derive(clap::Parser)]
 struct Args {
     dir: PathBuf,
+    #[clap(short, long)]
+    verbose: bool,
     #[clap(last = true)]
     flow_args: Vec<String>,
 }
@@ -35,7 +37,7 @@ fn main() -> Result<()> {
         .args(args.flow_args.iter());
     let result = cmd
         .run(&args.dir)?
-        .with_context(lemmy_unhacked::manual::check)?;
+        .with_context(|ctx| lemmy_unhacked::manual::check(ctx, args.verbose))?;
     assert!(result.success, "Policy failed");
     println!("policy succeeded");
     Ok(())

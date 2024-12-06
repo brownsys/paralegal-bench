@@ -12,6 +12,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for GetReportCount {
   type Response = GetReportCountResponse;
 
+  #[cfg_attr(feature = "user-report-count", paralegal::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,

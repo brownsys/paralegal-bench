@@ -5,9 +5,7 @@ use lemmy_api_common::{
   utils::{blocking, get_local_user_view_from_jwt},
 };
 use lemmy_db_schema::source::{
-  comment::Comment,
-  person_mention::PersonMention,
-  private_message::PrivateMessage,
+  comment::Comment, person_mention::PersonMention, private_message::PrivateMessage,
 };
 use lemmy_db_views::comment_view::CommentQueryBuilder;
 use lemmy_utils::{error::LemmyError, ConnectionId};
@@ -18,6 +16,7 @@ impl Perform for MarkAllAsRead {
   type Response = GetRepliesResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-mark-all-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

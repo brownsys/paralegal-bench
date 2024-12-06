@@ -2,7 +2,10 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   post::{PostReportResponse, ResolvePostReport},
-  utils::{blocking, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_mod_or_admin,
+  },
 };
 use lemmy_db_schema::{source::post_report::PostReport, traits::Reportable};
 use lemmy_db_views::structs::PostReportView;
@@ -15,6 +18,7 @@ impl Perform for ResolvePostReport {
   type Response = PostReportResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-report-resolve", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -42,6 +46,17 @@ impl Perform for ResolvePostReport {
         PostReport::unresolve(conn, report_id, person_id)
       }
     };
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(
+        local_user_view.person.id,
+        report.community.id,
+        context.pool(),
+      )
+      .await?;
+      check_community_deleted_or_removed(post_report_view.community.id, context.pool()).await?;
+    }
 
     blocking(context.pool(), resolve_fun)
       .await?

@@ -20,6 +20,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for ApproveRegistrationApplication {
   type Response = RegistrationApplicationResponse;
 
+  #[cfg_attr(feature = "registration-approve", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

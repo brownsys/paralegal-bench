@@ -14,6 +14,7 @@ impl Perform for ChangePassword {
   type Response = LoginResponse;
 
   #[tracing::instrument(skip(self, context, _websocket_id))]
+  #[cfg_attr(feature = "user-change-password", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -20,6 +20,7 @@ impl Perform for AddAdmin {
   type Response = AddAdminResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "user-add-admin", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

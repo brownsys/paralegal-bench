@@ -13,6 +13,7 @@ impl Perform for MarkPrivateMessageAsRead {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "private-message-mark-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

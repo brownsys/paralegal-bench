@@ -14,6 +14,7 @@ impl Perform for MarkPersonMentionAsRead {
   type Response = PersonMentionResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-mark-mention-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

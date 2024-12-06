@@ -3,12 +3,8 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   post::{CreatePostLike, PostResponse},
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    check_downvotes_enabled,
-    get_local_user_view_from_jwt,
-    mark_post_as_read,
+    blocking, check_community_ban, check_community_deleted_or_removed, check_downvotes_enabled,
+    get_local_user_view_from_jwt, mark_post_as_read,
   },
 };
 use lemmy_apub::{
@@ -31,6 +27,7 @@ impl Perform for CreatePostLike {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-like", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

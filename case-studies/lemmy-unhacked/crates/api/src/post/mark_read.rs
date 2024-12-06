@@ -2,8 +2,13 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   post::{MarkPostAsRead, PostResponse},
-  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read, mark_post_as_unread},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, mark_post_as_read, mark_post_as_unread,
+  },
 };
+use lemmy_db_schema::source::post::Post;
+use lemmy_db_schema::traits::Crud;
 use lemmy_db_views::structs::PostView;
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
@@ -13,6 +18,7 @@ impl Perform for MarkPostAsRead {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-mark-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -24,6 +30,18 @@ impl Perform for MarkPostAsRead {
 
     let post_id = data.post_id;
     let person_id = local_user_view.person.id;
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+      check_community_ban(
+        local_user_view.person.id,
+        orig_post.community_id,
+        context.pool(),
+      )
+      .await?;
+      check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+    }
 
     // Mark the post as read / unread
     if data.read {

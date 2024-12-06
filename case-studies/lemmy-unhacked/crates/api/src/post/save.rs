@@ -2,10 +2,13 @@ use crate::Perform;
 use actix_web::web::Data;
 use lemmy_api_common::{
   post::{PostResponse, SavePost},
-  utils::{blocking, get_local_user_view_from_jwt, mark_post_as_read},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, mark_post_as_read,
+  },
 };
 use lemmy_db_schema::{
-  source::post::{PostSaved, PostSavedForm},
+  source::post::{Post, PostSaved, PostSavedForm},
   traits::Saveable,
 };
 use lemmy_db_views::structs::PostView;
@@ -17,6 +20,7 @@ impl Perform for SavePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-save", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -30,6 +34,19 @@ impl Perform for SavePost {
       post_id: data.post_id,
       person_id: local_user_view.person.id,
     };
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      let post_id = data.post_id;
+      let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+      check_community_ban(
+        local_user_view.person.id,
+        orig_post.community_id,
+        context.pool(),
+      )
+      .await?;
+      check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
+    }
 
     if data.save {
       let save = move |conn: &'_ _| PostSaved::save(conn, &post_saved_form);

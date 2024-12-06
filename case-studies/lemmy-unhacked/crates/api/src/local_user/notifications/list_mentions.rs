@@ -13,6 +13,7 @@ impl Perform for GetPersonMentions {
   type Response = GetPersonMentionsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-list-mentions", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

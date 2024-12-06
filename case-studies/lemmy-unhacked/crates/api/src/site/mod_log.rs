@@ -5,21 +5,10 @@ use lemmy_api_common::{
   utils::{blocking, check_private_instance, get_local_user_view_from_jwt_opt},
 };
 use lemmy_db_views_moderator::structs::{
-  AdminPurgeCommentView,
-  AdminPurgeCommunityView,
-  AdminPurgePersonView,
-  AdminPurgePostView,
-  ModAddCommunityView,
-  ModAddView,
-  ModBanFromCommunityView,
-  ModBanView,
-  ModHideCommunityView,
-  ModLockPostView,
-  ModRemoveCommentView,
-  ModRemoveCommunityView,
-  ModRemovePostView,
-  ModStickyPostView,
-  ModTransferCommunityView,
+  AdminPurgeCommentView, AdminPurgeCommunityView, AdminPurgePersonView, AdminPurgePostView,
+  ModAddCommunityView, ModAddView, ModBanFromCommunityView, ModBanView, ModHideCommunityView,
+  ModLockPostView, ModRemoveCommentView, ModRemoveCommunityView, ModRemovePostView,
+  ModStickyPostView, ModTransferCommunityView,
 };
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
@@ -28,6 +17,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for GetModlog {
   type Response = GetModlogResponse;
 
+  #[cfg_attr(feature = "site-mod-log", paralegal::analyze)]
   #[tracing::instrument(skip(context, _websocket_id))]
   async fn perform(
     &self,

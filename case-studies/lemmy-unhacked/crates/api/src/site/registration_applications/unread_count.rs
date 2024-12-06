@@ -13,6 +13,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for GetUnreadRegistrationApplicationCount {
   type Response = GetUnreadRegistrationApplicationCountResponse;
 
+  #[cfg_attr(feature = "registration-unread-counts", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

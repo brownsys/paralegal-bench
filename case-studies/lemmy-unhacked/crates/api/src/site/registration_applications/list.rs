@@ -14,6 +14,7 @@ use lemmy_websocket::LemmyContext;
 impl Perform for ListRegistrationApplications {
   type Response = ListRegistrationApplicationsResponse;
 
+  #[cfg_attr(feature = "registration-list", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

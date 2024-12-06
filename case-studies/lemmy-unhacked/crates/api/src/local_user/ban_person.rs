@@ -25,6 +25,7 @@ impl Perform for BanPerson {
   type Response = BanPersonResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "user-ban-person", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

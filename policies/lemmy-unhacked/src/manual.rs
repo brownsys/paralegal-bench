@@ -7,7 +7,7 @@ use paralegal_policy::{
     Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries,
 };
 
-pub fn check(ctx: Arc<Context>) -> Result<()> {
+pub fn check(ctx: Arc<Context>, verbose: bool) -> Result<()> {
     let marker_db_access = Identifier::new_intern("db_access");
 
     let marker_instance = Identifier::new_intern("instance");
@@ -17,8 +17,10 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
 
     let mut access_seen = false;
     for ctx in ctx.controller_contexts() {
-        for instance in ctx.nodes_marked_any_way(marker_instance) {
-            ctx.node_note(instance, "This node has an instance marker");
+        if verbose {
+            for instance in ctx.nodes_marked_any_way(marker_instance) {
+                ctx.node_note(instance, "This node has an instance marker");
+            }
         }
 
         let accesses = ctx
@@ -68,14 +70,16 @@ pub fn check(ctx: Arc<Context>) -> Result<()> {
     let marker_community_ban_check = Identifier::new_intern("community_ban_check");
 
     for ctx in ctx.controller_contexts() {
-        for access in ctx.nodes_marked_any_way(marker_db_access) {
-            let mut markers = vec![];
-            if access.has_marker(&ctx, marker_community) {
-                markers.push("community");
-            } else if access.has_marker(&ctx, marker_instance_ban_check) {
-                markers.push("instance");
-            };
-            ctx.node_note(access, format!("Found this access {markers:?}",));
+        if verbose {
+            for access in ctx.nodes_marked_any_way(marker_db_access) {
+                let mut markers = vec![];
+                if access.has_marker(&ctx, marker_community) {
+                    markers.push("community");
+                } else if access.has_marker(&ctx, marker_instance_ban_check) {
+                    markers.push("instance");
+                };
+                ctx.node_note(access, format!("Found this access {markers:?}",));
+            }
         }
         let accesses = ctx
             .nodes_marked_any_way(marker_db_access)

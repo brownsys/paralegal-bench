@@ -20,6 +20,7 @@ impl Perform for PurgePost {
   type Response = PurgeItemResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "purge-post", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

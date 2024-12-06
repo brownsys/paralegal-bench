@@ -8,8 +8,7 @@ use lemmy_apub::{fetcher::resolve_actor_identifier, objects::community::ApubComm
 use lemmy_db_schema::{source::community::Community, traits::DeleteableOrRemoveable, SearchType};
 use lemmy_db_views::{comment_view::CommentQueryBuilder, post_view::PostQueryBuilder};
 use lemmy_db_views_actor::{
-  community_view::CommunityQueryBuilder,
-  person_view::PersonQueryBuilder,
+  community_view::CommunityQueryBuilder, person_view::PersonQueryBuilder,
 };
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::LemmyContext;
@@ -19,6 +18,7 @@ impl Perform for Search {
   type Response = SearchResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-search", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

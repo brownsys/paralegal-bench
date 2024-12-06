@@ -14,6 +14,7 @@ impl Perform for GetUnreadCount {
   type Response = GetUnreadCountResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "notification-unread-count", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

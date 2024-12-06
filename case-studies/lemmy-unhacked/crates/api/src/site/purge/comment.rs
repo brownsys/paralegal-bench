@@ -19,6 +19,7 @@ impl Perform for PurgeComment {
   type Response = PurgeItemResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "purge-comment", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
