@@ -2,7 +2,7 @@
 
 use paralegal_policy::paralegal_spdg::utils::write_sep;
 use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
-use paralegal_policy::Context;
+use paralegal_policy::RootContext;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::process::Child;
@@ -127,7 +127,7 @@ impl RunMeasurements {
     pub fn add_policy_stat(
         &mut self,
         cmd_stat: CommandMeasurement,
-        ctx: &Context,
+        ctx: &RootContext,
         success: PolicyResult,
         traversal_time: Duration,
         file_size: u64,

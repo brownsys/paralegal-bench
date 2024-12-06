@@ -9,7 +9,7 @@ use cargo::{
 use chrono;
 use csv::Writer;
 use indicatif::ProgressBar;
-use paralegal_policy::{Context, GraphLocation};
+use paralegal_policy::{GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
     io::{BufRead, BufReader, Seek},
@@ -50,7 +50,7 @@ pub struct Run<'c> {
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
-    pub post_process: Option<Rc<dyn Fn(&Context, &mut RunMeasurements)>>,
+    pub post_process: Option<Rc<dyn Fn(&RootContext, &mut RunMeasurements)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -93,7 +93,7 @@ impl<'a> Run<'a> {
     }
 }
 
-pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
+pub type PolicyFn<'c> = Rc<dyn Fn(Arc<RootContext>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
     general_output_dir: PathBuf,
@@ -376,7 +376,7 @@ impl EvaluationConfig {
 
 fn dump_code_for(
     id: usize,
-    ctx: &Context,
+    ctx: &RootContext,
     out_dir: &Path,
     exp: &Run<'_>,
     include_elided_code: bool,
@@ -410,7 +410,7 @@ fn dump_code_for(
 
 fn dump_code(
     id: usize,
-    ctx: &Context,
+    ctx: &RootContext,
     what: DumpCodeOption,
     out_dir: &Path,
     exp: &Run<'_>,

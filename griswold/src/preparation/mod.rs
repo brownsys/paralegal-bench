@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use clap::ValueEnum;
-use paralegal_policy::{Context, SPDGGenCommand};
+use paralegal_policy::{RootContext, SPDGGenCommand};
 
 use crate::input::{
     Application, ControllerRunMode, EvaluationConfig, ExperimentConfig, ExperimentMode, PolicyMode,
@@ -92,7 +92,7 @@ impl<'a> RunBuilder<'a> {
             .collect();
         (
             "unified",
-            Rc::new(move |ctx: Arc<Context>| {
+            Rc::new(move |ctx: Arc<RootContext>| {
                 for (_, policy, _) in base.iter() {
                     policy(ctx.clone())?;
                 }
@@ -357,7 +357,7 @@ fn diff_analyzed(
     current_idx: usize,
     range: Rc<Vec<String>>,
     target_path: &Path,
-) -> impl Fn(&Context, &mut RunMeasurements) {
+) -> impl Fn(&RootContext, &mut RunMeasurements) {
     let current = range[current_idx].clone();
     let target_path = target_path.to_owned();
     let code_path = move |commit: &str| target_path.join(format!("{commit}.code.rs"));
