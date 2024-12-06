@@ -2,14 +2,12 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use paralegal_policy::{
-    assert_error,
+    assert_error, assert_warning,
     paralegal_spdg::{Identifier, NodeCluster},
-    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries, RootContext,
+    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries, PolicyContext,
 };
 
-pub fn check(ctx: Arc<RootContext>, verbose: bool) -> Result<()> {
-    let marker_db_access = Identifier::new_intern("db_access");
-
+pub fn check_instance(ctx: Arc<PolicyContext>) -> Result<()> {
     let marker_instance = Identifier::new_intern("instance");
     let marker_instance_safe = Identifier::new_intern("instance_safe");
     let marker_instance_delete_check = Identifier::new_intern("instance_delete_check");
@@ -17,16 +15,9 @@ pub fn check(ctx: Arc<RootContext>, verbose: bool) -> Result<()> {
 
     let mut access_seen = false;
     for ctx in ctx.controller_contexts() {
-        if verbose {
-            for instance in ctx.nodes_marked_any_way(marker_instance) {
-                ctx.node_note(instance, "This node has an instance marker");
-            }
-        }
-
         let accesses = ctx
-            .nodes_marked_any_way(marker_db_access)
+            .nodes_marked_any_way(marker_instance)
             .filter(|a| !a.has_marker(&ctx, marker_instance_safe))
-            .filter(|a| a.has_marker(&ctx, marker_instance))
             .collect::<Box<_>>();
         if accesses.is_empty() {
             continue;
@@ -64,26 +55,24 @@ pub fn check(ctx: Arc<RootContext>, verbose: bool) -> Result<()> {
             }
         }
     }
+    assert_warning!(
+        ctx,
+        access_seen,
+        "VACUITY: No access seen in any controller"
+    );
 
+    Ok(())
+}
+
+pub fn check_community(ctx: Arc<PolicyContext>) -> Result<()> {
     let marker_community = Identifier::new_intern("community");
     let marker_community_delete_check = Identifier::new_intern("community_delete_check");
     let marker_community_ban_check = Identifier::new_intern("community_ban_check");
+    let mut access_seen = false;
 
     for ctx in ctx.controller_contexts() {
-        if verbose {
-            for access in ctx.nodes_marked_any_way(marker_db_access) {
-                let mut markers = vec![];
-                if access.has_marker(&ctx, marker_community) {
-                    markers.push("community");
-                } else if access.has_marker(&ctx, marker_instance_ban_check) {
-                    markers.push("instance");
-                };
-                ctx.node_note(access, format!("Found this access {markers:?}",));
-            }
-        }
         let accesses = ctx
-            .nodes_marked_any_way(marker_db_access)
-            .filter(|a| a.has_marker(&ctx, marker_community))
+            .nodes_marked_any_way(marker_community)
             .collect::<Box<_>>();
         if accesses.is_empty() {
             continue;

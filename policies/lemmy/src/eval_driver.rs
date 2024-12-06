@@ -1,11 +1,92 @@
+use anyhow::{anyhow, bail};
 use clap::{Args, ValueEnum};
 use paralegal_policy::Config;
+use std::borrow::Cow;
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::time::{Duration, SystemTime};
 
 use crate::Prop;
+
+const LEMMY_API_CONTROLLERS: &[&str] = &[
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "notification-list-mentions",
+    "notification-list-replies",
+    "notification-mark-all-read",
+    "notification-mark-mention-read",
+    "notification-unread-count",
+    "user-add-admin",
+    "user-ban-person",
+    "user-block",
+    "user-change-password",
+    "user-list-banned",
+    "user-login",
+    "user-report-count",
+    "user-save-settings",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
+];
+
+const LEMMY_API_CRUD_CONTROLLERS: &[&str] = &[
+    "comment-create",
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    "site-read",
+    "site-update",
+    "user-create",
+    "user-delete",
+    "user-read",
+];
 
 // Controllers are broken into batches.
 // Batches are arbitrary, except all of a subfolder's controllers are kept together.
@@ -470,14 +551,30 @@ fn print_ctrler_results<W: std::io::Write>(
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+enum LemmyPackage {
+    Api,
+    ApiCrud,
+}
+
+impl LemmyPackage {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Api => "lemmy_api",
+            Self::ApiCrud => "lemmy_api_crud",
+        }
+    }
+}
+
 // runs given batch of controllers on given props
 fn run_batch(
     common_args: &CommonArgs,
-    batch: &[impl AsRef<str>],
+    batch: impl IntoIterator<Item = impl AsRef<str>>,
     features: &[impl AsRef<str>],
     props: &[Prop],
     desc: &str,
     expect_failure: bool,
+    package: LemmyPackage,
 ) -> bool {
     use std::process::*;
     let mut w = std::io::stdout();
@@ -494,7 +591,7 @@ fn run_batch(
             .args([
                 "--abort-after-analysis",
                 "--target",
-                "lemmy_api",
+                package.as_str(),
                 "--external-annotations",
                 "external-annotations.toml",
                 "--",
@@ -553,6 +650,45 @@ fn run_batch(
     !failed
 }
 
+fn resplit_batches_for_package<'a: 'b, 'b>(
+    iter: impl IntoIterator<Item = &'b [&'a str]>,
+) -> (Vec<&'a str>, Vec<&'a str>) {
+    iter.into_iter()
+        .flatten()
+        .partition(|c| LEMMY_API_CONTROLLERS.contains(c))
+}
+
+/// This unifies handling for new and old batches. In the old version we
+/// basically just return the input iterator, but in the new version we return
+/// it split by the package that it runs in, e.g. api vs api_crud
+fn split_batches_if_new<'a: 'b, 'b>(
+    initial_batches: impl IntoIterator<Item = &'b [&'a str]> + 'b,
+    new: bool,
+) -> Box<dyn Iterator<Item = (Cow<'static, str>, LemmyPackage, Cow<'b, [&'a str]>)> + 'b> {
+    if new {
+        let (api, api_crud) = resplit_batches_for_package(initial_batches);
+        Box::new(
+            [
+                (Cow::Borrowed("api"), LemmyPackage::Api, Cow::Owned(api)),
+                (
+                    Cow::Borrowed("api_crud"),
+                    LemmyPackage::ApiCrud,
+                    Cow::Owned(api_crud),
+                ),
+            ]
+            .into_iter(),
+        ) as Box<dyn Iterator<Item = _>>
+    } else {
+        Box::new(initial_batches.into_iter().enumerate().map(|(i, b)| {
+            (
+                Cow::Owned(i.to_string()),
+                LemmyPackage::Api,
+                Cow::Borrowed(b),
+            )
+        }))
+    }
+}
+
 impl BatchConfig<'_> {
     pub fn run(&self, common_args: &CommonArgs) -> bool {
         let mut failed = false;
@@ -574,9 +710,19 @@ impl BatchConfig<'_> {
 
         println!("### {} ###", self.description);
 
-        for (batch_num, batch) in initial_batches.enumerate() {
+        let batches = split_batches_if_new(initial_batches, common_args.new);
+
+        for (batch_num, package, batch) in batches {
             let desc = format!("Initial batch {batch_num}");
-            run_batch(common_args, batch, &features, &props, &desc, expect_failure);
+            run_batch(
+                common_args,
+                batch.as_ref(),
+                &features,
+                &props,
+                &desc,
+                expect_failure,
+                package,
+            );
         }
 
         if let Some(change) = self.change.as_ref() {
@@ -591,15 +737,18 @@ impl BatchConfig<'_> {
                 features.push(change.change_feature);
             }
 
-            for (batch_num, batch) in second_batches.iter().copied().enumerate() {
+            let batches = split_batches_if_new(second_batches.iter().copied(), common_args.new);
+
+            for (batch_num, package, batch) in batches {
                 let desc = format!("Changed batch {batch_num}");
                 failed |= !run_batch(
                     common_args,
-                    batch,
+                    batch.as_ref(),
                     &features,
                     &props,
                     &desc,
                     !expect_failure,
+                    package,
                 );
             }
         }
@@ -610,6 +759,8 @@ impl BatchConfig<'_> {
 
 #[derive(Args)]
 pub struct CommonArgs {
+    #[clap(long)]
+    new: bool,
     #[clap(long, default_value = "case-studies/lemmy")]
     pub path: PathBuf,
 }
@@ -636,6 +787,9 @@ pub struct SelectionArgs {
 
 impl SelectionArgs {
     pub fn run(&self, args: &CommonArgs) -> anyhow::Result<bool> {
+        if args.new {
+            bail!("Please implement selection running for unhacked lemmy. (it wouldn't compile the correct target package)");
+        }
         let all_controllers = ["all_controllers".to_owned()];
         let selected_controllers = if self.controller.is_empty() {
             &all_controllers as &[_]
@@ -672,7 +826,7 @@ impl SelectionArgs {
                 } else {
                     self.prop.as_slice()
                 } {
-                    p.run(cx.clone())?;
+                    p.run(cx.clone(), args.new)?;
                 }
 
                 anyhow::Ok(())

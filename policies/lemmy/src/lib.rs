@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub mod eval_driver;
+pub mod unhacked;
 
 use paralegal_policy::{
     assert_warning,
@@ -118,13 +119,21 @@ pub enum Prop {
 }
 
 impl Prop {
-    pub fn run(self, cx: Arc<RootContext>) -> anyhow::Result<()> {
+    pub fn run(self, cx: Arc<RootContext>, new_version: bool) -> anyhow::Result<()> {
         match self {
             Self::Community => cx.named_policy(Identifier::new_intern("Community Policy"), |cx| {
-                CommunityProp::new(cx.clone()).check()
+                if new_version {
+                    unhacked::check_community(cx)
+                } else {
+                    CommunityProp::new(cx).check()
+                }
             }),
             Self::Instance => cx.named_policy(Identifier::new_intern("Instance Policy"), |cx| {
-                InstanceProp::new(cx.clone()).check()
+                if new_version {
+                    unhacked::check_instance(cx)
+                } else {
+                    InstanceProp::new(cx).check()
+                }
             }),
         }
     }
