@@ -2,7 +2,9 @@ use anyhow::Result;
 use clap::ValueEnum;
 use std::sync::Arc;
 
-use paralegal_policy::{paralegal_spdg::traverse::EdgeSelection, Context, Diagnostics, Marker};
+use paralegal_policy::{
+    paralegal_spdg::traverse::EdgeSelection, Context, Diagnostics, Marker, RootContext,
+};
 
 macro_rules! marker {
     ($id:ident) => {
@@ -12,7 +14,7 @@ macro_rules! marker {
 
 pub const DEFAULT_CONTROLLERS: &[&str] = &[];
 
-pub fn check(ctx: Arc<Context>) -> Result<()> {
+pub fn check(ctx: Arc<RootContext>) -> Result<()> {
     let user_data_types = ctx.marked_type(marker!(user_data));
 
     let found = ctx.all_controllers().find(|(deleter_id, ctrl)| {

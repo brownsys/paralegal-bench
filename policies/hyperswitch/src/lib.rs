@@ -1,7 +1,7 @@
 use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection,
-    Marker, NodeExt, NodeQueries,
+    Marker, NodeExt, NodeQueries, RootContext,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -26,7 +26,7 @@ macro_rules! marker {
 
 macro_rules! policy {
     ($name:ident $(,)? $context:ident $(,)? $code:block) => {
-        fn $name(ctx: Arc<Context>) -> Result<()> {
+        fn $name(ctx: Arc<RootContext>) -> Result<()> {
             ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
@@ -119,10 +119,10 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
+    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
         use Policy::*;
         match self {
-            CardStorage => card_storage as fn(Arc<Context>) -> Result<()>,
+            CardStorage => card_storage as fn(Arc<RootContext>) -> Result<()>,
             CardEncryption => card_encryption as _,
             ApikeyStorage => apikey_storage as _,
         }

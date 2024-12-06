@@ -11,10 +11,18 @@ rust-version = "1.57"
 [dependencies]
 lemmy_apub = { version = "=0.16.5", path = "../apub" }
 lemmy_utils = { version = "=0.16.5", path = "../utils" }
-lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = ["full"] }
-lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = ["full"] }
-lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = ["full"] }
-lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = ["full"] }
+lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = [
+    "full",
+] }
+lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = [
+    "full",
+] }
+lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = [
+    "full",
+] }
+lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = [
+    "full",
+] }
 lemmy_websocket = { version = "=0.16.5", path = "../websocket" }
 activitypub_federation = "0.2.0"
 bcrypt = "0.12.1"
@@ -25,3 +33,67 @@ tracing = "0.1.32"
 url = { version = "2.2.2", features = ["serde"] }
 async-trait = "0.1.53"
 webmention = "0.4.0"
+
+[features]
+bug-1-code = ["lemmy_api_common/bug-1-code"]
+bug-1-fix = ["lemmy_api_common/bug-1-fix"]
+post-bug-1 = ["lemmy_api_common/post-bug-1"]
+
+comment-create = []
+comment-delete = []
+comment-list = []
+comment-read = []
+comment-remove = []
+comment-update = []
+community-create = []
+community-delete = []
+community-list = []
+community-read = []
+community-remove = []
+community-update = []
+post-create = []
+post-delete = []
+post-list = []
+post-read = []
+post-remove = []
+post-update = []
+private-message-create = []
+private-message-delete = []
+private-message-read = []
+private-message-update = []
+site-create = []
+site-read = []
+site-update = []
+user-create = []
+user-delete = []
+user-read = []
+
+all-controllers = [
+    "comment-create",
+    "comment-delete",
+    "comment-list",
+    "comment-read",
+    "comment-remove",
+    "comment-update",
+    "community-create",
+    "community-delete",
+    "community-list",
+    "community-read",
+    "community-remove",
+    "community-update",
+    "post-create",
+    "post-delete",
+    "post-list",
+    "post-read",
+    "post-remove",
+    "post-update",
+    "private-message-create",
+    "private-message-delete",
+    "private-message-read",
+    "private-message-update",
+    "site-create",
+    "site-read",
+    "site-update",
+    "user-delete",
+    "user-read",
+]

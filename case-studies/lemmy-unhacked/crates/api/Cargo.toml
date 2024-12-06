@@ -105,38 +105,6 @@ site-mod-log = []
 site-resolve-object = []
 site-search = []
 
-
-# api crud
-comment-create = []
-comment-delete = []
-comment-list = []
-comment-read = []
-comment-remove = []
-comment-update = []
-community-create = []
-community-delete = []
-community-list = []
-community-read = []
-community-remove = []
-community-update = []
-post-create = []
-post-delete = []
-post-list = []
-post-read = []
-post-remove = []
-post-update = []
-private-message-create = []
-private-message-delete = []
-private-message-read = []
-private-message-update = []
-site-create = []
-site-read = []
-site-update = []
-user-create = []
-user-delete = []
-user-read = []
-
-
 full = []
 default = ["full"]
 
@@ -186,31 +154,4 @@ all-controllers = [
     "site-mod-log",
     "site-resolve-object",
     "site-search",
-    "comment-create",
-    "comment-delete",
-    "comment-list",
-    "comment-read",
-    "comment-remove",
-    "comment-update",
-    "community-create",
-    "community-delete",
-    "community-list",
-    "community-read",
-    "community-remove",
-    "community-update",
-    "post-create",
-    "post-delete",
-    "post-list",
-    "post-read",
-    "post-remove",
-    "post-update",
-    "private-message-create",
-    "private-message-delete",
-    "private-message-read",
-    "private-message-update",
-    "site-create",
-    "site-read",
-    "site-update",
-    "user-delete",
-    "user-read",
 ]

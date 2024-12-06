@@ -57,7 +57,7 @@ fn main() -> Result<()> {
 
     let result = graph_loc.with_context_configured(config, |ctx| {
         if let Some(p) = &args.dump_code {
-            if let Err(e) = File::create(p).and_then(|f| ctx.write_analyzed_code(f, false)) {
+            if let Err(e) = File::create(p).and_then(|f| ctx.write_analyzed_code(f, false, false)) {
                 eprintln!(
                     "Could dump code to {} due to error {e}, skipped.",
                     p.display()

@@ -55,7 +55,7 @@ impl Perform for ResolvePostReport {
         context.pool(),
       )
       .await?;
-      check_community_deleted_or_removed(post_report_view.community.id, context.pool()).await?;
+      check_community_deleted_or_removed(report.community.id, context.pool()).await?;
     }
 
     blocking(context.pool(), resolve_fun)

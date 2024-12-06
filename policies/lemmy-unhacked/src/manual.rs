@@ -4,10 +4,10 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error,
     paralegal_spdg::{Identifier, NodeCluster},
-    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries,
+    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries, RootContext,
 };
 
-pub fn check(ctx: Arc<Context>, verbose: bool) -> Result<()> {
+pub fn check(ctx: Arc<RootContext>, verbose: bool) -> Result<()> {
     let marker_db_access = Identifier::new_intern("db_access");
 
     let marker_instance = Identifier::new_intern("instance");

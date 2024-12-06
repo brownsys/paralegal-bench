@@ -9,7 +9,7 @@ use lemmy_api_common::{
 };
 use lemmy_db_schema::{
   source::post::{Post, PostSaved, PostSavedForm},
-  traits::Saveable,
+  traits::{Crud, Saveable},
 };
 use lemmy_db_views::structs::PostView;
 use lemmy_utils::{error::LemmyError, ConnectionId};

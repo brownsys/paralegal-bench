@@ -8,6 +8,7 @@ use paralegal_policy::{
     loc,
     paralegal_spdg::{self, Endpoint, FunctionCallInfo, InstructionKind, TypeId},
     Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, PolicyContext,
+    RootContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use petgraph::visit::EdgeRef;
@@ -40,17 +41,17 @@ impl Deref for PropRunner {
 }
 
 trait NodeExt {
-    fn unconditional(self, ctx: &Context) -> bool;
-    fn is_return(self, ctx: &Context) -> bool;
-    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode>;
+    fn unconditional(self, ctx: &RootContext) -> bool;
+    fn is_return(self, ctx: &RootContext) -> bool;
+    fn ctrl_influencer(self, ctx: &RootContext) -> Option<GlobalNode>;
 }
 
 impl NodeExt for GlobalNode {
-    fn unconditional(self, ctx: &Context) -> bool {
+    fn unconditional(self, ctx: &RootContext) -> bool {
         self.ctrl_influencer(ctx).is_none()
     }
 
-    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode> {
+    fn ctrl_influencer(self, ctx: &RootContext) -> Option<GlobalNode> {
         ctx.desc().controllers[&self.controller_id()]
             .graph
             .edges_directed(self.local_node(), petgraph::Incoming)
@@ -58,7 +59,7 @@ impl NodeExt for GlobalNode {
             .map(|e| GlobalNode::from_local_node(self.controller_id(), e.source()))
     }
 
-    fn is_return(self, ctx: &Context) -> bool {
+    fn is_return(self, ctx: &RootContext) -> bool {
         ctx.desc().controllers[&self.controller_id()]
             .return_
             .contains(&self.local_node())
@@ -69,7 +70,7 @@ trait ContextExt {
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
-impl ContextExt for Context {
+impl ContextExt for RootContext {
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
         Box::new(self.desc().controllers.iter().flat_map(|(id, spdg)| {
             spdg.return_
@@ -685,7 +686,7 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<Context>) -> Result<()>> {
+    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<RootContext>) -> Result<()>> {
         Box::new(move |ctx| {
             ctx.named_policy(Identifier::new_intern(self.as_ref()), |ctx| {
                 let runner = PropRunner::new(ctx, flavour);

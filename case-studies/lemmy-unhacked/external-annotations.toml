@@ -101,6 +101,10 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
+[["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::delete"]]
+markers = ["db_access", "instance"]
+on_return = true
+
 [["lemmy_db_views_actor::structs::CommunityModeratorView::for_community"]]
 markers = ["db_access", "instance"]
 on_return = true
@@ -237,19 +241,19 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::person::Person::update"]]
+[["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::update"]]
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::local_user::LocalUser::update"]]
+[["<lemmy_db_schema::source::local_user::LocalUser as lemmy_db_schema::traits::Crud>::update"]]
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::post::PostLike::remove"]]
+[["<lemmy_db_schema::source::post::PostLike as lemmy_db_schema::traits::Likeable>::remove"]]
 markers = ["db_access", "community", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::post::PostLike::like"]]
+[["<lemmy_db_schema::source::post::PostLike as lemmy_db_schema::traits::Likeable>::like"]]
 markers = ["db_access", "community", "instance"]
 on_return = true
 
@@ -277,11 +281,11 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Saveable>::save"]]
+[["<lemmy_db_schema::source::post::PostSaved as lemmy_db_schema::traits::Saveable>::save"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
 
-[["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Saveable>::unsave"]]
+[["<lemmy_db_schema::source::post::PostSaved as lemmy_db_schema::traits::Saveable>::unsave"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
 
@@ -293,7 +297,7 @@ on_return = true
 markers = ["db_access", "community", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::post_report::PostReport::report"]]
+[["<lemmy_db_schema::source::post_report::PostReport as lemmy_db_schema::traits::Reportable>::report"]]
 markers = ["db_access", "community", "instance"]
 on_return = true
 
@@ -305,7 +309,7 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["<lemmy_db_schema::source::post_report::PostReport as lemmy_db_schema::traits::Reportable>"]]
+[["<lemmy_db_schema::source::post_report::PostReport as lemmy_db_schema::traits::Reportable>::report"]]
 markers = ["db_access", "instance", "community"]
 on_return = true
 
@@ -313,15 +317,15 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::private_message::PrivateMessage::read"]]
+[["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::read"]]
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::comment::Comment::read"]]
+[["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::read"]]
 on_return = true
 markers = ["db_access", "instance"]
 
-[["lemmy_db_schema::source::comment::Comment::delete"]]
+[["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::delete"]]
 on_return = true
 markers = ["db_access", "instance"]
 
@@ -334,10 +338,6 @@ on_return = true
 markers = ["db_access", "instance"]
 
 [["lemmy_api_common::utils::purge_image_posts_for_person"]]
-on_return = true
-markers = ["db_access", "instance"]
-
-[["lemmy_db_schema::source::person::Person::delete"]]
 on_return = true
 markers = ["db_access", "instance"]
 
@@ -357,11 +357,11 @@ markers = ["db_access", "instance"]
 on_return = true
 markers = ["db_access", "instance"]
 
-[["<lemmy_db_schema::source::registration_application::RegistrationApplicationView as lemmy_db_schema::traits::Crud>::read"]]
+[["lemmy_db_views::structs::RegistrationApplicationView::read"]]
 on_return = true
 markers = ["db_access", "instance"]
 
-[["lemmy_db_schema::source::local_user::LocalUser::update"]]
+[["<lemmy_db_schema::source::local_user::LocalUser as lemmy_db_schema::traits::Crud>::update"]]
 markers = ["db_access", "instance"]
 on_return = true
 
@@ -373,7 +373,7 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::registration_application::RegistrationApplicationView::get_unread_count"]]
+[["lemmy_db_views::structs::RegistrationApplicationView::get_unread_count"]]
 on_return = true
 markers = ["db_access", "instance"]
 
@@ -421,7 +421,7 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_api_common::utils::search_by_apub_id"]]
+[["lemmy_apub::fetcher::search::search_by_apub_id"]]
 markers = ["db_access", "instance"]
 on_return = true
 
@@ -509,11 +509,11 @@ on_return = true
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::private_message::PrivateMessage::create"]]
+[["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::create"]]
 markers = ["db_access", "instance"]
 on_return = true
 
-[["lemmy_db_schema::source::private_message::PrivateMessage::read"]]
+[["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::read"]]
 markers = ["db_access", "instance"]
 on_return = true
 

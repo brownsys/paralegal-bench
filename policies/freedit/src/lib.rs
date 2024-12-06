@@ -6,6 +6,7 @@ use paralegal_policy::{
         CallString, Endpoint, GlobalNode, Identifier, InstructionInfo, InstructionKind, Node, SPDG,
     },
     Context, DefId, Diagnostics, EdgeSelection, IntoIterGlobalNodes, Marker, NodeExt, NodeQueries,
+    RootContext,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -101,11 +102,9 @@ trait ContextExt {
         ctr: Endpoint,
         fun: DefId,
     ) -> Box<dyn Iterator<Item = CallString> + 'a>;
-
-    fn marked(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
-impl ContextExt for Context {
+impl ContextExt for RootContext {
     fn call_sites_for<'a>(
         &'a self,
         ctrl: Endpoint,
@@ -124,19 +123,6 @@ impl ContextExt for Context {
             .filter(move |e| locs.contains(&e.leaf()));
         Box::new(iter)
     }
-
-    fn marked(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
-        let marked_types = self.marked_type(marker);
-        let iter = self
-            .marked_nodes(marker)
-            .chain(self.desc().controllers.iter().flat_map(|(&id, ctrl)| {
-                ctrl.type_assigns
-                    .iter()
-                    .filter(|(_, tys)| tys.0.iter().any(|t| marked_types.contains(t)))
-                    .map(move |(&n, _)| GlobalNode::from_local_node(id, n))
-            }));
-        Box::new(iter)
-    }
 }
 
 trait CtrlExt {
@@ -151,7 +137,7 @@ impl CtrlExt for SPDG {
 
 #[allow(dead_code)]
 /// Not actually used, because it turns out the application doesn't do this. It just cleans up the database every 10min.
-fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
+fn check_no_expired_read(ctx: Arc<RootContext>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("no expired read"), |ctx| {
         let expirable_data = ctx.marked_nodes(marker!(pageviews)).collect::<Vec<_>>();
         let time_marker = marker!(time);
@@ -191,9 +177,9 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
-fn check_date_store(ctx: Arc<Context>) -> Result<()> {
+fn check_date_store(ctx: Arc<RootContext>) -> Result<()> {
     let pageview_data = ctx
-        .marked(marker!(pageviews))
+        .nodes_marked_any_way(marker!(pageviews))
         .map(|d| d)
         .collect::<Vec<_>>();
     let db_store_marker = marker!(db_store);
@@ -256,9 +242,9 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
-fn check_expiration(ctx: Arc<Context>) -> Result<()> {
+fn check_expiration(ctx: Arc<RootContext>) -> Result<()> {
     let pageview_data = ctx
-        .marked(marker!(pageviews))
+        .nodes_marked_any_way(marker!(pageviews))
         .map(|d| d)
         .collect::<Vec<_>>();
     let time_sources = ctx.marked_nodes(marker!(time)).collect::<Vec<_>>();
@@ -328,7 +314,7 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn check(self, ctx: Arc<Context>) -> Result<()> {
+    pub fn check(self, ctx: Arc<RootContext>) -> Result<()> {
         match self {
             Self::DateStore => check_date_store(ctx),
             Self::Expiration => check_expiration(ctx),

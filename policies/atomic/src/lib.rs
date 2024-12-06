@@ -2,7 +2,7 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error,
     paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
-    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries, RootContext,
 };
 use petgraph::Direction::Outgoing;
 use std::{collections::HashSet, sync::Arc};
@@ -20,42 +20,18 @@ macro_rules! marker {
 
 macro_rules! policy {
     ($name:ident $(,)? $context:ident $(,)? $code:block) => {
-        pub fn $name(ctx: Arc<Context>) -> Result<()> {
+        pub fn $name(ctx: Arc<RootContext>) -> Result<()> {
             ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
 }
 
 trait NodeExt: Sized {
-    fn is_argument(self, ctx: &Context, num: u8) -> bool;
-}
-
-trait ContextExt {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a>;
-
-    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool;
-}
-
-impl ContextExt for Context {
-    fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a> {
-        Box::new(
-            self.desc()
-                .controllers
-                .keys()
-                .copied()
-                .flat_map(move |k| self.all_nodes_for_ctrl(k))
-                .filter(move |node| self.has_marker(marker, *node)),
-        )
-    }
-
-    fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool {
-        self.influencees(influencer, EdgeSelection::Data)
-            .any(|inf| self.flows_to(inf, target, EdgeSelection::Control))
-    }
+    fn is_argument(self, ctx: &RootContext, num: u8) -> bool;
 }
 
 impl NodeExt for GlobalNode {
-    fn is_argument(self, ctx: &Context, num: u8) -> bool {
+    fn is_argument(self, ctx: &RootContext, num: u8) -> bool {
         ctx.desc().controllers[&self.controller_id()]
             .graph
             .edges_directed(self.local_node(), Outgoing)
