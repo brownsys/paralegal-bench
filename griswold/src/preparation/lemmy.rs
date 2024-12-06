@@ -1,6 +1,6 @@
 use std::{rc::Rc, slice};
 
-use lemmy::eval_driver::{BatchConfig, GetUserVersion};
+use lemmy::eval_driver::{BatchConfig, GetUserVersion, LemmyPackage};
 
 use crate::{
     input::{ControllerRunMode, PolicyMode, PolicyResult},
@@ -9,93 +9,19 @@ use crate::{
 
 use super::{no_policy, selection_or_all, RunBuilder};
 
-const LEMMY_CONTROLLERS: &[&str] = &[
-    "comment-like",
-    "comment-mark-as-read",
-    "comment-save",
-    "comment-report-create",
-    "comment-report-list",
-    "comment-report-resolve",
-    "community-add-mod",
-    "community-ban",
-    "community-block",
-    "community-follow",
-    "community-hide",
-    "community-transfer",
-    "notification-list-mentions",
-    "notification-list-replies",
-    "notification-mark-all-read",
-    "notification-mark-mention-read",
-    "notification-unread-count",
-    "user-add-admin",
-    "user-ban-person",
-    "user-block",
-    "user-change-password",
-    "user-list-banned",
-    "user-login",
-    "user-report-count",
-    "user-save-settings",
-    "post-like",
-    "post-lock",
-    "post-mark-read",
-    "post-save",
-    "post-sticky",
-    "post-report-create",
-    "post-report-list",
-    "post-report-resolve",
-    "private-message-mark-read",
-    "purge-comment",
-    "purge-community",
-    "purge-person",
-    "purge-post",
-    "registration-approve",
-    "registration-list",
-    "registration-unread-counts",
-    "site-leave-admin",
-    "site-mod-log",
-    "site-resolve-object",
-    "site-search",
-    "comment-create",
-    "comment-delete",
-    "comment-list",
-    "comment-read",
-    "comment-remove",
-    "comment-update",
-    "community-create",
-    "community-delete",
-    "community-list",
-    "community-read",
-    "community-remove",
-    "community-update",
-    "post-create",
-    "post-delete",
-    "post-list",
-    "post-read",
-    "post-remove",
-    "post-update",
-    "private-message-create",
-    "private-message-delete",
-    "private-message-read",
-    "private-message-update",
-    "site-create",
-    "site-read",
-    "site-update",
-    "user-delete",
-    "user-read",
-];
-
 impl<'a> RunBuilder<'a> {
     pub(super) fn lemmy_case_study(
         self,
         policies: &'a [lemmy::Prop],
         bugs: &'a [GetUserVersion],
+        new_version: Option<LemmyPackage>,
     ) -> impl Iterator<Item = Run<'a>> {
         let bugs = selection_or_all(bugs);
         bugs.iter()
             .map(|v| (v, v.to_config()))
             .filter(|(_, c)| policies.contains(&c.property))
             .flat_map(move |(bug, batch_config)| {
-                self.lemmy_prepare_for_batch_confg(batch_config, bug)
+                self.lemmy_prepare_for_batch_confg(batch_config, bug, new_version)
             })
     }
 
@@ -103,11 +29,13 @@ impl<'a> RunBuilder<'a> {
         self,
         batch_config: &'a BatchConfig<'static>,
         bug: &'a GetUserVersion,
+        new_version: Option<LemmyPackage>,
     ) -> impl Iterator<Item = Run<'a>> {
         let preparer = BatchConfigPreparer {
             builder: self,
             batch_config,
             bug,
+            new_version,
         };
         preparer.runs()
     }
@@ -118,6 +46,7 @@ struct BatchConfigPreparer<'a> {
     builder: RunBuilder<'a>,
     batch_config: &'a BatchConfig<'static>,
     bug: &'a GetUserVersion,
+    new_version: Option<LemmyPackage>,
 }
 
 impl<'a> BatchConfigPreparer<'a> {
@@ -128,9 +57,14 @@ impl<'a> BatchConfigPreparer<'a> {
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
         let prop = &self.batch_config.property;
+        let new_version = self.new_version;
         let (policy_name, policy_fn, _) = match self.builder.experiment_config.policy_mode {
             PolicyMode::Unified => self.builder.unified_policies(),
-            PolicyMode::Separate => (prop.as_ref(), Rc::new(|ctx| prop.run(ctx)) as _, vec![]),
+            PolicyMode::Separate => (
+                prop.as_ref(),
+                Rc::new(move |ctx| prop.run(ctx, new_version.is_some(), false)) as _,
+                vec![],
+            ),
             PolicyMode::None => no_policy(),
         };
         let controllers = controller_features.iter().flat_map(|i| i.iter()).copied();
@@ -145,6 +79,9 @@ impl<'a> BatchConfigPreparer<'a> {
             controllers,
         );
         exp.bug = Some(self.bug.as_ref());
+        if let Some(package) = self.new_version {
+            exp.extra_flow_args.extend(["--target", package.as_str()]);
+        }
         exp.extra_cargo_args
             .extend(["--features", self.batch_config.baseline_feature]);
         if let Some(f) = extra_feature {
@@ -231,8 +168,16 @@ impl<'a> BatchConfigPreparer<'a> {
         match self.builder.experiment_config.controller_run_mode {
             ControllerRunMode::All => Box::new(run_pair("all-controllers")) as Box<_>,
             ControllerRunMode::AllSeparate => Box::new(
-                LEMMY_CONTROLLERS
-                    .iter()
+                matches!(self.new_version, None | Some(LemmyPackage::Api))
+                    .then_some(lemmy::eval_driver::LEMMY_API_CONTROLLERS)
+                    .into_iter()
+                    .flatten()
+                    .chain(
+                        matches!(self.new_version, None | Some(LemmyPackage::ApiCrud))
+                            .then_some(lemmy::eval_driver::LEMMY_API_CRUD_CONTROLLERS)
+                            .into_iter()
+                            .flatten(),
+                    )
                     .copied()
                     .flat_map(move |c| run_pair(&c)),
             ),

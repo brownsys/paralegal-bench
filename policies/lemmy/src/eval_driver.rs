@@ -9,7 +9,7 @@ use std::time::{Duration, SystemTime};
 
 use crate::Prop;
 
-const LEMMY_API_CONTROLLERS: &[&str] = &[
+pub const LEMMY_API_CONTROLLERS: &[&str] = &[
     "comment-like",
     "comment-mark-as-read",
     "comment-save",
@@ -57,7 +57,7 @@ const LEMMY_API_CONTROLLERS: &[&str] = &[
     "site-search",
 ];
 
-const LEMMY_API_CRUD_CONTROLLERS: &[&str] = &[
+pub const LEMMY_API_CRUD_CONTROLLERS: &[&str] = &[
     "comment-create",
     "comment-delete",
     "comment-list",
@@ -551,14 +551,14 @@ fn print_ctrler_results<W: std::io::Write>(
     Ok(())
 }
 
-#[derive(Clone, Copy, ValueEnum)]
-enum LemmyPackage {
+#[derive(Clone, Copy, ValueEnum, serde::Deserialize, serde::Serialize)]
+pub enum LemmyPackage {
     Api,
     ApiCrud,
 }
 
 impl LemmyPackage {
-    fn as_str(self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Api => "lemmy_api",
             Self::ApiCrud => "lemmy_api_crud",

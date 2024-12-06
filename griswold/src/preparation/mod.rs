@@ -270,10 +270,12 @@ impl<'a> RunBuilder<'a> {
 
     fn case_study_runs(self) -> impl Iterator<Item = Run<'a>> {
         match &self.experiment_config.application {
-            Application::Lemmy { policies, bugs } => {
-                Box::new(self.lemmy_case_study(selection_or_all(policies), bugs))
-                    as Box<dyn Iterator<Item = _> + 'a>
-            }
+            Application::Lemmy {
+                policies,
+                bugs,
+                new_version,
+            } => Box::new(self.lemmy_case_study(selection_or_all(policies), bugs, *new_version))
+                as Box<dyn Iterator<Item = _> + 'a>,
             _ => {
                 let expectations = if self.experiment_config.policy_mode.is_none() {
                     Box::new(std::iter::once((
@@ -506,15 +508,17 @@ impl Application {
                     )
                 }))
             }
-            Application::Lemmy { policies, .. } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
-                    (
-                        p.as_ref(),
-                        Rc::new(move |cx| p.run(cx)) as PolicyFn<'a>,
-                        vec!["all-controllers"],
-                    )
-                }))
-            }
+            Application::Lemmy {
+                policies,
+                new_version,
+                ..
+            } => Box::new(selection_or_all(policies).iter().map(move |p| {
+                (
+                    p.as_ref(),
+                    Rc::new(move |cx| p.run(cx, new_version.is_some(), false)) as PolicyFn<'a>,
+                    vec!["all-controllers"],
+                )
+            })),
             Application::Plume => Box::new(std::iter::once((
                 "data-deletion",
                 Rc::new(plume::check) as PolicyFn<'a>,
@@ -571,6 +575,7 @@ impl Run<'_> {
         compile_cmd
             .get_command()
             .args(app_config.flow_args.iter())
+            .args(self.extra_flow_args.iter())
             .arg("--")
             .args(app_config.cargo_args.iter())
             .args(self.extra_cargo_args.iter());

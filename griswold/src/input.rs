@@ -1,7 +1,7 @@
 //! Types describing data the runner ingests
 
 use indexmap::IndexMap;
-use lemmy::eval_driver::GetUserVersion;
+use lemmy::eval_driver::{GetUserVersion, LemmyPackage};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf, time::Duration};
@@ -188,6 +188,7 @@ pub enum Application {
         policies: Box<[lemmy::Prop]>,
         #[serde(default)]
         bugs: Box<[GetUserVersion]>,
+        new_version: Option<LemmyPackage>,
     },
     Hyperswitch {
         #[serde(default)]

@@ -53,6 +53,7 @@ pub struct Run<'c> {
     pub post_process: Option<Rc<dyn Fn(&RootContext, &mut RunMeasurements)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
+    pub extra_flow_args: Vec<&'c str>,
 }
 
 impl<'a> Run<'a> {
@@ -89,6 +90,7 @@ impl<'a> Run<'a> {
             controller: None,
             extra_cargo_args: vec![],
             post_process: None,
+            extra_flow_args: Default::default(),
         }
     }
 }
