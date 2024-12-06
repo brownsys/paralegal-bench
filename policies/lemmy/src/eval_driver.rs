@@ -1,10 +1,10 @@
-use anyhow::{anyhow, bail};
 use clap::{Args, ValueEnum};
-use paralegal_policy::Config;
+use paralegal_policy::{assert_warning, Config, GraphLocation};
 use std::borrow::Cow;
 use std::fmt::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Stdio;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
 use crate::Prop;
@@ -551,7 +551,7 @@ fn print_ctrler_results<W: std::io::Write>(
     Ok(())
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, ValueEnum)]
 enum LemmyPackage {
     Api,
     ApiCrud,
@@ -594,6 +594,7 @@ fn run_batch(
                 package.as_str(),
                 "--external-annotations",
                 "external-annotations.toml",
+                "--relaxed",
                 "--",
                 "--features",
                 ctrler.as_ref(),
@@ -616,16 +617,11 @@ fn run_batch(
                     verify_time = Duration::ZERO;
                     RunError::CompilationError
                 } else {
-                    let selection = SelectionArgs {
-                        skip_compile: true,
-                        quiet: true,
-                        prop: vec![*typ],
-                        controller: vec![],
-                        extra_args: vec![],
-                    };
-
                     let now = SystemTime::now();
-                    let status = selection.run(common_args);
+                    let graph_file = paralegal_policy::GraphLocation::std(&common_args.path);
+                    let status =
+                        run_policies_for_props(graph_file, &[*typ], common_args.new, true, false);
+
                     verify_time = now.elapsed().unwrap();
                     match status {
                         Ok(true) => RunError::Success,
@@ -777,19 +773,56 @@ pub struct SelectionArgs {
     /// the standard location
     #[clap(long)]
     pub skip_compile: bool,
-    /// Additional arguments to pass through to paralegal/cargo
-    #[clap(last = true)]
-    pub extra_args: Vec<String>,
+
+    #[clap(long, conflicts_with = "quiet")]
+    pub verbose: bool,
 
     #[clap(long, short)]
     pub quiet: bool,
+
+    #[clap(long)]
+    package: LemmyPackage,
+
+    /// Additional arguments to pass through to paralegal/cargo
+    #[clap(last = true)]
+    pub extra_args: Vec<String>,
+}
+
+fn run_policies_for_props(
+    graph_file: GraphLocation,
+    prop: &[Prop],
+    new: bool,
+    quiet: bool,
+    verbose: bool,
+) -> anyhow::Result<bool> {
+    let config = Config::default();
+
+    let cx = Arc::new(graph_file.build_context(config)?);
+    assert_warning!(
+        cx,
+        !cx.desc().controllers.is_empty(),
+        "No controllers found. Your policy is likely to be vacuous."
+    );
+    for p in if prop.is_empty() {
+        Prop::value_variants()
+    } else {
+        prop
+    } {
+        p.run(cx.clone(), new, verbose)?;
+    }
+
+    let writer = if quiet {
+        Box::new(std::io::sink()) as Box<dyn std::io::Write>
+    } else {
+        Box::new(std::io::stdout())
+    };
+
+    let success = cx.emit_diagnostics(writer)?;
+    Ok(success)
 }
 
 impl SelectionArgs {
     pub fn run(&self, args: &CommonArgs) -> anyhow::Result<bool> {
-        if args.new {
-            bail!("Please implement selection running for unhacked lemmy. (it wouldn't compile the correct target package)");
-        }
         let all_controllers = ["all_controllers".to_owned()];
         let selected_controllers = if self.controller.is_empty() {
             &all_controllers as &[_]
@@ -803,7 +836,10 @@ impl SelectionArgs {
             cmd.external_annotations("external-annotations.toml");
             cmd.abort_after_analysis();
             let rcmd = cmd.get_command();
-            rcmd.arg("--target").arg("lemmy_api").args(&self.extra_args);
+            rcmd.arg("--target")
+                .arg(self.package.as_str())
+                .arg("--relaxed")
+                .args(&self.extra_args);
             if self.quiet {
                 rcmd.stdout(Stdio::null()).stdin(Stdio::null());
             }
@@ -815,22 +851,13 @@ impl SelectionArgs {
             }
             cmd.run(&args.path)?
         };
-        let mut config = Config::default();
-        // if self.quiet {
-        //     config.output_writer = Box::new(std::io::sink());
-        // };
-        Ok(graph_file
-            .with_context_configured(config, |cx| {
-                for p in if self.prop.is_empty() {
-                    Prop::value_variants()
-                } else {
-                    self.prop.as_slice()
-                } {
-                    p.run(cx.clone(), args.new)?;
-                }
 
-                anyhow::Ok(())
-            })?
-            .success)
+        run_policies_for_props(
+            graph_file,
+            self.prop.as_slice(),
+            args.new,
+            self.quiet,
+            self.verbose,
+        )
     }
 }

@@ -4,10 +4,10 @@ use anyhow::Result;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{Identifier, NodeCluster},
-    Context, Diagnostics, EdgeSelection, NodeExt, NodeQueries, PolicyContext,
+    Context, Diagnostics, EdgeSelection, IntoIterGlobalNodes, NodeExt, NodeQueries, PolicyContext,
 };
 
-pub fn check_instance(ctx: Arc<PolicyContext>) -> Result<()> {
+pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
     let marker_instance = Identifier::new_intern("instance");
     let marker_instance_safe = Identifier::new_intern("instance_safe");
     let marker_instance_delete_check = Identifier::new_intern("instance_delete_check");
@@ -37,7 +37,24 @@ pub fn check_instance(ctx: Arc<PolicyContext>) -> Result<()> {
             continue;
         };
 
+        if verbose {
+            for n in delete_checks.iter_global_nodes() {
+                ctx.node_note(n, "This is an instance delete check");
+            }
+            for n in ban_checks.iter_global_nodes() {
+                ctx.node_note(n, "This is an instance ban check");
+            }
+        }
+
         for &access in accesses.iter() {
+            if verbose {
+                for access in ctx
+                    .nodes_marked_any_way(marker_instance)
+                    .filter(|a| !a.has_marker(&ctx, marker_instance_safe))
+                {
+                    ctx.node_note(access, "This is an instance access");
+                }
+            }
             // This is what it should be!!!
             //
             // if !delete_checks.has_ctrl_influence(access, &ctx) {

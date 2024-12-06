@@ -119,7 +119,7 @@ pub enum Prop {
 }
 
 impl Prop {
-    pub fn run(self, cx: Arc<RootContext>, new_version: bool) -> anyhow::Result<()> {
+    pub fn run(self, cx: Arc<RootContext>, new_version: bool, verbose: bool) -> anyhow::Result<()> {
         match self {
             Self::Community => cx.named_policy(Identifier::new_intern("Community Policy"), |cx| {
                 if new_version {
@@ -130,7 +130,7 @@ impl Prop {
             }),
             Self::Instance => cx.named_policy(Identifier::new_intern("Instance Policy"), |cx| {
                 if new_version {
-                    unhacked::check_instance(cx)
+                    unhacked::check_instance(cx, verbose)
                 } else {
                     InstanceProp::new(cx).check()
                 }

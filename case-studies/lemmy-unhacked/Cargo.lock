@@ -1930,6 +1930,7 @@ dependencies = [
  "lemmy_db_views_actor",
  "lemmy_utils",
  "lemmy_websocket",
+ "paralegal",
  "serde",
  "serde_json",
  "tracing",

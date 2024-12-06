@@ -204,6 +204,7 @@ pub async fn get_local_user_settings_view_from_jwt_opt(
         LocalUserSettingsView::read(conn, local_user_id)
       })
       .await??;
+      #[cfg(feature = "post-bug-1")]
       check_user_valid(
         local_user_view.person.banned,
         local_user_view.person.ban_expires,
