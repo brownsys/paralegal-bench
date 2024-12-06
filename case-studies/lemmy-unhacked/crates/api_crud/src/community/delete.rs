@@ -2,7 +2,9 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, DeleteCommunity},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use lemmy_db_schema::source::community::Community;
@@ -15,6 +17,7 @@ impl PerformCrud for DeleteCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-delete", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -30,6 +33,12 @@ impl PerformCrud for DeleteCommunity {
       CommunityModeratorView::for_community(conn, community_id)
     })
     .await??;
+
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
 
     // Make sure deleter is the top mod
     if local_user_view.person.id != community_mods[0].moderator.id {

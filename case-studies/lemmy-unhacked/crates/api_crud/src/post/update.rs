@@ -3,15 +3,11 @@ use lemmy_api_common::{
   post::{EditPost, PostResponse},
   request::fetch_site_data,
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
   },
 };
 use lemmy_apub::protocol::activities::{
-  create_or_update::post::CreateOrUpdatePost,
-  CreateOrUpdateType,
+  create_or_update::post::CreateOrUpdatePost, CreateOrUpdateType,
 };
 use lemmy_db_schema::{
   source::post::{Post, PostForm},
@@ -32,6 +28,7 @@ impl PerformCrud for EditPost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-update", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -60,6 +57,7 @@ impl PerformCrud for EditPost {
       context.pool(),
     )
     .await?;
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the creator can edit

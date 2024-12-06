@@ -2,7 +2,10 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, RemoveCommunity},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_admin,
+  },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use lemmy_db_schema::{
@@ -20,6 +23,7 @@ impl PerformCrud for RemoveCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-remove", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -35,6 +39,11 @@ impl PerformCrud for RemoveCommunity {
     // Do the remove
     let community_id = data.community_id;
     let removed = data.removed;
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
     let updated_community = blocking(context.pool(), move |conn| {
       Community::update_removed(conn, community_id, removed)
     })

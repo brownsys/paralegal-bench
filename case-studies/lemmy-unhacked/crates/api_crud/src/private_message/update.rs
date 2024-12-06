@@ -5,8 +5,7 @@ use lemmy_api_common::{
   utils::{blocking, get_local_user_view_from_jwt},
 };
 use lemmy_apub::protocol::activities::{
-  create_or_update::private_message::CreateOrUpdatePrivateMessage,
-  CreateOrUpdateType,
+  create_or_update::private_message::CreateOrUpdatePrivateMessage, CreateOrUpdateType,
 };
 use lemmy_db_schema::{source::private_message::PrivateMessage, traits::Crud};
 use lemmy_utils::{error::LemmyError, utils::remove_slurs, ConnectionId};
@@ -17,6 +16,7 @@ impl PerformCrud for EditPrivateMessage {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(self, context, websocket_id))]
+  #[cfg_attr(feature = "private-message-update", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

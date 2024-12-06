@@ -3,18 +3,13 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   person::{CreatePrivateMessage, PrivateMessageResponse},
   utils::{
-    blocking,
-    check_person_block,
-    get_local_user_view_from_jwt,
-    get_user_lang,
-    send_email_to_user,
+    blocking, check_person_block, get_local_user_view_from_jwt, get_user_lang, send_email_to_user,
   },
 };
 use lemmy_apub::{
   generate_local_apub_endpoint,
   protocol::activities::{
-    create_or_update::private_message::CreateOrUpdatePrivateMessage,
-    CreateOrUpdateType,
+    create_or_update::private_message::CreateOrUpdatePrivateMessage, CreateOrUpdateType,
   },
   EndpointType,
 };
@@ -31,6 +26,7 @@ impl PerformCrud for CreatePrivateMessage {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(self, context, websocket_id))]
+  #[cfg_attr(feature = "private-message-create", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

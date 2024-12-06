@@ -14,6 +14,7 @@ impl PerformCrud for DeleteAccount {
   type Response = DeleteAccountResponse;
 
   #[tracing::instrument(skip(self, context, _websocket_id))]
+  #[cfg_attr(feature = "user-delete", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

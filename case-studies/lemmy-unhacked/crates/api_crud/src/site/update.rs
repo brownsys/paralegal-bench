@@ -23,6 +23,7 @@ impl PerformCrud for EditSite {
   type Response = SiteResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "site-update", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

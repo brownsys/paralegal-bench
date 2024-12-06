@@ -6,21 +6,13 @@ use lemmy_api_common::{
   utils::{blocking, get_local_user_view_from_jwt, is_admin},
 };
 use lemmy_apub::{
-  generate_followers_url,
-  generate_inbox_url,
-  generate_local_apub_endpoint,
-  generate_shared_inbox_url,
-  objects::community::ApubCommunity,
-  EndpointType,
+  generate_followers_url, generate_inbox_url, generate_local_apub_endpoint,
+  generate_shared_inbox_url, objects::community::ApubCommunity, EndpointType,
 };
 use lemmy_db_schema::{
   source::{
     community::{
-      Community,
-      CommunityFollower,
-      CommunityFollowerForm,
-      CommunityForm,
-      CommunityModerator,
+      Community, CommunityFollower, CommunityFollowerForm, CommunityForm, CommunityModerator,
       CommunityModeratorForm,
     },
     site::Site,
@@ -41,6 +33,7 @@ impl PerformCrud for CreateCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "community-create", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

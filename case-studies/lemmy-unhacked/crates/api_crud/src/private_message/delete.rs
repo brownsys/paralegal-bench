@@ -14,6 +14,7 @@ impl PerformCrud for DeletePrivateMessage {
   type Response = PrivateMessageResponse;
 
   #[tracing::instrument(skip(self, context, websocket_id))]
+  #[cfg_attr(feature = "private-message-delete", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

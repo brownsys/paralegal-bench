@@ -15,6 +15,7 @@ impl PerformCrud for GetPost {
   type Response = GetPostResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -2,7 +2,9 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, EditCommunity},
-  utils::{blocking, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::protocol::activities::community::update::UpdateCommunity;
 use lemmy_db_schema::{
@@ -20,6 +22,7 @@ impl PerformCrud for EditCommunity {
   type Response = CommunityResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "community-update", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -51,6 +54,11 @@ impl PerformCrud for EditCommunity {
       Community::read(conn, community_id)
     })
     .await??;
+    #[cfg(feature = "hypothetical-fix")]
+    {
+      check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+      check_community_deleted_or_removed(community_id, context.pool()).await?;
+    }
 
     let community_form = CommunityForm {
       name: read_community.name,

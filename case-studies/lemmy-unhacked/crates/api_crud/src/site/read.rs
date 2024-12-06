@@ -7,10 +7,7 @@ use lemmy_api_common::{
 };
 use lemmy_db_views::structs::SiteView;
 use lemmy_db_views_actor::structs::{
-  CommunityBlockView,
-  CommunityFollowerView,
-  CommunityModeratorView,
-  PersonBlockView,
+  CommunityBlockView, CommunityFollowerView, CommunityModeratorView, PersonBlockView,
   PersonViewSafe,
 };
 use lemmy_utils::{error::LemmyError, version, ConnectionId};
@@ -22,6 +19,7 @@ impl PerformCrud for GetSite {
   type Response = GetSiteResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "site-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

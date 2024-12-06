@@ -3,12 +3,8 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   comment::{CommentResponse, CreateComment},
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    check_post_deleted_or_removed,
-    get_local_user_view_from_jwt,
-    get_post,
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    check_post_deleted_or_removed, get_local_user_view_from_jwt, get_post,
   },
 };
 use lemmy_apub::{
@@ -32,8 +28,7 @@ use lemmy_utils::{
 };
 use lemmy_websocket::{
   send::{send_comment_ws_message, send_local_notifs},
-  LemmyContext,
-  UserOperationCrud,
+  LemmyContext, UserOperationCrud,
 };
 
 #[async_trait::async_trait(?Send)]
@@ -41,6 +36,7 @@ impl PerformCrud for CreateComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "comment-create", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -59,6 +55,7 @@ impl PerformCrud for CreateComment {
     let community_id = post.community_id;
 
     check_community_ban(local_user_view.person.id, community_id, context.pool()).await?;
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(community_id, context.pool()).await?;
     check_post_deleted_or_removed(&post)?;
 

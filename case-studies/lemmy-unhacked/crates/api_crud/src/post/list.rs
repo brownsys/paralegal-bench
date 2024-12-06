@@ -3,9 +3,7 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   post::{GetPosts, GetPostsResponse},
   utils::{
-    blocking,
-    check_private_instance,
-    get_local_user_view_from_jwt_opt,
+    blocking, check_private_instance, get_local_user_view_from_jwt_opt,
     listing_type_with_site_default,
   },
 };
@@ -20,6 +18,7 @@ impl PerformCrud for GetPosts {
   type Response = GetPostsResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "post-list", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

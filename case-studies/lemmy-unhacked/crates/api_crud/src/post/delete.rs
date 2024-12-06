@@ -3,10 +3,7 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   post::{DeletePost, PostResponse},
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
   },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
@@ -22,6 +19,7 @@ impl PerformCrud for DeletePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-delete", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -45,6 +43,7 @@ impl PerformCrud for DeletePost {
       context.pool(),
     )
     .await?;
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the creator can delete

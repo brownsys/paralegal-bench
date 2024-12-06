@@ -2,7 +2,9 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   comment::{CommentResponse, DeleteComment},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+  },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use lemmy_db_schema::{
@@ -13,8 +15,7 @@ use lemmy_db_views::structs::CommentView;
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::{
   send::{send_comment_ws_message, send_local_notifs},
-  LemmyContext,
-  UserOperationCrud,
+  LemmyContext, UserOperationCrud,
 };
 
 #[async_trait::async_trait(?Send)]
@@ -22,6 +23,7 @@ impl PerformCrud for DeleteComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "comment-delete", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -48,6 +50,8 @@ impl PerformCrud for DeleteComment {
       context.pool(),
     )
     .await?;
+    #[cfg(feature = "hypothetical-fix")]
+    check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
 
     // Verify that only the creator can delete
     if local_user_view.person.id != orig_comment.creator.id {

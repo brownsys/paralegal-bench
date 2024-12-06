@@ -14,6 +14,7 @@ impl PerformCrud for GetPrivateMessages {
   type Response = PrivateMessagesResponse;
 
   #[tracing::instrument(skip(self, context, _websocket_id))]
+  #[cfg_attr(feature = "private-message-read", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

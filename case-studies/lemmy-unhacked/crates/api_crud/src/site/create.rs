@@ -26,6 +26,7 @@ impl PerformCrud for CreateSite {
   type Response = SiteResponse;
 
   #[tracing::instrument(skip(context, _websocket_id))]
+  #[cfg_attr(feature = "site-create", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,

@@ -2,7 +2,10 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   comment::{CommentResponse, RemoveComment},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_mod_or_admin,
+  },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use lemmy_db_schema::{
@@ -18,8 +21,7 @@ use lemmy_db_views::structs::CommentView;
 use lemmy_utils::{error::LemmyError, ConnectionId};
 use lemmy_websocket::{
   send::{send_comment_ws_message, send_local_notifs},
-  LemmyContext,
-  UserOperationCrud,
+  LemmyContext, UserOperationCrud,
 };
 
 #[async_trait::async_trait(?Send)]
@@ -27,6 +29,7 @@ impl PerformCrud for RemoveComment {
   type Response = CommentResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "comment-remove", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -48,6 +51,8 @@ impl PerformCrud for RemoveComment {
       context.pool(),
     )
     .await?;
+    #[cfg(feature = "hypothetical-fix")]
+    check_community_deleted_or_removed(orig_comment.community.id, context.pool()).await?;
 
     // Verify that only a mod or admin can remove
     is_mod_or_admin(

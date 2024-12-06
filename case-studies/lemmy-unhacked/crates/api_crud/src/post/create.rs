@@ -4,12 +4,8 @@ use lemmy_api_common::{
   post::{CreatePost, PostResponse},
   request::fetch_site_data,
   utils::{
-    blocking,
-    check_community_ban,
-    check_community_deleted_or_removed,
-    get_local_user_view_from_jwt,
-    honeypot_check,
-    mark_post_as_read,
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, honeypot_check, mark_post_as_read,
   },
 };
 use lemmy_apub::{
@@ -29,11 +25,7 @@ use lemmy_db_views_actor::structs::CommunityView;
 use lemmy_utils::{
   error::LemmyError,
   utils::{
-    check_slurs,
-    check_slurs_opt,
-    clean_optional_text,
-    clean_url_params,
-    is_valid_post_title,
+    check_slurs, check_slurs_opt, clean_optional_text, clean_url_params, is_valid_post_title,
   },
   ConnectionId,
 };
@@ -47,6 +39,7 @@ impl PerformCrud for CreatePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-create", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -66,6 +59,7 @@ impl PerformCrud for CreatePost {
     }
 
     check_community_ban(local_user_view.person.id, data.community_id, context.pool()).await?;
+    #[cfg(feature = "correct")]
     check_community_deleted_or_removed(data.community_id, context.pool()).await?;
 
     let community_id = data.community_id;

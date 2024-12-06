@@ -2,7 +2,10 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use lemmy_api_common::{
   post::{PostResponse, RemovePost},
-  utils::{blocking, check_community_ban, get_local_user_view_from_jwt, is_mod_or_admin},
+  utils::{
+    blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt, is_mod_or_admin,
+  },
 };
 use lemmy_apub::activities::deletion::{send_apub_delete_in_community, DeletableObjects};
 use lemmy_db_schema::{
@@ -21,6 +24,7 @@ impl PerformCrud for RemovePost {
   type Response = PostResponse;
 
   #[tracing::instrument(skip(context, websocket_id))]
+  #[cfg_attr(feature = "post-remove", paralegal::analyze)]
   async fn perform(
     &self,
     context: &Data<LemmyContext>,
@@ -39,6 +43,9 @@ impl PerformCrud for RemovePost {
       context.pool(),
     )
     .await?;
+
+    #[cfg(feature = "hypothetical-fix")]
+    check_community_deleted_or_removed(orig_post.community_id, context.pool()).await?;
 
     // Verify that only the mods can remove
     is_mod_or_admin(
