@@ -1,6 +1,6 @@
 
 [["diesel::query_builder::functions::insert_into"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 # [["lemmy_db_schema::schema::site::table"]]
@@ -10,15 +10,15 @@ on_return = true
 # marker = "db_access"
 
 [["lemmy_db_views::local_user_view::LocalUserView::find_by_email_or_name"]]
-markers = ["db_access", "instance", "instance_safe"]
+markers = ["instance", "instance_safe"]
 on_return = true
 
 [["lemmy_db_views::structs::LocalUserView::read_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::impls::site::Site::read_local_site"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::check_user_valid"]]
@@ -26,15 +26,15 @@ markers = ["instance_ban_check", "instance_delete_check"]
 on_return = true
 
 [["lemmy_db_views::structs::CommentView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::CommentLike as lemmy_db_schema::traits::Likeable>::remove"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::CommentLike as lemmy_db_schema::traits::Likeable>::like"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["lemmy_api_common::utils::check_community_deleted_or_removed"]]
@@ -47,528 +47,536 @@ on_return = true
 
 [["lemmy_db_schema::source::comment::Comment::update_read"]]
 on_return = true
-markers = ["db_access", "community", "instance"]
+# Marked as not community by justus
+# markers = ["community", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::comment::CommentSaved as lemmy_db_schema::traits::Saveable>::save"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::CommentSaved as lemmy_db_schema::traits::Saveable>::unsave"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment_report::CommentReport as lemmy_db_schema::traits::Reportable>::report"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["lemmy_db_views::structs::CommentReportView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::comment_report_view::CommentReportQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::delete"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::join"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityModerator as lemmy_db_schema::traits::Joinable>::leave"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::community::CommunityModerator::delete_for_community"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModAddCommunity as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::delete"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityModeratorView::for_community"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityPersonBan as lemmy_db_schema::traits::Bannable>::ban"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityPersonBan as lemmy_db_schema::traits::Bannable>::unban"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityFollower as lemmy_db_schema::traits::Followable>::unfollow"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::CommunityFollower as lemmy_db_schema::traits::Followable>::follow"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModBanFromCommunity as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonViewSafe::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonViewSafe::admins"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::remove_user_data_in_community"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community_block::CommunityBlock as lemmy_db_schema::traits::Blockable>::block"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community_block::CommunityBlock as lemmy_db_schema::traits::Blockable>::unblock"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModHideCommunity as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModTransferCommunity as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_views_actor::person_mention_view::PersonMentionQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::person_mention::PersonMention::mark_all_as_read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::private_message::PrivateMessage::mark_all_as_read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::person_mention::PersonMention as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::person_mention::PersonMention::update_read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonMentionView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::CommentView::get_unread_replies"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonMentionView::get_unread_mentions"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::PrivateMessageView::get_unread_messages"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::person::Person::add_admin"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModAdd as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::person::Person::ban_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::remove_user_data"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModBan as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::person_block::PersonBlock as lemmy_db_schema::traits::Blockable>::block"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::person_block::PersonBlock as lemmy_db_schema::traits::Blockable>::unblock"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::local_user::LocalUser::update_password"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonViewSafe::banned"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::CommentReportView::get_report_count"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::PostReportView::get_report_count"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::person::Person as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::local_user::LocalUser as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::PostLike as lemmy_db_schema::traits::Likeable>::remove"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::PostLike as lemmy_db_schema::traits::Likeable>::like"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["lemmy_api_common::utils::mark_post_as_read"]]
-markers = ["db_access", "community", "instance"]
+# Marked as not community by justus
+# markers = ["community", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::mark_post_as_unread"]]
-markers = ["db_access", "community", "instance"]
+# Marked as not community by justus
+# markers = ["community", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::post::Post::update_locked"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModLockPost as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["lemmy_db_views::structs::PostView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::PostSaved as lemmy_db_schema::traits::Saveable>::save"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::PostSaved as lemmy_db_schema::traits::Saveable>::unsave"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::post::Post::update_stickied"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModStickyPost as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post_report::PostReport as lemmy_db_schema::traits::Reportable>::report"]]
-markers = ["db_access", "community", "instance"]
+markers = ["community", "instance"]
 on_return = true
 
 [["lemmy_db_views::structs::PostReportView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::post_report_view::PostReportQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post_report::PostReport as lemmy_db_schema::traits::Reportable>::report"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::private_message::PrivateMessage::update_read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::read"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::delete"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::moderator::AdminPurgeComment as lemmy_db_schema::traits::Crud>::create"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["lemmy_api_common::request::purge_image_from_pictrs"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["lemmy_api_common::utils::purge_image_posts_for_person"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::moderator::AdminPurgePerson as lemmy_db_schema::traits::Crud>::create"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Crud>::delete"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::AdminPurgePost as lemmy_db_schema::traits::Crud>::create"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::registration_application::RegistrationApplication as lemmy_db_schema::traits::Crud>::update"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["lemmy_db_views::structs::RegistrationApplicationView::read"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["<lemmy_db_schema::source::local_user::LocalUser as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::LocalUserView::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::registration_application_view::RegistrationApplicationQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::RegistrationApplicationView::get_unread_count"]]
 on_return = true
-markers = ["db_access", "instance"]
+markers = ["instance"]
 
 [["lemmy_db_schema::source::person::Person::leave_admin"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::structs::SiteView::read_local"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::check_private_instance"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModRemovePostView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModLockPostView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModStickyPostView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModRemoveCommentView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModBanFromCommunityView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModAddCommunityView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModTransferCommunityView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_moderator::structs::ModHideCommunityView::list"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_apub::fetcher::search::search_by_apub_id"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::community_view::CommunityQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::person_view::PersonQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::comment_view::CommentQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::comment::Comment as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::person_mention::PersonMention::read_by_comment_and_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::person_mention::PersonMention::update_read"]]
-markers = ["db_access", "instance", "community"]
+# marked as not community by justus
+# markers = ["instance", "community"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::comment::Comment::update_deleted"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::comment::Comment::update_removed"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModRemoveComment as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::comment::Comment::update_content"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::community::Community::update_deleted"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::community::Community::update_removed"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::moderator::ModRemoveCommunity as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::community::Community as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityView::is_mod_or_admin"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["<lemmy_db_schema::source::post::Post as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::post::Post::update_deleted"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_db_schema::source::post::Post::update_removed"]]
-markers = ["db_access", "instance", "community"]
+markers = ["instance", "community"]
 on_return = true
 
 [["lemmy_api_common::utils::check_person_block"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::private_message::PrivateMessage as lemmy_db_schema::traits::Crud>::read"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::private_message::PrivateMessage::update_deleted"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::private_message::PrivateMessage::update_content"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::private_message_view::PrivateMessageQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::site::Site as lemmy_db_schema::traits::Crud>::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["<lemmy_db_schema::source::site::Site as lemmy_db_schema::traits::Crud>::update"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityFollowerView::for_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityBlockView::for_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::PersonBlockView::for_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityModeratorView::for_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::local_user::LocalUser::set_all_users_registration_applications_accepted"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_schema::source::local_user::LocalUser::set_all_users_email_verified"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_api_common::utils::delete_user_account"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views::post_view::PostQueryBuilder::create"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
 
 [["lemmy_db_views_actor::structs::CommunityModeratorView::for_person"]]
-markers = ["db_access", "instance"]
+markers = ["instance"]
 on_return = true
