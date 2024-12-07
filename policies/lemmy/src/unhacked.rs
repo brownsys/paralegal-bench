@@ -56,20 +56,20 @@ pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
                 }
             }
             // This is what it should be!!!
-            //
-            // if !delete_checks.has_ctrl_influence(access, &ctx) {
-            //     ctx.node_error(access, "Unprotected access (delete)");
-            // }
-            // if !ban_checks.has_ctrl_influence(access, &ctx) {
-            //     ctx.node_error(access, "Unprotected access (ban)");
-            // }
 
-            if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            if !delete_checks.has_ctrl_influence(access, &ctx) {
                 ctx.node_error(access, "Unprotected access (delete)");
             }
-            if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            if !ban_checks.has_ctrl_influence(access, &ctx) {
                 ctx.node_error(access, "Unprotected access (ban)");
             }
+
+            // if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            //     ctx.node_error(access, "Unprotected access (delete)");
+            // }
+            // if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            //     ctx.node_error(access, "Unprotected access (ban)");
+            // }
         }
     }
     assert_warning!(
