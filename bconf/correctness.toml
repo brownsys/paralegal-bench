@@ -82,10 +82,10 @@ mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 
-[[experiment.correctness]]
-mode = "case-study"
-application = "lemmy"
-controller-run-mode = "affected-merged"
+# [[experiment.correctness]]
+# mode = "case-study"
+# application = "lemmy"
+# controller-run-mode = "affected-merged"
 
 [[experiment.correctness]]
 mode = "case-study"

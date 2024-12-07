@@ -48,7 +48,11 @@ pub struct RunMeasurements {
     /// Total time takes by the `cargo paralegal-flow` command
     pdg_time: TimeMeasurement,
     pdg_timed_out: bool,
+    /// How long the last analzyer invokation took
+    last_self_time: Option<TimeMeasurement>,
+    /// Total time from the flow analyzer on included crates
     flow_time: Option<TimeMeasurement>,
+    dump_time: Option<TimeMeasurement>,
     rustc_time: Option<TimeMeasurement>,
     /// Total time spent executing the policy
     policy_time: Option<TimeMeasurement>,
@@ -103,6 +107,8 @@ impl RunMeasurements {
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,
             flow_time: None,
+            last_self_time: None,
+            dump_time: None,
             rustc_time: None,
             policy_time: None,
             pdg_timed_out: pdg_stat.timed_out,
@@ -163,7 +169,9 @@ impl RunMeasurements {
         set!(seen_locs, desc_stats.seen_locs);
         set!(seen_functions, desc_stats.seen_functions);
         set!(file_size, file_size);
-        set!(flow_time, desc_stats.time.into());
+        set!(flow_time, desc_stats.total_time.into());
+        set!(dump_time, desc_stats.dump_time.into());
+        set!(last_self_time, desc_stats.self_time.into());
     }
 
     pub fn add_changed_lines(&mut self, l: u32) {
