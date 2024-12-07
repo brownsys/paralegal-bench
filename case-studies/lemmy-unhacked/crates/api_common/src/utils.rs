@@ -126,6 +126,11 @@ pub fn apply_label_deleted<T>(t: T) -> T {
   t
 }
 
+#[paralegal::marker(exception, arguments = [0])]
+pub fn policy_exception<R>(f: impl FnOnce() -> R) -> R {
+  f()
+}
+
 #[tracing::instrument(skip_all)]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,

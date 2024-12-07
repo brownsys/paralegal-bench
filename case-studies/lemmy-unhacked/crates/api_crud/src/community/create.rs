@@ -3,7 +3,7 @@ use activitypub_federation::core::{object_id::ObjectId, signatures::generate_act
 use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, CreateCommunity},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin, policy_exception},
 };
 use lemmy_apub::{
   generate_followers_url, generate_inbox_url, generate_local_apub_endpoint,
@@ -106,7 +106,9 @@ impl PerformCrud for CreateCommunity {
       person_id: local_user_view.person.id,
     };
 
-    let join = move |conn: &'_ _| CommunityModerator::join(conn, &community_moderator_form);
+    let join = move |conn: &'_ _| {
+      policy_exception(|| CommunityModerator::join(conn, &community_moderator_form))
+    };
     blocking(context.pool(), join)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "community_moderator_already_exists"))?;
@@ -118,7 +120,9 @@ impl PerformCrud for CreateCommunity {
       pending: false,
     };
 
-    let follow = move |conn: &'_ _| CommunityFollower::follow(conn, &community_follower_form);
+    let follow = move |conn: &'_ _| {
+      policy_exception(|| CommunityFollower::follow(conn, &community_follower_form))
+    };
     blocking(context.pool(), follow)
       .await?
       .map_err(|e| LemmyError::from_error_message(e, "community_follower_already_exists"))?;
