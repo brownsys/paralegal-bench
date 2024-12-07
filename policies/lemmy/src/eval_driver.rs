@@ -552,6 +552,7 @@ fn print_ctrler_results<W: std::io::Write>(
 }
 
 #[derive(Clone, Copy, ValueEnum, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub enum LemmyPackage {
     Api,
     ApiCrud,

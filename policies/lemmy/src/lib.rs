@@ -123,7 +123,7 @@ impl Prop {
         match self {
             Self::Community => cx.named_policy(Identifier::new_intern("Community Policy"), |cx| {
                 if new_version {
-                    unhacked::check_community(cx)
+                    unhacked::check_community(cx, verbose)
                 } else {
                     CommunityProp::new(cx).check()
                 }

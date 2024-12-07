@@ -7,6 +7,11 @@ source-dir = "case-studies/lemmy"
 flow-args = ["--target", "lemmy_api", "--relaxed"]
 external-annotations = "external-annotations.toml"
 
+[app-config.lemmy-new]
+source-dir = "case-studies/lemmy-unhacked"
+flow-args = ["--relaxed"]
+external-annotations = "external-annotations.toml"
+
 [app-config.plume]
 source-dir = "case-studies/plume"
 external-annotations = "external-annotations.toml"
@@ -80,6 +85,20 @@ policy-mode = "unified"
 [[experiment.correctness]]
 mode = "case-study"
 application = "lemmy"
+controller-run-mode = "affected-merged"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+app-config-override = "lemmy-new"
+controller-run-mode = "affected-merged"
+
+[[experiment.correctness]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+app-config-override = "lemmy-new"
 controller-run-mode = "affected-merged"
 
 [[experiment.correctness]]

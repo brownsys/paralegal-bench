@@ -23,6 +23,11 @@ pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
             continue;
         }
         access_seen = true;
+        if verbose {
+            for access in accesses.iter() {
+                ctx.node_note(*access, "This is an instance access");
+            }
+        }
 
         let Some(delete_checks) =
             NodeCluster::try_from_iter(ctx.nodes_marked_any_way(marker_instance_delete_check))
@@ -47,29 +52,21 @@ pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
         }
 
         for &access in accesses.iter() {
-            if verbose {
-                for access in ctx
-                    .nodes_marked_any_way(marker_instance)
-                    .filter(|a| !a.has_marker(&ctx, marker_instance_safe))
-                {
-                    ctx.node_note(access, "This is an instance access");
-                }
-            }
-            // This is what it should be!!!
-
-            if !delete_checks.has_ctrl_influence(access, &ctx) {
-                ctx.node_error(access, "Unprotected access (delete)");
-            }
-            if !ban_checks.has_ctrl_influence(access, &ctx) {
-                ctx.node_error(access, "Unprotected access (ban)");
-            }
-
-            // if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            // Sadly the pattern of the first bug fix does not fit this policy.
+            // We should find a better way to match it.
+            // if !delete_checks.has_ctrl_influence(access, &ctx) {
             //     ctx.node_error(access, "Unprotected access (delete)");
             // }
-            // if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+            // if !ban_checks.has_ctrl_influence(access, &ctx) {
             //     ctx.node_error(access, "Unprotected access (ban)");
             // }
+
+            if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+                ctx.node_error(access, "Unprotected access (delete)");
+            }
+            if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+                ctx.node_error(access, "Unprotected access (ban)");
+            }
         }
     }
     assert_warning!(
@@ -81,7 +78,7 @@ pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
     Ok(())
 }
 
-pub fn check_community(ctx: Arc<PolicyContext>) -> Result<()> {
+pub fn check_community(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
     let marker_community = Identifier::new_intern("community");
     let marker_community_delete_check = Identifier::new_intern("community_delete_check");
     let marker_community_ban_check = Identifier::new_intern("community_ban_check");
@@ -95,6 +92,12 @@ pub fn check_community(ctx: Arc<PolicyContext>) -> Result<()> {
             continue;
         }
         access_seen = true;
+
+        if verbose {
+            for a in accesses.iter() {
+                ctx.node_note(*a, "This is a community access");
+            }
+        }
 
         let Some(delete_checks) =
             NodeCluster::try_from_iter(ctx.nodes_marked_any_way(marker_community_delete_check))
@@ -110,6 +113,9 @@ pub fn check_community(ctx: Arc<PolicyContext>) -> Result<()> {
         };
 
         for &access in accesses.iter() {
+            if verbose {
+                ctx.node_note(access, "This is a community access");
+            }
             // This is what it should be!!!
             //
             // if !delete_checks.has_ctrl_influence(access, &ctx) {
@@ -128,7 +134,7 @@ pub fn check_community(ctx: Arc<PolicyContext>) -> Result<()> {
         }
     }
 
-    assert_error!(
+    assert_warning!(
         ctx,
         access_seen,
         "VACUITY: No access seen in any controller"

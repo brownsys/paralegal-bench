@@ -1,6 +1,8 @@
 use std::{rc::Rc, slice};
 
-use lemmy::eval_driver::{BatchConfig, GetUserVersion, LemmyPackage};
+use lemmy::eval_driver::{
+    BatchConfig, GetUserVersion, LemmyPackage, LEMMY_API_CONTROLLERS, LEMMY_API_CRUD_CONTROLLERS,
+};
 
 use crate::{
     input::{ControllerRunMode, PolicyMode, PolicyResult},
@@ -50,9 +52,9 @@ struct BatchConfigPreparer<'a> {
 }
 
 impl<'a> BatchConfigPreparer<'a> {
-    fn case_study_run(
+    fn case_study_run<'b>(
         self,
-        controller_features: &[&[&'a str]],
+        controller_features: impl IntoIterator<Item = &'a str> + Clone + 'b,
         expect_fail: bool,
         extra_feature: Option<&'static str>,
     ) -> Run<'a> {
@@ -67,7 +69,6 @@ impl<'a> BatchConfigPreparer<'a> {
             ),
             PolicyMode::None => no_policy(),
         };
-        let controllers = controller_features.iter().flat_map(|i| i.iter()).copied();
         let mut exp = self.builder.case_study_run(
             policy_name,
             policy_fn,
@@ -76,7 +77,7 @@ impl<'a> BatchConfigPreparer<'a> {
             } else {
                 PolicyResult::Pass
             },
-            controllers,
+            controller_features,
         );
         exp.bug = Some(self.bug.as_ref());
         if let Some(package) = self.new_version {
@@ -90,27 +91,23 @@ impl<'a> BatchConfigPreparer<'a> {
         exp
     }
 
-    fn mk_batch_exps(
+    fn mk_batch_exps<'b>(
         self,
         expect_fail: bool,
-        controllers: &'a [&'static [&'static str]],
+        controllers: impl IntoIterator<Item = &'a str> + Clone + 'a,
         extra_feature: Option<&'static str>,
     ) -> Box<dyn Iterator<Item = Run<'a>> + 'a> {
         match self.builder.experiment_config.controller_run_mode {
             ControllerRunMode::Affected => {
-                let iter = controllers.iter().flat_map(|s| s.iter()).map(move |c| {
-                    self.case_study_run(
-                        slice::from_ref(&slice::from_ref(c)),
-                        expect_fail,
-                        extra_feature,
-                    )
-                });
+                let iter = controllers
+                    .into_iter()
+                    .map(move |c| self.case_study_run([c], expect_fail, extra_feature));
                 Box::new(iter)
             }
             ControllerRunMode::AffectedMerged => {
                 // If this batch happens to be empty we must return no run.
                 // Otherwise this can cause spuriously succeeding runs.
-                if controllers.iter().flat_map(|s| s.iter()).next().is_none() {
+                if controllers.clone().into_iter().next().is_none() {
                     Box::new(std::iter::empty())
                 } else {
                     Box::new(std::iter::once(self.case_study_run(
@@ -142,7 +139,7 @@ impl<'a> BatchConfigPreparer<'a> {
         let run_pair = move |ctrl| {
             let failing = || {
                 self.case_study_run(
-                    slice::from_ref(&slice::from_ref(&ctrl)),
+                    [ctrl],
                     true,
                     if self.batch_config.expect_failure {
                         initial_extra_feature
@@ -153,7 +150,7 @@ impl<'a> BatchConfigPreparer<'a> {
             };
             let succeeding = {
                 self.case_study_run(
-                    slice::from_ref(&slice::from_ref(&ctrl)),
+                    [ctrl],
                     !self.batch_config.expect_failure,
                     if self.batch_config.expect_failure {
                         changed_extra_feature
@@ -182,35 +179,52 @@ impl<'a> BatchConfigPreparer<'a> {
                     .flat_map(move |c| run_pair(&c)),
             ),
             _ => {
-                let iter = self
-                    .mk_batch_exps(
-                        self.batch_config.expect_failure,
-                        self.batch_config.baseline_controllers,
+                let new_version = self.new_version;
+                macro_rules! select_applicable {
+                    ($slc:expr) => {{
+                        let mut it = $slc
+                            .into_iter()
+                            .flat_map(|s| s.iter())
+                            .copied()
+                            .filter(move |c| match new_version {
+                                None => true,
+                                Some(LemmyPackage::Api) => LEMMY_API_CONTROLLERS.contains(c),
+                                Some(LemmyPackage::ApiCrud) => {
+                                    LEMMY_API_CRUD_CONTROLLERS.contains(c)
+                                }
+                            })
+                            .peekable();
+                        it.peek().is_some().then(move || it)
+                    }};
+                }
+                let initial_expectation = self.batch_config.expect_failure;
+                let mut runs = vec![];
+                if let Some(it) = select_applicable!(self.batch_config.baseline_controllers) {
+                    runs.extend(self.mk_batch_exps(initial_expectation, it, initial_extra_feature));
+                }
+                if let Some(affected) = change
+                    .as_ref()
+                    .and_then(|c| select_applicable!(c.affected_controllers.as_slice()))
+                {
+                    runs.extend(self.mk_batch_exps(
+                        initial_expectation,
+                        affected,
                         initial_extra_feature,
-                    )
-                    .chain(change.iter().flat_map(move |change| {
-                        change.affected_controllers.iter().flat_map(move |c| {
-                            self.mk_batch_exps(
-                                self.batch_config.expect_failure,
-                                slice::from_ref(c),
-                                initial_extra_feature,
-                            )
-                        })
+                    ));
+                };
+                if let Some(fixed) = select_applicable!(change
+                    .as_ref()
+                    .map_or(self.batch_config.baseline_controllers, |ctrl| {
+                        ctrl.affected_controllers.as_slice()
                     }))
-                    .chain(change.iter().flat_map(move |change| {
-                        let fixed = change
-                            .affected_controllers
-                            .as_ref()
-                            .map_or(self.batch_config.baseline_controllers, |ctrl| {
-                                slice::from_ref(ctrl)
-                            });
-                        self.mk_batch_exps(
-                            !self.batch_config.expect_failure,
-                            fixed,
-                            changed_extra_feature,
-                        )
-                    }));
-                Box::new(iter)
+                {
+                    runs.extend(self.mk_batch_exps(
+                        !self.batch_config.expect_failure,
+                        fixed,
+                        changed_extra_feature,
+                    ))
+                }
+                Box::new(runs.into_iter())
             }
         }
     }

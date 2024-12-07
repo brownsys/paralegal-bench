@@ -183,6 +183,7 @@ impl Default for ControllerRunMode {
 #[strum(serialize_all = "kebab-case")]
 pub enum Application {
     Plume,
+    #[serde(rename_all = "kebab-case")]
     Lemmy {
         #[serde(default)]
         policies: Box<[lemmy::Prop]>,
