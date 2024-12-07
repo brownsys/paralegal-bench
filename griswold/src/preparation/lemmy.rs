@@ -83,6 +83,7 @@ impl<'a> BatchConfigPreparer<'a> {
         if let Some(package) = self.new_version {
             exp.extra_flow_args.extend(["--target", package.as_str()]);
         }
+        exp.package = self.new_version;
         exp.extra_cargo_args
             .extend(["--features", self.batch_config.baseline_feature]);
         if let Some(f) = extra_feature {

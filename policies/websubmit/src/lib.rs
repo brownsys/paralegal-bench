@@ -580,6 +580,7 @@ impl PropRunner {
                     let store_scopes = self
                         .cx
                         .influencers(&sink_callsite, EdgeSelection::Data)
+                        .chain(sink_callsite.iter_global_nodes())
                         .filter(|n| self.cx.has_marker(marker!(scopes), *n))
                         .collect::<Vec<_>>();
                     if store_scopes.is_empty() {

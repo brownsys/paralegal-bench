@@ -76,7 +76,10 @@ impl PerformCrud for GetSite {
       }
     };
 
-    let admins = blocking(context.pool(), PersonViewSafe::admins).await??;
+    let admins = blocking(context.pool(), |db| {
+      policy_exception(|| PersonViewSafe::admins(db))
+    })
+    .await??;
 
     let online = context
       .chat_server()

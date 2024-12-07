@@ -1,5 +1,6 @@
 //! Types describing data the runner emits
 
+use lemmy::eval_driver::LemmyPackage;
 use paralegal_policy::paralegal_spdg::utils::write_sep;
 use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
 use paralegal_policy::RootContext;
@@ -37,6 +38,8 @@ pub struct RunMeasurements {
     commit: Option<String>,
     /// Used by lemmy to identify the bug that was tested
     bug: Option<String>,
+    /// Used by new-style lemmy to identify the package that was tested
+    package: Option<LemmyPackage>,
     run: String,
     policy: String,
     expectation: PolicyResult,
@@ -95,6 +98,7 @@ impl RunMeasurements {
             ablation_feature: exp.ablation_feature.map(ToOwned::to_owned),
             commit: exp.commit.clone(),
             bug: exp.bug.map(ToOwned::to_owned),
+            package: exp.package,
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,

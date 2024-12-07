@@ -9,6 +9,7 @@ use cargo::{
 use chrono;
 use csv::Writer;
 use indicatif::ProgressBar;
+use lemmy::eval_driver::LemmyPackage;
 use paralegal_policy::{GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
@@ -46,6 +47,8 @@ pub struct Run<'c> {
     /// performed on.
     pub commit: Option<String>,
     pub bug: Option<&'c str>,
+    /// Only set in new-style lemmy evals to identify the analyzed package
+    pub package: Option<LemmyPackage>,
     pub expectation: PolicyResult,
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
@@ -85,6 +88,7 @@ impl<'a> Run<'a> {
             expectation,
             prepare: None,
             bug: None,
+            package: None,
             ablation_feature: None,
             commit: None,
             controller: None,

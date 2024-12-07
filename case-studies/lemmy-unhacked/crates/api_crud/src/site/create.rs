@@ -3,7 +3,10 @@ use activitypub_federation::core::signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use lemmy_api_common::{
   site::{CreateSite, SiteResponse},
-  utils::{blocking, get_local_user_view_from_jwt, is_admin, site_description_length_check},
+  utils::{
+    blocking, get_local_user_view_from_jwt, is_admin, policy_exception,
+    site_description_length_check,
+  },
 };
 use lemmy_apub::generate_site_inbox_url;
 use lemmy_db_schema::{
@@ -34,8 +37,12 @@ impl PerformCrud for CreateSite {
   ) -> Result<SiteResponse, LemmyError> {
     let data: &CreateSite = self;
 
-    let read_site = Site::read_local_site;
-    if blocking(context.pool(), read_site).await?.is_ok() {
+    if blocking(context.pool(), |db| {
+      policy_exception(|| Site::read_local_site(db))
+    })
+    .await?
+    .is_ok()
+    {
       return Err(LemmyError::from_message("site_already_exists"));
     };
 
