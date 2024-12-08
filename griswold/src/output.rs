@@ -44,6 +44,7 @@ pub struct RunMeasurements {
     policy: String,
     expectation: PolicyResult,
     adaptive_depth: bool,
+    pdg_caching: bool,
     result: Option<PolicyResult>,
     /// Total time takes by the `cargo paralegal-flow` command
     pdg_time: TimeMeasurement,
@@ -107,6 +108,7 @@ impl RunMeasurements {
             result: None,
             pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,
+            pdg_caching: exp.config.pdg_caching,
             flow_time: None,
             last_self_time: None,
             dump_time: None,

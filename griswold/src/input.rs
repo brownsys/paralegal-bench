@@ -95,6 +95,8 @@ pub struct ExperimentConfig {
     pub policy_mode: PolicyMode,
     #[serde(default = "const_true")]
     pub adaptive_depth: bool,
+    #[serde(default = "const_true")]
+    pub pdg_caching: bool,
     #[serde(flatten)]
     pub application: Application,
     #[serde(default)]
