@@ -10,7 +10,7 @@ use chrono;
 use csv::Writer;
 use indicatif::ProgressBar;
 use lemmy::eval_driver::LemmyPackage;
-use paralegal_policy::{GraphLocation, RootContext};
+use paralegal_policy::{paralegal_spdg::AnalyzerStats, GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
     io::{BufRead, BufReader, Seek},
@@ -320,8 +320,8 @@ impl EvaluationConfig {
                     match process.try_wait()? {
                         Some(e) if e.success() => {
                             let policy = exp.policy.clone();
+                            let graph_loc = GraphLocation::std(".");
                             let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
-                                let graph_loc = GraphLocation::std(".");
                                 let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
                                 let mut config = paralegal_policy::Config::default();
                                 //config.output_writer = Box::new(policy_out.clone());
@@ -333,6 +333,8 @@ impl EvaluationConfig {
                                 anyhow::Ok((ctx, success, file_size, policy_start.elapsed()))
                             });
                             let (ctx, success, file_size, traversal_time) = res?;
+                            let analyzer_stats =
+                                AnalyzerStats::canonical_read(graph_loc.stats_path())?;
                             run_stats.add_policy_stat(
                                 cmd_stat,
                                 ctx.as_ref(),
@@ -343,6 +345,7 @@ impl EvaluationConfig {
                                 },
                                 traversal_time,
                                 file_size,
+                                &analyzer_stats,
                             );
                             for ctrl in ctx.desc().controllers.values() {
                                 output
@@ -398,19 +401,6 @@ fn dump_code_for(
         .write(true)
         .open(code_out_path)?;
     ctx.write_analyzed_code(&mut out_file, false, include_elided_code)?;
-    out_file.flush()?;
-    out_file.rewind()?;
-    let lcount = BufReader::new(out_file).lines().count();
-    let ctx_locs = if include_elided_code {
-        ctx.desc().stats.seen_locs
-    } else {
-        ctx.desc().stats.pdg_locs
-    };
-    if ctx_locs != lcount as u32 {
-        progress.println(
-            format!("Warnings: Lines counted by context ({ctx_locs:?}) and lines written ({lcount:?}) are not the same.")
-        );
-    }
     Ok(())
 }
 

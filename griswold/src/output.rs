@@ -2,7 +2,7 @@
 
 use lemmy::eval_driver::LemmyPackage;
 use paralegal_policy::paralegal_spdg::utils::write_sep;
-use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
+use paralegal_policy::paralegal_spdg::{AnalyzerStats, Identifier, SPDGStats, SPDG};
 use paralegal_policy::RootContext;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -56,6 +56,7 @@ pub struct RunMeasurements {
     rustc_time: Option<TimeMeasurement>,
     /// Total time spent executing the policy
     policy_time: Option<TimeMeasurement>,
+    serialization_time: Option<TimeMeasurement>,
     deserialization_time: Option<TimeMeasurement>,
     /// Time spent preparing the `Context`
     precomputation_time: Option<TimeMeasurement>,
@@ -112,6 +113,7 @@ impl RunMeasurements {
             rustc_time: None,
             policy_time: None,
             pdg_timed_out: pdg_stat.timed_out,
+            serialization_time: None,
             deserialization_time: None,
             precomputation_time: None,
             traversal_time: None,
@@ -141,13 +143,13 @@ impl RunMeasurements {
         success: PolicyResult,
         traversal_time: Duration,
         file_size: u64,
+        desc_stats: &AnalyzerStats,
     ) {
         macro_rules! set {
             ($field:ident, $target:expr) => {
                 assert!(self.$field.replace($target).is_none());
             };
         }
-        let desc_stats = &ctx.desc().stats;
         set!(mean_cpu_usage_policy, cmd_stat.mean_cpu_usage);
         set!(peak_mem_usage_policy, cmd_stat.peak_mem_usage);
         set!(
@@ -159,6 +161,7 @@ impl RunMeasurements {
             deserialization_time,
             ctx.context_stats().deserialization.unwrap().into()
         );
+        set!(serialization_time, desc_stats.serialization_time.into());
         set!(traversal_time, traversal_time.into());
         set!(num_controllers, ctx.desc().controllers.len() as u16);
         set!(rustc_time, desc_stats.rustc_time.into());
