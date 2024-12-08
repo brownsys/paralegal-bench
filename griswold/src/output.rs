@@ -46,13 +46,14 @@ pub struct RunMeasurements {
     adaptive_depth: bool,
     pdg_caching: bool,
     result: Option<PolicyResult>,
-    /// Total time takes by the `cargo paralegal-flow` command
-    pdg_time: TimeMeasurement,
     pdg_timed_out: bool,
     /// How long the last analzyer invokation took
     last_self_time: Option<TimeMeasurement>,
-    /// Total time from the flow analyzer on included crates
-    flow_time: Option<TimeMeasurement>,
+    /// Total time spent on dependencies
+    dep_time: Option<TimeMeasurement>,
+    /// Total time spent type checking
+    tycheck_time: Option<TimeMeasurement>,
+    /// Time spent writing and serializing intermediate artifacts
     dump_time: Option<TimeMeasurement>,
     rustc_time: Option<TimeMeasurement>,
     /// Total time spent executing the policy
@@ -106,11 +107,11 @@ impl RunMeasurements {
             bug: exp.bug.map(ToOwned::to_owned),
             package: exp.package,
             result: None,
-            pdg_time: pdg_stat.elapsed.into(),
             adaptive_depth: exp.config.adaptive_depth,
             pdg_caching: exp.config.pdg_caching,
-            flow_time: None,
             last_self_time: None,
+            dep_time: None,
+            tycheck_time: None,
             dump_time: None,
             rustc_time: None,
             policy_time: None,
@@ -174,7 +175,8 @@ impl RunMeasurements {
         set!(seen_locs, desc_stats.seen_locs);
         set!(seen_functions, desc_stats.seen_functions);
         set!(file_size, file_size);
-        set!(flow_time, desc_stats.total_time.into());
+        set!(dep_time, desc_stats.dep_time.into());
+        set!(tycheck_time, desc_stats.tycheck_time.into());
         set!(dump_time, desc_stats.dump_time.into());
         set!(last_self_time, desc_stats.self_time.into());
     }
