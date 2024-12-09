@@ -70,6 +70,71 @@ cargo-args = ["--lib", "--features", "db"]
 [app-config.roll-forward-atomic.env]
 RUSTUP_TOOLCHAIN = "1.75"
 
+
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api"
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api-crud"
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+adaptive-depth = false
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = false
+
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
@@ -122,70 +187,6 @@ policy-mode = "unified"
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
-
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "freedit"
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "atomic-data"
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-lemmy-controller-run-mode = "all"
-application = "lemmy"
-policy-mode = "unified"
-adaptive-depth = false
-bugs = ["bug4"]
-new-version = "api"
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-lemmy-controller-run-mode = "all"
-application = "lemmy"
-policy-mode = "unified"
-adaptive-depth = false
-bugs = ["bug4"]
-new-version = "api-crud"
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
-policy-mode = "unified"
-adaptive-depth = false
-
-[[experiment.adaptive-depth]]
-mode = "case-study"
-application = "mcaptcha"
-policy-mode = "unified"
-adaptive-depth = false
 
 [[experiment.atomic-roll-forward]]
 mode = "roll-forward"
@@ -304,64 +305,64 @@ policy-mode = "unified"
 controller-run-mode = "all-separate"
 
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "plume"
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "freedit"
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "freedit"
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "websubmit"
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "atomic-data"
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "atomic-data"
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api"
-controller-run-mode = "all"
-bugs = ["bug4"]
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "lemmy"
+# new-version = "api"
+# controller-run-mode = "all"
+# bugs = ["bug4"]
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api-crud"
-controller-run-mode = "all"
-bugs = ["bug4"]
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "lemmy"
+# new-version = "api-crud"
+# controller-run-mode = "all"
+# bugs = ["bug4"]
+# pdg-caching = false
 
-# Does not run on this machine sadly
-[[experiment.no-cache]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
-policy-mode = "unified"
-pdg-caching = false
+# # Does not run on this machine sadly
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "hyperswitch"
+# # Limiting policies for now, because only these actually make sense
+# policies = ["card-storage", "apikey-storage"]
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "contile"
+# # Otherwise we overtaint and don't pass the non-bug
+# policy-mode = "unified"
+# pdg-caching = false
 
-[[experiment.no-cache]]
-mode = "case-study"
-application = "mcaptcha"
-policy-mode = "unified"
-pdg-caching = false
+# [[experiment.no-cache]]
+# mode = "case-study"
+# application = "mcaptcha"
+# policy-mode = "unified"
+# pdg-caching = false
