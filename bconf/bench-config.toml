@@ -76,24 +76,28 @@ mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -103,6 +107,7 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api"
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -112,6 +117,7 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api-crud"
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -119,6 +125,7 @@ application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -127,36 +134,38 @@ application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
@@ -164,7 +173,7 @@ application = "lemmy"
 new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
@@ -172,7 +181,7 @@ application = "lemmy"
 new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
-clean = true
+repeats = 5
 
 # Does not run on this machine sadly
 [[experiment.case-studies]]
@@ -181,20 +190,20 @@ application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
-clean = true
+repeats = 5
 
 [[experiment.atomic-roll-forward]]
 mode = "roll-forward"
@@ -373,3 +382,66 @@ controller-run-mode = "all-separate"
 # application = "mcaptcha"
 # policy-mode = "unified"
 # pdg-caching = false
+
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+
+# Does not run on this machine sadly
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-runtime]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+clean = true
