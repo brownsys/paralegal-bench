@@ -1,6 +1,6 @@
 //! Types that describe experiment runs and functions to execute them
 
-use anyhow::{ensure, Result};
+use anyhow::{bail, ensure, Result};
 use cargo::{
     core::Workspace,
     ops::{resolve_ws, UpdateOptions},
@@ -300,6 +300,9 @@ impl EvaluationConfig {
                     for (package, overrides) in &exp.app_config.version_override {
                         let (stdout, _stderr) = output.log_for("prepare")?;
                         overrides.enact(package, Box::new(stdout))?;
+                    }
+                    if exp.config.clean && !Command::new("cargo").arg("clean").status()?.success() {
+                        bail!("clean command didn't succeed");
                     }
                     let compile_command = &mut exp.compile_cmd();
                     //progress.println(format!("Running {} {:?}", compile_command.get_command(),));

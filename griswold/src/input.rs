@@ -101,6 +101,8 @@ pub struct ExperimentConfig {
     pub application: Application,
     #[serde(default)]
     pub cargo_args: Box<[String]>,
+    #[serde(default = "const_false")]
+    pub clean: bool,
     /// Default to the application name
     pub app_config_override: Option<String>,
     #[serde(default)]
@@ -131,6 +133,10 @@ pub struct ApplicationConfig {
 
 fn const_true() -> bool {
     true
+}
+
+fn const_false() -> bool {
+    false
 }
 
 #[derive(Serialize, Deserialize, strum::AsRefStr)]

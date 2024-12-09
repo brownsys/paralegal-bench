@@ -431,7 +431,10 @@ impl Application {
                 (PolicyResult::Pass, &[]),
                 (PolicyResult::Fail, &["--features", "buggy"]),
             ],
-            Application::Hyperswitch { .. } => &[(PolicyResult::Pass, &[])],
+            Application::Hyperswitch { .. } => &[
+                (PolicyResult::Pass, &[]),
+                (PolicyResult::Fail, &["--features", "buggy"]),
+            ],
             Application::Plume => &[
                 (PolicyResult::Fail, &[]),
                 (

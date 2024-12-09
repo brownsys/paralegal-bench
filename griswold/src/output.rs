@@ -47,6 +47,8 @@ pub struct RunMeasurements {
     pdg_caching: bool,
     result: Option<PolicyResult>,
     pdg_timed_out: bool,
+    /// How long the `cargo paralegal-flow` command took in total
+    analyzer_time: TimeMeasurement,
     /// How long the last analzyer invokation took
     last_self_time: Option<TimeMeasurement>,
     /// Total time spent on dependencies
@@ -109,6 +111,7 @@ impl RunMeasurements {
             result: None,
             adaptive_depth: exp.config.adaptive_depth,
             pdg_caching: exp.config.pdg_caching,
+            analyzer_time: pdg_stat.elapsed,
             last_self_time: None,
             dep_time: None,
             tycheck_time: None,
