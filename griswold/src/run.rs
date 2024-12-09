@@ -13,7 +13,7 @@ use lemmy::eval_driver::LemmyPackage;
 use paralegal_policy::{paralegal_spdg::AnalyzerStats, GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
-    io::{BufRead, BufReader, Seek},
+    io::{BufRead, BufReader, BufWriter, Seek, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     rc::Rc,
@@ -226,6 +226,113 @@ fn with_env<'a, R>(
 }
 
 impl EvaluationConfig {
+    fn run_a_repeat(
+        &self,
+        output: &mut Output,
+        id: usize,
+        exp: &Run<'_>,
+        progress: &ProgressBar,
+        mut policy_out: Arc<File>,
+    ) -> anyhow::Result<()> {
+        if exp.config.clean && !Command::new("cargo").arg("clean").status()?.success() {
+            bail!("clean command didn't succeed");
+        }
+        let compile_command = &mut exp.compile_cmd();
+        //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
+        let (mut stdout, mut stderr) = output.log_for("compile")?;
+        writeln!(stdout, "###### Run {id}: {:?}", compile_command)?;
+        writeln!(stderr, "###### Run {id}: {:?}", compile_command)?;
+        let mut process = compile_command
+            .get_command()
+            .stderr(stderr)
+            .stdout(stdout)
+            .spawn()?;
+        let cmd_stat = CommandMeasurement::for_process(self, self.pdg_timeout, &mut process)?;
+        let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
+        progress.inc(1);
+        progress.set_message(format!("policy: {}", exp.policy_name));
+        match process.try_wait()? {
+            Some(e) if e.success() => {
+                let policy = exp.policy.clone();
+                let graph_loc = GraphLocation::std(".");
+                let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
+                    let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
+                    let mut config = paralegal_policy::Config::default();
+                    //config.output_writer = Box::new(policy_out.clone());
+                    let ctx = Arc::new(graph_loc.build_context(config)?);
+                    let policy_start = Instant::now();
+                    (policy)(ctx.clone())?;
+                    writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
+                    let success = ctx.emit_diagnostics(BufWriter::new(policy_out.clone()))?;
+                    anyhow::Ok((ctx, success, file_size, policy_start.elapsed()))
+                });
+                let (ctx, success, file_size, traversal_time) = res?;
+                let analyzer_stats = AnalyzerStats::canonical_read(graph_loc.stats_path())?;
+                run_stats.add_policy_stat(
+                    cmd_stat,
+                    ctx.as_ref(),
+                    if success {
+                        PolicyResult::Pass
+                    } else {
+                        PolicyResult::Fail
+                    },
+                    traversal_time,
+                    file_size,
+                    &analyzer_stats,
+                );
+                for ctrl in ctx.desc().controllers.values() {
+                    output
+                        .controller_stat_out
+                        .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
+                }
+                if let Some(pp) = exp.post_process.as_ref() {
+                    pp(&ctx, &mut run_stats);
+                }
+
+                dump_code(
+                    id,
+                    &ctx,
+                    self.dump_analyzed_code,
+                    &output.post_process_dir,
+                    &exp,
+                    &progress,
+                )?;
+            }
+            other => {
+                progress.println(format!(
+                    "WARNING: Run id {} dir not successfully pass PDG construction: {other:?}",
+                    id
+                ));
+            }
+        }
+        output.run_stat_out.serialize(run_stats)?;
+        output.flush()?;
+        Ok(())
+    }
+    fn run_one_experiment(
+        &self,
+        output: &mut Output,
+        id: usize,
+        exp: &Run<'_>,
+        progress: &ProgressBar,
+        policy_out: Arc<File>,
+    ) -> anyhow::Result<()> {
+        progress.inc(1);
+        progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
+        if let Some(prepare) = exp.prepare.as_ref() {
+            let (stdout, stderr) = output.log_for("prepare")?;
+            (prepare)(stdout.into(), stderr.into())
+        }
+        for (package, overrides) in &exp.app_config.version_override {
+            let (stdout, _stderr) = output.log_for("prepare")?;
+            overrides.enact(package, Box::new(stdout))?;
+        }
+        for _ in 0..exp.config.repeats {
+            self.run_a_repeat(output, id, exp, progress, policy_out.clone())?;
+        }
+        anyhow::Ok(())
+    }
+
     pub fn run(&self, output: &mut Output) -> Result<()> {
         for (app_name, app_config) in self.app_config.iter() {
             trace!(app_name, "Checking app for whether folder exists");
@@ -267,7 +374,7 @@ impl EvaluationConfig {
             )?,
         );
         progress.enable_steady_tick(Duration::from_millis(500));
-        let mut policy_out = Arc::new(File::create(output.path("policy.out.txt"))?);
+        let policy_out = Arc::new(File::create(output.path("policy.out.txt"))?);
         let starting_dir = std::env::current_dir()?;
         for (id, exp) in experiments.iter() {
             let Run {
@@ -290,95 +397,7 @@ impl EvaluationConfig {
                     .env
                     .iter()
                     .map(|(k, v)| (k.as_str(), v.as_str())),
-                || {
-                    progress.inc(1);
-                    progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
-                    if let Some(prepare) = exp.prepare.as_ref() {
-                        let (stdout, stderr) = output.log_for("prepare")?;
-                        (prepare)(stdout.into(), stderr.into())
-                    }
-                    for (package, overrides) in &exp.app_config.version_override {
-                        let (stdout, _stderr) = output.log_for("prepare")?;
-                        overrides.enact(package, Box::new(stdout))?;
-                    }
-                    if exp.config.clean && !Command::new("cargo").arg("clean").status()?.success() {
-                        bail!("clean command didn't succeed");
-                    }
-                    let compile_command = &mut exp.compile_cmd();
-                    //progress.println(format!("Running {} {:?}", compile_command.get_command(),));
-                    let (mut stdout, mut stderr) = output.log_for("compile")?;
-                    use std::io::Write;
-                    writeln!(stdout, "###### Run {id}: {:?}", compile_command)?;
-                    writeln!(stderr, "###### Run {id}: {:?}", compile_command)?;
-                    let mut process = compile_command
-                        .get_command()
-                        .stderr(stderr)
-                        .stdout(stdout)
-                        .spawn()?;
-                    let cmd_stat =
-                        CommandMeasurement::for_process(self, self.pdg_timeout, &mut process)?;
-                    let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
-                    progress.inc(1);
-                    progress.set_message(format!("policy: {}", exp.policy_name));
-                    match process.try_wait()? {
-                        Some(e) if e.success() => {
-                            let policy = exp.policy.clone();
-                            let graph_loc = GraphLocation::std(".");
-                            let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
-                                let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
-                                let mut config = paralegal_policy::Config::default();
-                                //config.output_writer = Box::new(policy_out.clone());
-                                let ctx = Arc::new(graph_loc.build_context(config)?);
-                                let policy_start = Instant::now();
-                                (policy)(ctx.clone())?;
-                                writeln!(policy_out, "###### Run {id}: {:?}", compile_command)?;
-                                let success = ctx.emit_diagnostics(policy_out.clone())?;
-                                anyhow::Ok((ctx, success, file_size, policy_start.elapsed()))
-                            });
-                            let (ctx, success, file_size, traversal_time) = res?;
-                            let analyzer_stats =
-                                AnalyzerStats::canonical_read(graph_loc.stats_path())?;
-                            run_stats.add_policy_stat(
-                                cmd_stat,
-                                ctx.as_ref(),
-                                if success {
-                                    PolicyResult::Pass
-                                } else {
-                                    PolicyResult::Fail
-                                },
-                                traversal_time,
-                                file_size,
-                                &analyzer_stats,
-                            );
-                            for ctrl in ctx.desc().controllers.values() {
-                                output
-                                    .controller_stat_out
-                                    .serialize(ControllerMeasurement::from_spdg(id as u32, ctrl))?
-                            }
-                            if let Some(pp) = exp.post_process.as_ref() {
-                                pp(&ctx, &mut run_stats);
-                            }
-
-                            dump_code(
-                                id,
-                                &ctx,
-                                self.dump_analyzed_code,
-                                &output.post_process_dir,
-                                &exp,
-                                &progress,
-                            )?;
-                        }
-                        other => {
-                            progress.println(format!(
-                        "WARNING: Run id {} dir not successfully pass PDG construction: {other:?}",
-                        id
-                    ));
-                        }
-                    }
-                    output.run_stat_out.serialize(run_stats)?;
-                    output.flush()?;
-                    anyhow::Ok(())
-                },
+                || self.run_one_experiment(output, id, &exp, &progress, policy_out.clone()),
             )?;
             std::env::set_current_dir(&starting_dir)?;
         }
@@ -392,9 +411,8 @@ fn dump_code_for(
     out_dir: &Path,
     exp: &Run<'_>,
     include_elided_code: bool,
-    progress: &ProgressBar,
+    _progress: &ProgressBar,
 ) -> Result<()> {
-    use std::io::Write;
     let postfix = if include_elided_code { "seen" } else { "pdg" };
     let code_out_path = out_dir.join(format!("{id}-{}-{}.rs", exp.name(), postfix));
     let mut out_file = OpenOptions::new()

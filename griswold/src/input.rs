@@ -103,6 +103,8 @@ pub struct ExperimentConfig {
     pub cargo_args: Box<[String]>,
     #[serde(default = "const_false")]
     pub clean: bool,
+    #[serde(default = "const_one")]
+    pub repeats: u32,
     /// Default to the application name
     pub app_config_override: Option<String>,
     #[serde(default)]
@@ -137,6 +139,10 @@ fn const_true() -> bool {
 
 fn const_false() -> bool {
     false
+}
+
+fn const_one() -> u32 {
+    1
 }
 
 #[derive(Serialize, Deserialize, strum::AsRefStr)]
