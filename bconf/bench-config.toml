@@ -365,3 +365,62 @@ mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 pdg-caching = false
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+clean = true
+
+[[experiment.total-time]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+clean = true
