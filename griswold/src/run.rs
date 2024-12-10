@@ -226,7 +226,7 @@ fn with_env<'a, R>(
 }
 
 impl EvaluationConfig {
-    fn run_a_repeat(
+    fn run_one_experiment(
         &self,
         output: &mut Output,
         id: usize,
@@ -234,6 +234,17 @@ impl EvaluationConfig {
         progress: &ProgressBar,
         mut policy_out: Arc<File>,
     ) -> anyhow::Result<()> {
+        progress.inc(1);
+        progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
+        if let Some(prepare) = exp.prepare.as_ref() {
+            let (stdout, stderr) = output.log_for("prepare")?;
+            (prepare)(stdout.into(), stderr.into())
+        }
+        for (package, overrides) in &exp.app_config.version_override {
+            let (stdout, _stderr) = output.log_for("prepare")?;
+            overrides.enact(package, Box::new(stdout))?;
+        }
+
         if exp.config.clean && !Command::new("cargo").arg("clean").status()?.success() {
             bail!("clean command didn't succeed");
         }
@@ -307,29 +318,7 @@ impl EvaluationConfig {
         }
         output.run_stat_out.serialize(run_stats)?;
         output.flush()?;
-        Ok(())
-    }
-    fn run_one_experiment(
-        &self,
-        output: &mut Output,
-        id: usize,
-        exp: &Run<'_>,
-        progress: &ProgressBar,
-        policy_out: Arc<File>,
-    ) -> anyhow::Result<()> {
-        progress.inc(1);
-        progress.set_message(format!("pdg: {}", exp.config.application.as_ref()));
-        if let Some(prepare) = exp.prepare.as_ref() {
-            let (stdout, stderr) = output.log_for("prepare")?;
-            (prepare)(stdout.into(), stderr.into())
-        }
-        for (package, overrides) in &exp.app_config.version_override {
-            let (stdout, _stderr) = output.log_for("prepare")?;
-            overrides.enact(package, Box::new(stdout))?;
-        }
-        for _ in 0..exp.config.repeats {
-            self.run_a_repeat(output, id, exp, progress, policy_out.clone())?;
-        }
+
         anyhow::Ok(())
     }
 
@@ -368,15 +357,11 @@ impl EvaluationConfig {
             .experiments(&post_process_dir)
             .enumerate()
             .collect::<Vec<_>>();
-        let progress = ProgressBar::new(
-            experiments
-                .iter()
-                .map(|(_, e)| e.config.repeats as u64 * 2)
-                .sum(),
-        )
-        .with_style(indicatif::ProgressStyle::with_template(
-            "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
-        )?);
+        let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
+            indicatif::ProgressStyle::with_template(
+                "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
+            )?,
+        );
         progress.enable_steady_tick(Duration::from_millis(500));
         let policy_out = Arc::new(File::create(output.path("policy.out.txt"))?);
         let starting_dir = std::env::current_dir()?;
