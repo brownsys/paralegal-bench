@@ -19,6 +19,8 @@ struct Args {
     skip_compile: bool,
     #[clap(long, conflicts_with = "skip_compile")]
     buggy: bool,
+    #[clap(long)]
+    cnl: bool,
 }
 
 fn main() -> Result<()> {
@@ -58,7 +60,7 @@ fn main() -> Result<()> {
         policy
             .iter()
             .cloned()
-            .map(|p| p.check(ctx.clone(), false))
+            .map(|p| p.check(ctx.clone(), args.cnl))
             .collect::<Result<()>>()
     })?;
     println!("Policy check succeeded: {}", res.stats);

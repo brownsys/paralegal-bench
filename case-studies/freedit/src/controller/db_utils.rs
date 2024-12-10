@@ -6,6 +6,10 @@ use nanoid::nanoid;
 use sled::{Db, IVec, Iter, Tree};
 use std::iter::Rev;
 
+#[paralegal::marker(expiration_check, return)]
+fn expiration_check<T: std::cmp::Ord>(one: T, other: T) -> bool {
+    one < other
+}
 
 /// Cron job: Scan all the keys in the `Tree` regularly and remove the expired ones.
 ///
@@ -19,7 +23,7 @@ pub async fn clear_invalid(db: &Db, tree_name: &str) -> Result<(), AppError> {
             .split_once('_')
             .and_then(|s| i64::from_str_radix(s.0, 16).ok());
         if let Some(time_stamp) = time_stamp {
-            if time_stamp < Utc::now().timestamp() {
+            if expiration_check(time_stamp,  Utc::now().timestamp()) {
                 #[cfg(not(feature = "buggy"))]
                 tree.remove(k)?;
             }

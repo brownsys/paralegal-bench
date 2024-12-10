@@ -3,7 +3,8 @@ use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning,
     paralegal_spdg::{
-        CallString, Endpoint, GlobalNode, Identifier, InstructionInfo, InstructionKind, Node, SPDG,
+        CallString, DisplayPath, Endpoint, GlobalNode, Identifier, InstructionInfo,
+        InstructionKind, Node, SPDG,
     },
     Context, DefId, Diagnostics, EdgeSelection, IntoIterGlobalNodes, Marker, NodeExt, NodeQueries,
     RootContext,
@@ -253,64 +254,49 @@ fn check_date_store(ctx: Arc<RootContext>) -> Result<()> {
 }
 
 fn check_expiration(ctx: Arc<RootContext>) -> Result<()> {
-    let pageview_data = ctx
-        .nodes_marked_any_way(marker!(pageviews))
-        .map(|d| d)
-        .collect::<Vec<_>>();
-    let time_sources = ctx.marked_nodes(marker!(time)).collect::<Vec<_>>();
-    let delete_sinks = ctx.marked_nodes(marker!(deletes)).collect::<Vec<_>>();
+    let m_expiration_check = marker!(expiration_check);
+    let m_time = marker!(time);
+    let m_db_access = marker!(db_access);
+    let m_delete = marker!(deletes);
+    let mut at_least_one_pageview = false;
     ctx.named_policy(Identifier::new_intern("expiration check"), |ctx| {
+        let found = ctx.controller_contexts().find(|ctx| {
+            let mut pageview_data = ctx.nodes_marked_any_way(marker!(pageviews)).peekable();
+            if pageview_data.peek().is_none() {
+                return false;
+            }
+            pageview_data.all(|pageview| {
+                at_least_one_pageview = true;
+                ctx.marked_nodes(m_expiration_check)
+                    .any(|expiration_check| {
+                        ctx.marked_nodes(m_time)
+                            .any(|time| time.flows_to(expiration_check, &ctx, EdgeSelection::Data))
+                            && ctx.marked_nodes(m_db_access).any(|fetch| {
+                                pageview.flows_to(fetch, &ctx, EdgeSelection::Data)
+                                    && fetch.flows_to(expiration_check, &ctx, EdgeSelection::Data)
+                            })
+                            && ctx.marked_nodes(m_delete).any(|delete| {
+                                pageview.flows_to(delete, &ctx, EdgeSelection::Data)
+                                    && expiration_check.has_ctrl_influence(delete, &ctx)
+                            })
+                    })
+            })
+        });
         assert_warning!(
             ctx,
-            !pageview_data.is_empty(),
+            at_least_one_pageview,
             "No pageview data found. The policy may be vacuous."
         );
-        assert_error!(ctx, !time_sources.is_empty(), "No time sources found");
-        assert_error!(ctx, !delete_sinks.is_empty(), "No delete sinks found");
-        let farthest = std::sync::Mutex::new((0, Identifier::new_intern("no controller")));
-
-        let db_access_marker = marker!(db_access);
-        let found = ctx.controller_contexts().any(|ctx| {
-            let name = ctx.desc().controllers[&ctx.id()].name;
-            let tick = |num| {
-                // let mut lock = farthest.lock().unwrap();
-                // if lock.0 < num {
-                //     *lock = (num, name);
-                // }
-            };
-
-            iterator_quantifiers!(
-                all &type_ident = pageview_data.iter();
-                allow type_ident.controller_id() != ctx.id();
-                tick(1);
-                any type_source = ctx.marked_nodes(db_access_marker);
-                tick(2);
-                require ctx.flows_to(type_ident, type_source, EdgeSelection::Data);
-                tick(3);
-                any &delete = &delete_sinks;
-                tick(4);
-                require ctx.flows_to(type_source, delete, EdgeSelection::Data);
-                tick(6);
-                any time_check = ctx.current().all_sources().map(|n| GlobalNode::from_local_node(ctx.id(), n));
-                tick(7);
-                any &time_source = &time_sources;
-                require time_source.controller_id() == ctx.id();
-                tick(8);
-                let type_flows_to_check = ctx.flows_to(type_source, time_check, EdgeSelection::Data);
-                require type_flows_to_check;
-                tick(9);
-                let time_flows_to_check = ctx.flows_to(time_source, time_check, EdgeSelection::Data);
-                require time_flows_to_check;
-                tick(10);
-                any delete_call_site = ctx.successors(delete);
-                let check_ctrls_delete = ctx.has_ctrl_influence(time_check, delete_call_site);
-                tick(11);
-                check_ctrls_delete
-            )
-        });
         // let (last, ctrl) = *farthest.lock().unwrap();
         // println!("Last seen {last} in controller {ctrl}", );
-        assert_error!(ctx, found, "Could not find an expiration deletion for pageview data.")
+        if let Some(found) = found {
+            ctx.note(format!(
+                "Found {} deletes data with expiration",
+                DisplayPath::from(&found.current().path)
+            ));
+        } else {
+            ctx.error("Found no controller that deletes data with expiration");
+        }
     });
     Ok(())
 }
