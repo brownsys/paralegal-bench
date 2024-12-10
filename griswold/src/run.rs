@@ -245,7 +245,14 @@ impl EvaluationConfig {
             overrides.enact(package, Box::new(stdout))?;
         }
 
-        if exp.config.clean && !Command::new("cargo").arg("clean").status()?.success() {
+        if exp.config.clean
+            && !Command::new("cargo")
+                .arg("clean")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()?
+                .success()
+        {
             bail!("clean command didn't succeed");
         }
         let compile_command = &mut exp.compile_cmd();
