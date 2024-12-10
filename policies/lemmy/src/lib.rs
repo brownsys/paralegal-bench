@@ -137,7 +137,7 @@ impl Prop {
         cnl: bool,
     ) -> anyhow::Result<()> {
         if cnl {
-            assert!(!new_version);
+            assert!(new_version);
             return match self {
                 Self::Community => cnl::community::check(cx),
                 Self::Instance => cnl::instance::check(cx),

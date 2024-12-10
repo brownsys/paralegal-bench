@@ -22,6 +22,8 @@ struct Arguments {
     annotations: PathBuf,
     #[clap(long)]
     dump_code: Option<PathBuf>,
+    #[clap(long)]
+    cnl: bool,
     #[clap(last = true)]
     extra_args: Vec<OsString>,
 }
@@ -64,7 +66,11 @@ fn main() -> Result<()> {
                 )
             }
         }
-        atomic::check_rights(ctx)
+        if args.cnl {
+            atomic::cnl::check(ctx)
+        } else {
+            atomic::check_rights(ctx)
+        }
     })?;
     println!(
         "Policy {}successful with {}",

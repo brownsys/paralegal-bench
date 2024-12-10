@@ -5,7 +5,7 @@ fn main() {
 
     let base_dir = Path::new("../..");
 
-    let policies = ["check-rights"];
+    let policies = ["check-rights-alt"];
     for policy in policies {
         let mut p = Path::new("policies/atomic").join(policy);
         p.set_extension("txt");

@@ -40,7 +40,7 @@ impl NodeExt for GlobalNode {
 }
 
 pub mod cnl {
-    include!(concat!(env!("OUT_DIR"), "/check-rights.rs"));
+    include!(concat!(env!("OUT_DIR"), "/check-rights-alt.rs"));
 }
 
 policy!(check_rights, ctx {
@@ -72,32 +72,6 @@ policy!(check_rights, ctx {
             .iter()
             .copied()
             .filter(|n| n.has_marker(&ctx, m_new_resource))
-            .filter(|n| {
-                // Hackery
-                //
-                // On one hand this is hacky beacuse we're selecting a specific
-                // argument. This shold probably be done cleanly via markers. On
-                // the other hand we're just checking that the first argument is
-                // not form the commit (e.g. user-specified), which is not bad,
-                // but really I think this should be a whitelisted source, such
-                // as `urls::PARENT`, *but* we can't annotate constants so this
-                // has to do.
-                let argument_siblings = n.siblings(&ctx)
-                    .iter_global_nodes()
-                    .filter(|n| n.is_argument(&ctx, 1))
-                    .collect::<Box<[_]>>();
-
-                let valid = argument_siblings.iter().copied().any(|n| {
-                        commit_influencees.contains(&n)
-                    });
-                // let mut msg = ctx.struct_node_help(*n, format!("This is a new resource, it has {} argument 1 siblings. It is {}problematic", argument_siblings.len(), if valid { "" } else {"un"}));
-                // for sibling in argument_siblings.iter().copied() {
-                //     msg.with_node_note(sibling, "This is an argument 1 sibling");
-                // }
-                // msg.emit();
-                valid
-
-            })
             .collect::<Box<[_]>>();
 
         // All checks that flow from the commit but not from a new_resource
@@ -119,9 +93,8 @@ policy!(check_rights, ctx {
                 (
                     store,
                     valid_checks.iter().copied().find_map(|check| {
-                        let store_cs = store.successors(&ctx)
-                            .find(|cs| ctx.has_ctrl_influence(check, *cs))?;
-                        Some((check, store_cs))
+                        ctx.has_ctrl_influence(check, store)
+                        .then_some(check)
                     }),
                 )
             })
