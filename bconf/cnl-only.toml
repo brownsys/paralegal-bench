@@ -1,0 +1,116 @@
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+# Bumped because lemmy without adaptive depth takes ~10min in analysis
+pdg-timeout = "15min"
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy-unhacked"
+flow-args = ["--relaxed"]
+external-annotations = "external-annotations.toml"
+
+[app-config.plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models", "--relaxed"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+[app-config.websubmit]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+
+[app-config.freedit]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib", "--relaxed"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "router", "--relaxed"]
+cargo-args = ["--lib"]
+
+[app-config.contile]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "lemmy"
+controller-run-mode = "all"
+policy-mode = "unified"
+bugs = ["bug4"]
+new-version = "api"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "lemmy"
+controller-run-mode = "all"
+policy-mode = "unified"
+bugs = ["bug4"]
+new-version = "api-crud"
+cnl = true
+
+# Does not run on this machine sadly
+[[experiment.case-studies]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+adaptive-depth = false
+cnl = true
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+cnl = true
