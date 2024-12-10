@@ -58,7 +58,7 @@ fn main() -> Result<()> {
         policy
             .iter()
             .cloned()
-            .map(|p| p.check(ctx.clone()))
+            .map(|p| p.check(ctx.clone(), false))
             .collect::<Result<()>>()
     })?;
     println!("Policy check succeeded: {}", res.stats);

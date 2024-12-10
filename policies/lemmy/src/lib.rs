@@ -129,7 +129,20 @@ pub enum Prop {
 }
 
 impl Prop {
-    pub fn run(self, cx: Arc<RootContext>, new_version: bool, verbose: bool) -> anyhow::Result<()> {
+    pub fn run(
+        self,
+        cx: Arc<RootContext>,
+        new_version: bool,
+        verbose: bool,
+        cnl: bool,
+    ) -> anyhow::Result<()> {
+        if cnl {
+            assert!(!new_version);
+            return match self {
+                Self::Community => cnl::community::check(cx),
+                Self::Instance => cnl::instance::check(cx),
+            };
+        }
         match self {
             Self::Community => cx.named_policy(Identifier::new_intern("Community Policy"), |cx| {
                 if new_version {

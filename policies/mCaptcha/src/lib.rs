@@ -35,10 +35,17 @@ pub mod cnl {
 }
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
-        match self {
-            Self::Deletion => deletion_policy as _,
-            Self::OptInBeforeSave => verify_opt_in_before_save_policy,
+    pub fn runnable(self, cnl: bool) -> fn(Arc<RootContext>) -> Result<()> {
+        if cnl {
+            match self {
+                Self::Deletion => cnl::deletion::check as fn(_) -> _,
+                Self::OptInBeforeSave => cnl::verify_before_save::check,
+            }
+        } else {
+            match self {
+                Self::Deletion => deletion_policy as _,
+                Self::OptInBeforeSave => verify_opt_in_before_save_policy,
+            }
         }
     }
 }

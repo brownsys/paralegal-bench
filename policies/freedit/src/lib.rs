@@ -324,10 +324,17 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn check(self, ctx: Arc<RootContext>) -> Result<()> {
-        match self {
-            Self::DateStore => check_date_store(ctx),
-            Self::Expiration => check_expiration(ctx),
+    pub fn check(self, ctx: Arc<RootContext>, cnl: bool) -> Result<()> {
+        if cnl {
+            match self {
+                Self::DateStore => cnl::store_date::check(ctx),
+                Self::Expiration => cnl::expiration_marked::check(ctx),
+            }
+        } else {
+            match self {
+                Self::DateStore => check_date_store(ctx),
+                Self::Expiration => check_expiration(ctx),
+            }
         }
     }
 }

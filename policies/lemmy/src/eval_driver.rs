@@ -809,7 +809,7 @@ fn run_policies_for_props(
     } else {
         prop
     } {
-        p.run(cx.clone(), new, verbose)?;
+        p.run(cx.clone(), new, verbose, false)?;
     }
 
     let writer = if quiet {

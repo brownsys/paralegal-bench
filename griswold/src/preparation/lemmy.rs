@@ -64,7 +64,14 @@ impl<'a> BatchConfigPreparer<'a> {
             PolicyMode::Unified => self.builder.unified_policies(),
             PolicyMode::Separate => (
                 prop.as_ref(),
-                Rc::new(move |ctx| prop.run(ctx, new_version.is_some(), false)) as _,
+                Rc::new(move |ctx| {
+                    prop.run(
+                        ctx,
+                        new_version.is_some(),
+                        false,
+                        self.builder.experiment_config.cnl,
+                    )
+                }) as _,
                 vec![],
             ),
             PolicyMode::None => no_policy(),

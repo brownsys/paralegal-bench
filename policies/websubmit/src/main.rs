@@ -69,7 +69,7 @@ fn main() -> Result<()> {
         .run(args.ws_dir)?
         .with_context_configured(cfg, |ctx| {
             for prop in policies.iter() {
-                prop.runnable(args.flavour)(ctx.clone())?;
+                prop.runnable(args.flavour, false)(ctx.clone())?;
             }
             Ok(())
         })?;

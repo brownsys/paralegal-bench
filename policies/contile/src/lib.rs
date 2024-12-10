@@ -17,10 +17,17 @@ pub enum Policy {
 pub const DEFAULT_CONTROLLERS: &[&str] = &[];
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
-        match self {
-            Policy::SendToAdm => send_to_adm as fn(_) -> _,
-            Policy::SendToMetrics => send_to_metrics as _,
+    pub fn runnable(self, cnl: bool) -> fn(Arc<RootContext>) -> Result<()> {
+        if cnl {
+            return match self {
+                Policy::SendToAdm => cnl::tags_to_adm::check as fn(_) -> _,
+                Policy::SendToMetrics => cnl::tags_to_metrics::check,
+            };
+        } else {
+            match self {
+                Policy::SendToAdm => send_to_adm as fn(_) -> _,
+                Policy::SendToMetrics => send_to_metrics as _,
+            }
         }
     }
 }

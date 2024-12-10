@@ -504,19 +504,19 @@ impl Application {
             )))
                 as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)>>,
             Application::Freedit { policies } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
+                Box::new(selection_or_all(policies).iter().map(move |p| {
                     (
                         p.as_ref(),
-                        Rc::new(move |ctx| p.check(ctx)) as PolicyFn<'a>,
+                        Rc::new(move |ctx| p.check(ctx, cnl)) as PolicyFn<'a>,
                         freedit::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
             Application::Hyperswitch { policies } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
+                Box::new(selection_or_all(policies).iter().map(move |p| {
                     (
                         p.as_ref(),
-                        Rc::new(p.runnable()) as PolicyFn<'a>,
+                        Rc::new(p.runnable(cnl)) as PolicyFn<'a>,
                         self.all_controllers(),
                     )
                 }))
@@ -528,38 +528,42 @@ impl Application {
             } => Box::new(selection_or_all(policies).iter().map(move |p| {
                 (
                     p.as_ref(),
-                    Rc::new(move |cx| p.run(cx, new_version.is_some(), false)) as PolicyFn<'a>,
+                    Rc::new(move |cx| p.run(cx, new_version.is_some(), false, cnl)) as PolicyFn<'a>,
                     vec!["all-controllers"],
                 )
             })),
             Application::Plume => Box::new(std::iter::once((
                 "data-deletion",
-                Rc::new(plume::check) as PolicyFn<'a>,
+                if cnl {
+                    Rc::new(plume::cnl::check) as PolicyFn<'a>
+                } else {
+                    Rc::new(plume::check) as PolicyFn<'a>
+                },
                 plume::DEFAULT_CONTROLLERS.to_vec(),
             ))),
             Application::Websubmit { policies, flavour } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
+                Box::new(selection_or_all(policies).iter().map(move |p| {
                     (
                         p.as_ref(),
-                        Rc::from(p.runnable(*flavour)) as PolicyFn<'a>,
+                        Rc::from(p.runnable(*flavour, cnl)) as PolicyFn<'a>,
                         websubmit::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
             Application::Contile { policies } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
+                Box::new(selection_or_all(policies).iter().map(move |p| {
                     (
                         p.as_ref(),
-                        Rc::from(p.runnable()) as PolicyFn<'a>,
+                        Rc::from(p.runnable(cnl)) as PolicyFn<'a>,
                         contile::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))
             }
             Application::Mcaptcha { policies } => {
-                Box::new(selection_or_all(policies).iter().map(|p| {
+                Box::new(selection_or_all(policies).iter().map(move |p| {
                     (
                         p.as_ref(),
-                        Rc::from(p.runnable()) as PolicyFn<'a>,
+                        Rc::from(p.runnable(cnl)) as PolicyFn<'a>,
                         mCaptcha::DEFAULT_CONTROLLERS.to_vec(),
                     )
                 }))

@@ -78,7 +78,7 @@ fn main() -> Result<()> {
             args.policy.as_slice()
         };
         for p in policies {
-            p.runnable()(ctx.clone())?
+            p.runnable(false)(ctx.clone())?
         }
         Ok(())
     })?;

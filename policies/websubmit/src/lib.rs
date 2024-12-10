@@ -700,16 +700,29 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<RootContext>) -> Result<()>> {
+    pub fn runnable(
+        self,
+        flavour: Flavour,
+        cnl: bool,
+    ) -> Box<dyn Fn(Arc<RootContext>) -> Result<()>> {
         Box::new(move |ctx| {
-            ctx.named_policy(Identifier::new_intern(self.as_ref()), |ctx| {
-                let runner = PropRunner::new(ctx, flavour);
+            if cnl {
+                assert!(matches!(flavour, Flavour::Application));
                 match self {
-                    Policy::ScopedStorage => runner.check_scoped_storage(),
-                    Policy::AuthorizedDisclosure => runner.check_authorized_disclosure(),
-                    Policy::Deletion => runner.check_deletion(),
+                    Policy::ScopedStorage => cnl::scoped_storage::check(ctx),
+                    Policy::AuthorizedDisclosure => cnl::authorized_disclosure::check(ctx),
+                    Policy::Deletion => cnl::deletion::check(ctx),
                 }
-            })
+            } else {
+                ctx.named_policy(Identifier::new_intern(self.as_ref()), |ctx| {
+                    let runner = PropRunner::new(ctx, flavour);
+                    match self {
+                        Policy::ScopedStorage => runner.check_scoped_storage(),
+                        Policy::AuthorizedDisclosure => runner.check_authorized_disclosure(),
+                        Policy::Deletion => runner.check_deletion(),
+                    }
+                })
+            }
         })
     }
 

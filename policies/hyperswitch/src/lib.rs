@@ -133,12 +133,20 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
+    pub fn runnable(self, cnl: bool) -> fn(Arc<RootContext>) -> Result<()> {
         use Policy::*;
-        match self {
-            CardStorage => card_storage as fn(Arc<RootContext>) -> Result<()>,
-            CardEncryption => card_encryption as _,
-            ApikeyStorage => apikey_storage as _,
+        if cnl {
+            match self {
+                CardStorage => cnl::card_storage::check as fn(Arc<RootContext>) -> Result<()>,
+                CardEncryption => cnl::card_encryption::check as _,
+                ApikeyStorage => cnl::apikey_storage::check as _,
+            }
+        } else {
+            match self {
+                CardStorage => card_storage as fn(Arc<RootContext>) -> Result<()>,
+                CardEncryption => card_encryption as _,
+                ApikeyStorage => apikey_storage as _,
+            }
         }
     }
 }
