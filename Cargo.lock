@@ -991,7 +991,6 @@ dependencies = [
 [[package]]
 name = "flowistry_pdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=2f1c24c1f040ec7f6928d1aac0beea4bef182b2d#2f1c24c1f040ec7f6928d1aac0beea4bef182b2d"
 dependencies = [
  "cfg-if",
  "internment",
@@ -2216,18 +2215,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lemmy-unhacked"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "humantime",
- "paralegal-policy",
- "serde",
- "strum 0.26.2",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2560,9 +2547,9 @@ dependencies = [
 [[package]]
 name = "paralegal-policy"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=2f1c24c1f040ec7f6928d1aac0beea4bef182b2d#2f1c24c1f040ec7f6928d1aac0beea4bef182b2d"
 dependencies = [
  "anyhow",
+ "autocfg",
  "bitvec",
  "colored 1.9.4",
  "indexical",
@@ -2580,7 +2567,6 @@ dependencies = [
 [[package]]
 name = "paralegal-spdg"
 version = "0.1.0"
-source = "git+https://github.com/brownsys/paralegal?rev=2f1c24c1f040ec7f6928d1aac0beea4bef182b2d#2f1c24c1f040ec7f6928d1aac0beea4bef182b2d"
 dependencies = [
  "anyhow",
  "bincode",

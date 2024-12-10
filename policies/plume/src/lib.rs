@@ -12,6 +12,10 @@ macro_rules! marker {
     };
 }
 
+pub mod cnl {
+    include!(concat!(env!("OUT_DIR"), "/deletion.rs"));
+}
+
 pub const DEFAULT_CONTROLLERS: &[&str] = &[];
 
 pub fn check(ctx: Arc<RootContext>) -> Result<()> {

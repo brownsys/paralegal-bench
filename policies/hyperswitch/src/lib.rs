@@ -32,6 +32,20 @@ macro_rules! policy {
     };
 }
 
+pub mod cnl {
+    pub mod card_storage {
+        include!(concat!(env!("OUT_DIR"), "/card-storage.rs"));
+    }
+
+    pub mod card_encryption {
+        include!(concat!(env!("OUT_DIR"), "/card-encryption.rs"));
+    }
+
+    pub mod apikey_storage {
+        include!(concat!(env!("OUT_DIR"), "/apikey-storage.rs"));
+    }
+}
+
 policy!(apikey_storage, ctx, {
     let sources = ctx
         .nodes_marked_any_way(marker!(apikey))

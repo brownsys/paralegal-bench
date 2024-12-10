@@ -24,6 +24,16 @@ pub enum Policy {
 
 pub const DEFAULT_CONTROLLERS: &[&str] = &["verify-pow", "delete-account"];
 
+pub mod cnl {
+    pub mod deletion {
+        include!(concat!(env!("OUT_DIR"), "/deletion.rs"));
+    }
+
+    pub mod verify_before_save {
+        include!(concat!(env!("OUT_DIR"), "/verify-before-save.rs"));
+    }
+}
+
 impl Policy {
     pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
         match self {

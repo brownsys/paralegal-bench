@@ -72,8 +72,11 @@ fn no_policy() -> (&'static str, PolicyFn<'static>, Vec<&'static str>) {
 impl<'a> RunBuilder<'a> {
     pub fn policies(self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
         match self.experiment_config.policy_mode {
-            PolicyMode::Separate => Box::new(self.experiment_config.application.policies())
-                as Box<dyn Iterator<Item = _> + 'a>,
+            PolicyMode::Separate => Box::new(
+                self.experiment_config
+                    .application
+                    .policies(self.experiment_config.cnl),
+            ) as Box<dyn Iterator<Item = _> + 'a>,
             PolicyMode::Unified => Box::new(std::iter::once(self.unified_policies())),
             PolicyMode::None => Box::new(std::iter::once(no_policy())),
         }
@@ -83,7 +86,7 @@ impl<'a> RunBuilder<'a> {
         let base = self
             .experiment_config
             .application
-            .policies()
+            .policies(self.experiment_config.cnl)
             .collect::<Vec<_>>();
         let affected = base
             .iter()
@@ -485,11 +488,18 @@ impl Application {
         .to_vec()
     }
 
-    fn policies<'a>(&'a self) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
+    fn policies<'a>(
+        &'a self,
+        cnl: bool,
+    ) -> impl Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)> {
         match self {
             Application::AtomicData => Box::new(std::iter::once((
                 "check-writes",
-                Rc::new(atomic::check_rights) as PolicyFn<'a>,
+                if cnl {
+                    Rc::new(atomic::cnl::check) as PolicyFn<'a>
+                } else {
+                    Rc::new(atomic::check_rights) as PolicyFn<'a>
+                },
                 atomic::DEFAULT_CONTROLLERS.to_owned(),
             )))
                 as Box<dyn Iterator<Item = (&'a str, PolicyFn<'a>, Vec<&'a str>)>>,

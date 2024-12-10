@@ -1,0 +1,3 @@
+[submodule "paralegal-compiler"]
+	path = paralegal-compiler
+	url = git@github.com:JustusAdam/paralegal-compiler

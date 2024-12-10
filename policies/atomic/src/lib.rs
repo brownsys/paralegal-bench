@@ -39,6 +39,10 @@ impl NodeExt for GlobalNode {
     }
 }
 
+pub mod cnl {
+    include!(concat!(env!("OUT_DIR"), "/check-rights.rs"));
+}
+
 policy!(check_rights, ctx {
     let mut any_sink_reached = false;
     let check_rights = marker!(check_rights);

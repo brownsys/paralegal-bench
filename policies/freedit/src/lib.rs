@@ -27,6 +27,16 @@ macro_rules! marker {
     }};
 }
 
+pub mod cnl {
+    pub mod expiration_marked {
+        include!(concat!(env!("OUT_DIR"), "/expiration-marked.rs"));
+    }
+
+    pub mod store_date {
+        include!(concat!(env!("OUT_DIR"), "/store-date.rs"));
+    }
+}
+
 /// Monadic quantifiers for Rust iterators.
 ///
 /// Allows you to pseudo-monadically create a `bool` computation with iterators.

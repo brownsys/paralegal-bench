@@ -1,6 +1,4 @@
 extern crate anyhow;
-use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
-
 use anyhow::Result;
 use paralegal_policy::{
     assert_error,
@@ -13,6 +11,7 @@ use paralegal_policy::{
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use petgraph::visit::EdgeRef;
 use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Deref, path::Path, sync::Arc};
 
 macro_rules! marker {
     ($id:ident) => {
@@ -25,6 +24,20 @@ pub const DEFAULT_CONTROLLERS: &[&str] = &[
     "forget-user",
     "questions-submit-internal",
 ];
+
+pub mod cnl {
+    pub mod deletion {
+        include!(concat!(env!("OUT_DIR"), "/deletion.rs"));
+    }
+
+    pub mod authorized_disclosure {
+        include!(concat!(env!("OUT_DIR"), "/authorized-disclosure.rs"));
+    }
+
+    pub mod scoped_storage {
+        include!(concat!(env!("OUT_DIR"), "/scoped-storage.rs"));
+    }
+}
 
 /// Asserts that there exists one controller which calls a deletion
 /// function on every value (or an equivalent type) that is ever stored.

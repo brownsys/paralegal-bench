@@ -25,6 +25,16 @@ impl Policy {
     }
 }
 
+pub mod cnl {
+    pub mod tags_to_adm {
+        include!(concat!(env!("OUT_DIR"), "/tags-to-admin.rs"));
+    }
+
+    pub mod tags_to_metrics {
+        include!(concat!(env!("OUT_DIR"), "/tags-to-metrics.rs"));
+    }
+}
+
 pub fn send_to_adm(ctx: Arc<RootContext>) -> Result<()> {
     let m_sink = Identifier::new_intern("sink");
     let m_sensitive = Identifier::new_intern("sensitive");

@@ -26,6 +26,16 @@ pub struct InstanceProp {
     cx: Arc<PolicyContext>,
 }
 
+pub mod cnl {
+    pub mod instance {
+        include!(concat!(env!("OUT_DIR"), "/instance.rs"));
+    }
+
+    pub mod community {
+        include!(concat!(env!("OUT_DIR"), "/community.rs"));
+    }
+}
+
 impl CommunityProp {
     fn new(cx: Arc<PolicyContext>) -> Self {
         CommunityProp { cx }

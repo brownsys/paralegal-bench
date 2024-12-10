@@ -93,6 +93,8 @@ pub struct ExperimentConfig {
     pub mode: ExperimentMode,
     #[serde(default)]
     pub policy_mode: PolicyMode,
+    #[serde(default = "const_false")]
+    pub cnl: bool,
     #[serde(default = "const_true")]
     pub adaptive_depth: bool,
     #[serde(default = "const_true")]
