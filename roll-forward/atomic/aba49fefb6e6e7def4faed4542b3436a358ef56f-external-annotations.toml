@@ -16,7 +16,7 @@ on_argument = [1]
 
 [["atomic_lib::resources::Resource::set_propval"]]
 marker = "new_resource"
-on_argument = [0]
+on_argument = [1]
 
 [["atomic_lib::storelike::Storelike::add_resource_opts"]]
 marker = "sink"
