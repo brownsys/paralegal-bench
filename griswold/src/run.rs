@@ -368,11 +368,15 @@ impl EvaluationConfig {
             .experiments(&post_process_dir)
             .enumerate()
             .collect::<Vec<_>>();
-        let progress = ProgressBar::new(experiments.len() as u64 * 2).with_style(
-            indicatif::ProgressStyle::with_template(
-                "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
-            )?,
-        );
+        let progress = ProgressBar::new(
+            experiments
+                .iter()
+                .map(|(_, e)| e.config.repeats as u64 * 2)
+                .sum(),
+        )
+        .with_style(indicatif::ProgressStyle::with_template(
+            "[{msg:15}] {wide_bar} {pos:>4}/{len:4} {elapsed:7}",
+        )?);
         progress.enable_steady_tick(Duration::from_millis(500));
         let policy_out = Arc::new(File::create(output.path("policy.out.txt"))?);
         let starting_dir = std::env::current_dir()?;
