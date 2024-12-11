@@ -2,14 +2,6 @@
 marker = "commit"
 on_argument = [0]
 
-[["atomic_lib::commit::Commit::into_resource"]]
-marker = "resource"
-on_return = true
-
-[["atomic_lib::storelike::Storelike::get_resource"]]
-marker = "resource"
-on_return = true
-
 [["atomic_lib::hierarchy::check_write"]]
 marker = "check_rights"
 on_argument = [1]
