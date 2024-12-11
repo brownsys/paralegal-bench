@@ -20,6 +20,8 @@ struct Args {
     skip_compile: bool,
     #[clap(long, value_enum)]
     controller: Vec<Controllers>,
+    #[clap(long)]
+    cnl: bool,
     #[clap(last = true)]
     extra_flow_args: Vec<String>,
 }
@@ -78,7 +80,7 @@ fn main() -> Result<()> {
             args.policy.as_slice()
         };
         for p in policies {
-            p.runnable(false)(ctx.clone())?
+            p.runnable(args.cnl)(ctx.clone())?
         }
         Ok(())
     })?;
