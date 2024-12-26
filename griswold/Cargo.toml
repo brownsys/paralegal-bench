@@ -19,7 +19,7 @@ clap = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
 indexmap = { version = "2", features = ["serde"] }
-cargo = "0.78.0"
+cargo = "0.84.0"
 
 atomic = { path = "../policies/atomic" }
 freedit = { path = "../policies/freedit" }

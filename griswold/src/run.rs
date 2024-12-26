@@ -129,7 +129,7 @@ impl Output {
             metrics_output_dir.join("bench-config.toml"),
         )?;
         let sys_stat = SystemParameters::new(paralegal_commit, repo_commit);
-        let mut sys_stat_file = File::create(metrics_output_dir.join("sys.toml"))?;
+        let mut sys_stat_file = BufWriter::new(File::create(metrics_output_dir.join("sys.toml"))?);
         use std::io::Write;
         write!(
             sys_stat_file,
@@ -172,7 +172,7 @@ impl Output {
 impl CrateOverride {
     /// Assumes we are in the directory of the crate we want to make changes to
     fn enact(&self, name: &str, stdout: Box<dyn std::io::Write>) -> Result<()> {
-        let cargo_cfg = cargo::Config::default()?;
+        let cargo_cfg = cargo::GlobalContext::default()?;
         let mut shell = cargo::core::Shell::from_write(stdout);
         shell.set_verbosity(cargo::core::Verbosity::Quiet);
         *cargo_cfg.shell() = shell;
@@ -180,7 +180,7 @@ impl CrateOverride {
         let current_dir = std::env::current_dir()?;
         let ws = Workspace::new(&find_root_manifest_for_wd(&current_dir)?, &cargo_cfg)?;
         // Might have to change this, use a specific config and enable/disable certain features
-        let (_package_set, graph) = resolve_ws(&ws)?;
+        let (_package_set, graph) = resolve_ws(&ws, false)?;
         let interned_name: cargo::util::interning::InternedString = name.into();
         for p in graph.iter() {
             let summary = graph.summary(p);
@@ -188,7 +188,7 @@ impl CrateOverride {
                 cargo::ops::update_lockfile(
                     &ws,
                     &UpdateOptions {
-                        config: &cargo_cfg,
+                        gctx: &cargo_cfg,
                         to_update: vec![format!("{name}@{}", summary.version())],
                         precise: Some(&self.replacement.to_string()),
                         recursive: false,
@@ -411,12 +411,14 @@ fn dump_code_for(
 ) -> Result<()> {
     let postfix = if include_elided_code { "seen" } else { "pdg" };
     let code_out_path = out_dir.join(format!("{id}-{}-{}.rs", exp.name(), postfix));
-    let mut out_file = OpenOptions::new()
-        .create(true)
-        .truncate(true)
-        .read(true)
-        .write(true)
-        .open(code_out_path)?;
+    let mut out_file = BufWriter::new(
+        OpenOptions::new()
+            .create(true)
+            .truncate(true)
+            .read(true)
+            .write(true)
+            .open(code_out_path)?,
+    );
     ctx.write_analyzed_code(&mut out_file, false, include_elided_code)?;
     Ok(())
 }

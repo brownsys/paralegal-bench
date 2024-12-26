@@ -79,21 +79,6 @@ impl NodeExt for GlobalNode {
     }
 }
 
-trait ContextExt {
-    fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
-}
-
-impl ContextExt for RootContext {
-    fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
-        Box::new(self.desc().controllers.iter().flat_map(|(id, spdg)| {
-            spdg.return_
-                .iter()
-                .copied()
-                .map(move |local_node| GlobalNode::from_local_node(*id, local_node))
-        }))
-    }
-}
-
 impl PropRunner {
     pub fn new(cx: Arc<PolicyContext>, flavour: Flavour) -> Self {
         Self { cx, flavour }

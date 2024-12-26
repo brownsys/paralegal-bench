@@ -24,7 +24,7 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 cfg-if = "1.0.0"
-paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
+paralegal = { git = "https://github.com/brownsys/paralegal", rev = "d75fcbb40be0ff7665b7f38ba2943d92a4dce30f" }
 
 
 [features]

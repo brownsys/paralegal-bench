@@ -2,7 +2,7 @@
 
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, BufWriter};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::rc::Rc;
@@ -372,8 +372,12 @@ fn diff_analyzed(
     let code_path = move |commit: &str| target_path.join(format!("{commit}.code.rs"));
     let current_code_path = code_path(&current);
     move |ctx, measurement| {
-        ctx.write_analyzed_code(File::create(&current_code_path).unwrap(), false, true)
-            .unwrap();
+        ctx.write_analyzed_code(
+            BufWriter::new(File::create(&current_code_path).unwrap()),
+            false,
+            true,
+        )
+        .unwrap();
         for predecessor in (current_idx != 0)
             .then(|| &range[0..current_idx])
             .unwrap_or(&[])
