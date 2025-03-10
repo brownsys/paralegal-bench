@@ -1,0 +1,87 @@
+
+Items are in-degrees, frequency shown is how many functions have such an
+in-degree.
+
+Results are a lower bound as they do not include compiler libs (std, core, libc)
+and the traversal seems to be unable to execute certain monomorphizations and
+some functions I was unable to dump MIR for. 
+
+
+
+------ Histogram for all functions ------
+  1 | ################################################## (779)
+  2 | ############### (241)
+  3 | ###### (106)
+  4 | #### (74)
+  5 | # (22)
+  6 | # (23)
+  7 | # (16)
+  8 | # (23)
+  9 |  (15)
+ 10 |  (8)
+ 11 |  (9)
+ 12 |  (5)
+ 13 |  (5)
+ 14 |  (6)
+ 15 |  (7)
+ 16 |  (1)
+ 17 |  (5)
+ 18 |  (5)
+ 19 |  (4)
+ 20 |  (7)
+ 22 |  (4)
+ 23 |  (2)
+ 24 |  (2)
+ 25 |  (2)
+ 26 |  (2)
+ 27 |  (2)
+ 28 |  (6)
+ 29 |  (6)
+ 30 |  (4)
+ 31 |  (4)
+ 32 |  (1)
+ 33 |  (2)
+ 36 |  (1)
+ 37 |  (1)
+ 39 |  (2)
+ 40 |  (1)
+ 44 |  (3)
+ 46 |  (1)
+ 49 |  (1)
+ 54 |  (1)
+ 65 |  (1)
+ 69 |  (1)
+ 72 |  (1)
+ 73 |  (2)
+ 86 |  (1)
+ 89 |  (1)
+ 91 |  (1)
+ 97 |  (1)
+102 |  (1)
+113 |  (1)
+129 |  (1)
+144 |  (1)
+
+Average: 		4.33
+Standard Deviation: 	10.72
+Total Function: 	1422
+Total Calls: 		6151
+
+
+------ Histogram for inlined functions ------
+  1 | ################################################## (27)
+  2 | ################################### (19)
+  3 | ### (2)
+  4 | ### (2)
+  5 | # (1)
+
+Average: 		1.65
+Standard Deviation: 	0.89
+Total Function: 	51
+Total Calls: 		84
+
+
+Function calls when considering:
+Inlined only:	 84
+With elided:	 205
+With library:	 6151
