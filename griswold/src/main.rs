@@ -15,7 +15,7 @@ pub mod output;
 pub mod preparation;
 pub mod run;
 
-/// Run benchmarks for the 2024 SOSP Paralegal paper.
+/// Run benchmarks for the Paralegal static analyzer.
 ///
 /// The run is entirely guided by a [Config], which is read from the config-path
 /// argument (defaults to "bench-config.toml").

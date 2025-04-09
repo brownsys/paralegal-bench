@@ -1,6 +1,6 @@
 [package]
 name = "griswold"
-description = "The top-level coordinator for Paralegal's evaluation benchmarks for the 2024 paper submission to SOSP. Named after 381 U.S. 479 'Griswold v. Connecticut' that recognized a persons's general 'right to privacy'."
+description = "The top-level coordinator for Paralegal's evaluation benchmarks. Named after 381 U.S. 479 'Griswold v. Connecticut' that recognized a persons's general 'right to privacy'."
 version = "0.1.0"
 edition = "2021"
 

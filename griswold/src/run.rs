@@ -13,7 +13,7 @@ use lemmy::eval_driver::LemmyPackage;
 use paralegal_policy::{paralegal_spdg::AnalyzerStats, GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
-    io::{BufRead, BufReader, BufWriter, Seek, Write},
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     rc::Rc,
@@ -130,7 +130,6 @@ impl Output {
         )?;
         let sys_stat = SystemParameters::new(paralegal_commit, repo_commit);
         let mut sys_stat_file = File::create(metrics_output_dir.join("sys.toml"))?;
-        use std::io::Write;
         write!(
             sys_stat_file,
             "{}",
@@ -275,7 +274,7 @@ impl EvaluationConfig {
                 let graph_loc = GraphLocation::std(".");
                 let (res, cmd_stat) = CommandMeasurement::for_self(self, || {
                     let file_size = graph_loc.path().metadata().map_or(0, |d| d.len());
-                    let mut config = paralegal_policy::Config::default();
+                    let config = paralegal_policy::Config::default();
                     //config.output_writer = Box::new(policy_out.clone());
                     let ctx = Arc::new(graph_loc.build_context(config)?);
                     let policy_start = Instant::now();

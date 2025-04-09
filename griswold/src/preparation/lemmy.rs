@@ -1,4 +1,4 @@
-use std::{rc::Rc, slice};
+use std::rc::Rc;
 
 use lemmy::eval_driver::{
     BatchConfig, GetUserVersion, LemmyPackage, LEMMY_API_CONTROLLERS, LEMMY_API_CRUD_CONTROLLERS,
