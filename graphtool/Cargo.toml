@@ -1,0 +1,9 @@
+[package]
+name = "graphtool"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+paralegal-policy = { workspace = true }
+allocative = "0.3.4"
+clap = { workspace = true }

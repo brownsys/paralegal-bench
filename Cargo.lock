@@ -50,6 +50,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocative"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fac2ce611db8b8cee9b2aa886ca03c924e9da5e5295d0dbd0526e5d0b0710f7"
+dependencies = [
+ "allocative_derive",
+ "ctor",
+]
+
+[[package]]
+name = "allocative_derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe233a377643e0fc1a56421d7c90acdec45c291b30345eb9f08e8d0ddce5a4ab"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.58",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -755,6 +776,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3b7eb4404b8195a9abb6356f4ac07d8ba267045c8d6d220ac4dc992e6cc75df"
 
 [[package]]
+name = "ctor"
+version = "0.1.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d2301688392eb071b0bf1a37be05c469d3cc4dbbd95df672fe28ab021e6a096"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "curl"
 version = "0.4.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -992,6 +1023,7 @@ dependencies = [
 name = "flowistry_pdg"
 version = "0.1.0"
 dependencies = [
+ "allocative",
  "cfg-if",
  "internment",
  "serde",
@@ -1842,6 +1874,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphtool"
+version = "0.0.1"
+dependencies = [
+ "allocative",
+ "clap",
+ "paralegal-policy",
+]
+
+[[package]]
 name = "griswold"
 version = "0.1.0"
 dependencies = [
@@ -2568,6 +2609,7 @@ dependencies = [
 name = "paralegal-spdg"
 version = "0.1.0"
 dependencies = [
+ "allocative",
  "anyhow",
  "bincode",
  "cfg-if",
