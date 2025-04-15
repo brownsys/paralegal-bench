@@ -590,8 +590,8 @@ impl Run<'_> {
         if app_config.abort {
             compile_cmd.abort_after_analysis();
         }
-        if self.config.adaptive_depth {
-            compile_cmd.get_command().arg("--adaptive-depth");
+        if !self.config.adaptive_depth {
+            compile_cmd.get_command().arg("--no-adaptive-approximation");
         }
         if !self.config.pdg_caching {
             compile_cmd.get_command().arg("--no-pdg-cache");
