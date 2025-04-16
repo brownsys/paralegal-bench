@@ -7,3 +7,5 @@ edition = "2021"
 paralegal-policy = { workspace = true }
 allocative = "0.3.4"
 clap = { workspace = true }
+sysinfo = "0.34.2"
+stats_alloc = "0.1.10"

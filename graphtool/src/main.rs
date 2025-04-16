@@ -1,11 +1,18 @@
+use allocative::Allocative;
 use clap::Parser;
-use paralegal_policy::paralegal_spdg::rustc_proxies::{CrateNum, Location};
-use paralegal_policy::paralegal_spdg::utils::TruncatedHumanTime;
-use paralegal_policy::paralegal_spdg::{CallString, GlobalLocation, Identifier};
-use paralegal_policy::{paralegal_spdg, DefId, GraphLocation, ProgramDescription};
+use paralegal_policy::paralegal_spdg::{
+    allocative_visit_map_coerce_key,
+    utils::{serde_map_via_vec, TruncatedHumanTime},
+};
+use paralegal_policy::ProgramDescription;
+use stats_alloc::{StatsAlloc, INSTRUMENTED_SYSTEM};
 use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{alloc::System, collections::HashMap};
+
+#[global_allocator]
+static GLOBAL: &StatsAlloc<System> = &INSTRUMENTED_SYSTEM;
 
 #[derive(Parser)]
 struct Arguments {
@@ -48,14 +55,29 @@ impl fmt::Display for HumanInt {
     }
 }
 
-macro_rules! show_size {
-    ($e:expr) => {
-        println!("Size of {}: {}", stringify!($e), allocative::size_of_unique($e));
-    }
+fn get_allocated_memory_sysinfo() -> usize {
+    let mut system = sysinfo::System::new_all();
+    system.refresh_memory();
+    system.used_memory() as usize
+}
+
+fn get_allocated_memory_stats_alloc() -> usize {
+    let stats = GLOBAL.stats();
+    stats.bytes_allocated - stats.bytes_deallocated
 }
 
 fn main() {
     let args = Arguments::parse();
+
+    let mem_before_load = get_allocated_memory_sysinfo();
+    println!(
+        "Memory before load (as per sysinfo): {}",
+        HumanBytes(mem_before_load)
+    );
+    println!(
+        "Memory before load (as per stats_alloc): {}",
+        HumanBytes(get_allocated_memory_stats_alloc())
+    );
 
     let loading_start = std::time::Instant::now();
     let graph = ProgramDescription::canonical_read(&args.path).unwrap();
@@ -65,12 +87,36 @@ fn main() {
     flame_graph_builder.visit_root(&graph);
     let out = flame_graph_builder.finish();
 
+    let mut max_call_string = 0;
+    let mut call_string_len = 0_u64;
+    let mut num_call_strings = 0_u32;
+    for cs in graph
+        .controllers
+        .values()
+        .flat_map(|v| v.graph.node_weights().map(|n| n.at))
+    {
+        call_string_len += cs.len() as u64;
+        max_call_string = max_call_string.max(cs.len());
+        num_call_strings += 1;
+    }
+
     let table = [
         (
             "Load Time",
             &TruncatedHumanTime::from(loading_duration) as &dyn std::fmt::Display,
         ),
-        ("Size in memory", &HumanBytes(out.flamegraph().total_size())),
+        (
+            "Total program memory (stats_alloc)",
+            &HumanBytes(get_allocated_memory_stats_alloc()),
+        ),
+        (
+            "Total program memory (sysinfo)",
+            &HumanBytes(get_allocated_memory_sysinfo()),
+        ),
+        (
+            "Graph size in memory (allocative)",
+            &HumanBytes(out.flamegraph().total_size()),
+        ),
         ("PDGs", &graph.controllers.len() as &_),
         (
             "Size on disk",
@@ -101,6 +147,11 @@ fn main() {
                     .map(|pdg| pdg.graph.edge_count())
                     .sum::<usize>(),
             ) as &_,
+        ),
+        ("Max Call String Length", &HumanInt(max_call_string)),
+        (
+            "Average Call String Length",
+            &HumanInt((call_string_len / num_call_strings as u64) as usize),
         ),
     ];
     let table = table
