@@ -17,14 +17,7 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
-
-[app-config.websubmit-lib]
-source-dir = "case-studies/websubmit"
-external-annotations = "lib-external-annotations.toml"
-
-[app-config.websubmit-strict]
-source-dir = "case-studies/websubmit"
-external-annotations = "strict-external-annotations.toml"
+flow-args = ["--relaxed"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
