@@ -23,6 +23,7 @@ explore
 flow-graph.json
 flow-graph.stat.json
 flow-graph.o
+*.marker_stats.json
 
 /results/
 

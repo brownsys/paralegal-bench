@@ -314,6 +314,7 @@ impl EvaluationConfig {
                     &exp,
                     &progress,
                 )?;
+                std::fs::remove_file(graph_loc.path())?;
             }
             other => {
                 progress.println(format!(
