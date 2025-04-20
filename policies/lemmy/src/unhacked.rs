@@ -51,23 +51,42 @@ pub fn check_instance(ctx: Arc<PolicyContext>, verbose: bool) -> Result<()> {
             }
         }
 
-        for &access in accesses.iter() {
-            // Sadly the pattern of the first bug fix does not fit this policy.
-            // We should find a better way to match it.
-            // if !delete_checks.has_ctrl_influence(access, &ctx) {
-            //     ctx.node_error(access, "Unprotected access (delete)");
-            // }
-            // if !ban_checks.has_ctrl_influence(access, &ctx) {
-            //     ctx.node_error(access, "Unprotected access (ban)");
-            // }
+        let accesses = NodeCluster::try_from_iter(accesses.iter().copied()).unwrap();
 
-            if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
-                ctx.node_error(access, "Unprotected access (delete)");
+        if let Some(unprotected) = delete_checks.flows_to_all(&accesses, &ctx, EdgeSelection::Both)
+        {
+            let mut msg = ctx.struct_error("Not all accesses are protected by delete checks");
+            for n in unprotected.iter_global_nodes() {
+                msg.with_node_note(n, "This is an unprotected access");
             }
-            if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
-                ctx.node_error(access, "Unprotected access (ban)");
-            }
+            msg.emit();
         }
+
+        if let Some(unprotected) = ban_checks.flows_to_all(&accesses, &ctx, EdgeSelection::Both) {
+            let mut msg = ctx.struct_error("Not all accesses are protected by ban checks");
+            for n in unprotected.iter_global_nodes() {
+                msg.with_node_note(n, "This is an unprotected access");
+            }
+            msg.emit();
+        }
+
+        // for &access in accesses.iter() {
+        //     // Sadly the pattern of the first bug fix does not fit this policy.
+        //     // We should find a better way to match it.
+        //     // if !delete_checks.has_ctrl_influence(access, &ctx) {
+        //     //     ctx.node_error(access, "Unprotected access (delete)");
+        //     // }
+        //     // if !ban_checks.has_ctrl_influence(access, &ctx) {
+        //     //     ctx.node_error(access, "Unprotected access (ban)");
+        //     // }
+
+        //     if !delete_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+        //         ctx.node_error(access, "Unprotected access (delete)");
+        //     }
+        //     if !ban_checks.flows_to(access, &ctx, EdgeSelection::Both) {
+        //         ctx.node_error(access, "Unprotected access (ban)");
+        //     }
+        // }
     }
     assert_warning!(
         ctx,
