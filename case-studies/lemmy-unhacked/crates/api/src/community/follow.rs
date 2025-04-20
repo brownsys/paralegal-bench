@@ -3,7 +3,8 @@ use actix_web::web::Data;
 use lemmy_api_common::{
   community::{CommunityResponse, FollowCommunity},
   utils::{
-    blocking, check_community_ban, check_community_deleted_or_removed, get_local_user_view_from_jwt,
+    async_policy_exception, blocking, check_community_ban, check_community_deleted_or_removed,
+    get_local_user_view_from_jwt,
   },
 };
 use lemmy_apub::{
@@ -71,8 +72,12 @@ impl Perform for FollowCommunity {
     } else if data.follow {
       // Dont actually add to the community followers here, because you need
       // to wait for the accept
-      FollowCommunityApub::send(&local_user_view.person.clone().into(), &community, context)
-        .await?;
+      async_policy_exception(FollowCommunityApub::send(
+        &local_user_view.person.clone().into(),
+        &community,
+        context,
+      ))
+      .await?;
     } else {
       UndoFollowCommunity::send(&local_user_view.person.clone().into(), &community, context)
         .await?;

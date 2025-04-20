@@ -131,6 +131,11 @@ pub fn policy_exception<R>(f: impl FnOnce() -> R) -> R {
   f()
 }
 
+#[paralegal::marker(exception, arguments = [0])]
+pub async fn async_policy_exception<R>(f: impl std::future::Future<Output = R>) -> R {
+  f.await
+}
+
 #[tracing::instrument(skip_all)]
 pub async fn get_local_user_view_from_jwt(
   jwt: &str,
