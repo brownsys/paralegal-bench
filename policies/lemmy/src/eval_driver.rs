@@ -817,8 +817,9 @@ fn run_policies_for_props(
     } else {
         Box::new(std::io::stdout())
     };
-
+    let stats = cx.stat_snapshot();
     let success = cx.emit_diagnostics(writer)?;
+    println!("Policy finished with success {success}: {stats}");
     Ok(success)
 }
 
