@@ -101,22 +101,13 @@ policy!(card_storage, ctx {
     for ctx in ctx.controller_contexts() {
         let mut srcs = ctx
             .nodes_marked_any_way(m_credit_card)
-            .filter(|n| n.controller_id() == ctx.id())
             .peekable();
         if srcs.peek().is_none() {
             continue;
         }
-        let Some(decision_sources) = NodeCluster::try_from_iter(
+        let maybe_decision_sources = NodeCluster::try_from_iter(
             ctx.nodes_marked_any_way(m_future_usage)
-                .filter(|n| n.controller_id() == ctx.id())
-            ) else {
-            let mut msg = ctx.struct_error("No future usage decision found");
-            for src in srcs {
-                msg.with_node_note(src, "Credit card source");
-            }
-            msg.emit();
-            continue;
-        };
+        );
         any_source_found = any_source_found || srcs.peek().is_some();
         // for src in srcs {
         //     for sink in src.influencees(&ctx, EdgeSelection::Data).into_iter().filter(|n| n.has_marker(&ctx, m_store)) {
@@ -138,6 +129,14 @@ policy!(card_storage, ctx {
                 continue;
             };
             any_sink_reached = true;
+
+            let Some(decision_sources) = maybe_decision_sources.as_ref() else {
+                let mut msg = ctx.struct_error("No future usage decision found");
+                msg.with_node_note(src, "Credit card source");
+                msg.emit();
+                continue;
+            };
+
 
             if let Some(unreached) = decision_sources.has_ctrl_influence_all(&sinks, &ctx) {
                 let mut msg = ctx.struct_error("Unprotected credit card storage");
