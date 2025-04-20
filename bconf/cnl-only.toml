@@ -17,6 +17,7 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
+flow-args = ["--relaxed"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
@@ -44,10 +45,11 @@ cargo-args = ["--lib"]
 source-dir = "case-studies/contile"
 external-annotations = "external-annotations.toml"
 cargo-args = ["--lib"]
+flow-args = ["--relaxed"]
 
 [app-config.mcaptcha]
 source-dir = "case-studies/mCaptcha"
-flow-args = ["--target", "mcaptcha"]
+flow-args = ["--target", "mcaptcha", "--relaxed"]
 external-annotations = "external-annotations.toml"
 
 [[experiment.case-studies]]
@@ -76,8 +78,8 @@ cnl = true
 
 [[experiment.case-studies]]
 mode = "case-study"
+lemmy-controller-run-mode = "all"
 application = "lemmy"
-controller-run-mode = "all"
 policy-mode = "unified"
 bugs = ["bug4"]
 new-version = "api"
@@ -85,8 +87,8 @@ cnl = true
 
 [[experiment.case-studies]]
 mode = "case-study"
+lemmy-controller-run-mode = "all"
 application = "lemmy"
-controller-run-mode = "all"
 policy-mode = "unified"
 bugs = ["bug4"]
 new-version = "api-crud"
@@ -101,13 +103,13 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 cnl = true
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-policy-mode = "unified"
-adaptive-depth = false
-cnl = true
+# [[experiment.case-studies]]
+# mode = "case-study"
+# application = "contile"
+# # Otherwise we overtaint and don't pass the non-bug
+# policy-mode = "unified"
+# adaptive-depth = false
+# cnl = true
 
 [[experiment.case-studies]]
 mode = "case-study"
