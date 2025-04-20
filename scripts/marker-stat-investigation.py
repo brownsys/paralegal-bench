@@ -2,13 +2,20 @@
 import json
 import argparse
 
-def print_a_stat(stat):
+def print_a_stat(stat, args):
     indent = '   '
     has_var_markers = any(len(v['markers']) != 0 for v in stat['markers_from_variables'])
     has_reachable_markers = len(stat['calls_with_reachable_markers']) != 0
     has_markers_on_self = len(stat['markers_on_self']) != 0
-    if not (has_var_markers or has_reachable_markers or has_markers_on_self):
+
+    if args.select is not None\
+        and len(args.select) != 0\
+        and i['function']['ident'] not in args.select:
         return
+    if args.root_marked and not (has_var_markers or has_reachable_markers or has_markers_on_self):
+        return
+    # if not (has_var_markers or has_reachable_markers or has_markers_on_self):
+    #     return
     
     # if not (has_var_markers or has_markers_on_self):
     #     return
@@ -18,7 +25,7 @@ def print_a_stat(stat):
     is_async = stat['is_async']
     if is_async is not None:
         print(indent, 'async closure', is_async)
-    is_stubbed = stat['is_stubed']
+    is_stubbed = stat['is_stubbed']
     if is_stubbed is not None:
         print(indent, 'stubbed by', is_stubbed)
     if has_var_markers:
@@ -37,11 +44,18 @@ def print_a_stat(stat):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
+    parser.add_argument('--select', '-s', action='append', help='Select a specific function to print')
+    parser.add_argument('--root-marked', action='store_true', help='Only show functions that are marked directly')
 
     args = parser.parse_args()
 
     with open(args.file, "r") as f:
         data = json.load(f)
+
+    print("Found", len(data), "functions")
+    for i in data:
+        print_a_stat(i, args)
+    return
 
     filtered = [
         stat for stat in data
