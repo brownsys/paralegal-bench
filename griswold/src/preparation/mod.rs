@@ -596,6 +596,9 @@ impl Run<'_> {
         if !self.config.pdg_caching {
             compile_cmd.get_command().arg("--no-pdg-cache");
         }
+        if let Some(limit) = self.config.k_depth {
+            compile_cmd.get_command().arg(format!("--k-depth={limit}"));
+        }
         compile_cmd
             .get_command()
             .args(app_config.flow_args.iter())

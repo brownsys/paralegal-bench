@@ -31,6 +31,19 @@ use crate::{
     Arguments,
 };
 
+/// Represents a single run of analyzer+policies.
+///
+/// [`ExperimentConfig`] is the atomic unit of experiments, whereas this is the
+/// atomic unit of actual runs. The distinction is necessary, because a single
+/// experiment usually causes multiple analyzer runs, depending on its mode. For
+/// example
+///
+/// - A `roll-forward` experiment causes one run per commit that is in the
+///   specified range.
+/// - An `ablation` experiment causes one run per feature that is specified in
+///   the `ablation_features` field of the experiment config.
+/// - A `case-study` experiment can cause up to 2 runs, one for the expected
+///   success and one for expected failure.
 #[derive(Clone)]
 pub struct Run<'c> {
     pub experiment_name: &'c str,

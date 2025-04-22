@@ -86,6 +86,10 @@ pub enum PolicyMode {
     None,
 }
 
+/// The atomic unit of the experiment configuration file.
+///
+/// Each of these produces one or many [`crate::run::Run`]s, meaning an
+/// invocation of the PDG constructur and the policy enforcer.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ExperimentConfig {
@@ -99,6 +103,7 @@ pub struct ExperimentConfig {
     pub adaptive_depth: bool,
     #[serde(default = "const_true")]
     pub pdg_caching: bool,
+    pub k_depth: Option<u32>,
     #[serde(flatten)]
     pub application: Application,
     #[serde(default)]
