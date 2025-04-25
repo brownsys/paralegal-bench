@@ -275,12 +275,9 @@ impl EvaluationConfig {
         let (mut stdout, mut stderr) = output.log_for("compile")?;
         writeln!(stdout, "###### Run {id}: {:?}", compile_command)?;
         writeln!(stderr, "###### Run {id}: {:?}", compile_command)?;
-        let mut process = compile_command
-            .get_command()
-            .stderr(stderr)
-            .stdout(stdout)
-            .spawn()?;
-        let cmd_stat = CommandMeasurement::for_process(self, self.pdg_timeout, &mut process)?;
+        let command = compile_command.get_command().stderr(stderr).stdout(stdout);
+        let (cmd_stat, mut process) =
+            CommandMeasurement::for_process(self, self.pdg_timeout, command)?;
         let mut run_stats = RunMeasurements::from_experiment(id as u32, &exp, cmd_stat);
         progress.inc(1);
         progress.set_message(format!("policy: {}", exp.policy_name));

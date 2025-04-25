@@ -32,8 +32,7 @@ version = "0.4"
 
 [dependencies.pulldown-cmark]
 default-features = false
-git = "https://git.joinplu.me/Plume/pulldown-cmark"
-branch = "bidi-plume"
+path = "../vendored/pulldown-cmark-2e586d5ae34d41d0/58514a6"
 
 [dev-dependencies]
 assert-json-diff = "2.0.1"

@@ -6,7 +6,8 @@ use paralegal_policy::paralegal_spdg::{AnalyzerStats, Identifier, SPDGStats, SPD
 use paralegal_policy::RootContext;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use std::process::Child;
+use std::os::unix::process::CommandExt;
+use std::process::{Child, Command};
 use std::sync;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -383,8 +384,12 @@ impl CommandMeasurement {
     pub fn for_process(
         config: &EvaluationConfig,
         timeout: Option<Duration>,
-        process: &mut Child,
-    ) -> std::io::Result<Self> {
+        // Yikes. Should be by value, but SPSGGenCommand only allows us to take
+        // a reference
+        command: &mut Command,
+    ) -> std::io::Result<(Self, Child)> {
+        command.process_group(0);
+        let mut process = command.spawn()?;
         let pid = process.id();
 
         let mut collector = CommandMeasurementCollector::new(sysinfo::Pid::from_u32(pid));
@@ -395,7 +400,7 @@ impl CommandMeasurement {
             collector.tick();
             if let Some(timeout) = timeout {
                 if timeout < collector.start.elapsed() {
-                    process.kill()?;
+                    terminate_process_group(pid)?;
                     timed_out = true;
                     break;
                 }
@@ -404,6 +409,16 @@ impl CommandMeasurement {
 
         let stat = collector.into_measurement(timed_out);
 
-        Ok(stat)
+        Ok((stat, process))
     }
+}
+
+fn terminate_process_group(pid: u32) -> std::io::Result<()> {
+    use nix::sys::signal::{killpg, Signal};
+    use nix::unistd::Pid;
+
+    killpg(Pid::from_raw(pid as i32), Signal::SIGTERM)?;
+    std::thread::sleep(Duration::from_secs(1));
+    killpg(Pid::from_raw(pid as i32), Signal::SIGKILL)?;
+    Ok(())
 }

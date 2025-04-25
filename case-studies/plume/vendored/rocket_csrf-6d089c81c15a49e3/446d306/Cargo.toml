@@ -1,0 +1,16 @@
+[package]
+name = "rocket_csrf"
+description = "Rocket fairing and guard for csrf protection"
+version = "0.1.2"
+authors = ["Trinity Pointard <trinity.pointard@insa-rennes.fr>"]
+repository = "https://github.com/fdb-hiroshima/rocket_csrf"
+readme = "README.md"
+license = "GPL-3.0"
+keywords = ["rocket", "csrf", "security"]
+
+[dependencies]
+data-encoding = "~2.1.1"
+ring = "~0.16.20"
+rocket = "0.4.0-rc.1"
+serde = "~1.0"
+time = "~0.1.40"

@@ -1,5 +1,5 @@
 stat-refresh-interval = "500ms"
-paralegal-home-dir = "../paralegal"
+paralegal-home-dir = "/home/jadam/research/paralegal"
 # Bumped because lemmy without adaptive depth takes ~10min in analysis
 pdg-timeout = "15min"
 
@@ -16,11 +16,9 @@ cargo-args = ["--no-default-features", "--features", "postgres"]
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
-flow-args = ["--relaxed"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
-flow-args = ["--relaxed"]
 cargo-args = ["--lib"]
 external-annotations = "external-annotations.toml"
 
