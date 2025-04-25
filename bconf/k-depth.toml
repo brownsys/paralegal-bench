@@ -1,7 +1,7 @@
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "/home/jadam/research/paralegal"
 # Bumped because lemmy without adaptive depth takes ~10min in analysis
-pdg-timeout = "15min"
+pdg-timeout = "5min"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy-unhacked"
@@ -48,25 +48,42 @@ source-dir = "case-studies/mCaptcha"
 flow-args = ["--target", "mcaptcha"]
 external-annotations = "external-annotations.toml"
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
+adaptive-depth = false
+k-depth = 6
 
 [[experiment.case-studies]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
+k-depth = 4
+adaptive-depth = false
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 3
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "contile"
+# Otherwise we overtaint and don't pass the non-bug
+policy-mode = "unified"
+adaptive-depth = false
+k-depth = 6
+
+[[experiment.case-studies]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+k-depth = 14
+adaptive-depth = false
 
 [[experiment.case-studies]]
 mode = "case-study"
@@ -75,6 +92,8 @@ application = "lemmy"
 policy-mode = "unified"
 bugs = ["bug4"]
 new-version = "api"
+adaptive-depth = false
+k-depth = 24
 
 [[experiment.case-studies]]
 mode = "case-study"
@@ -83,6 +102,8 @@ application = "lemmy"
 policy-mode = "unified"
 bugs = ["bug4"]
 new-version = "api-crud"
+adaptive-depth = false
+k-depth = 24
 
 # Does not run on this machine sadly
 [[experiment.case-studies]]
@@ -91,14 +112,12 @@ application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
+adaptive-depth = false
+k-depth = 11
 
 [[experiment.case-studies]]
 mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
+application = "plume"
 policy-mode = "unified"
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "mcaptcha"
-policy-mode = "unified"
+adaptive-depth = false
+k-depth = 19
