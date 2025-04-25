@@ -1,0 +1,45 @@
+[package]
+name          = "chomp"
+version       = "0.3.1"
+authors       = ["Martin Wernstål <m4rw3r@gmail.com>"]
+description   = "A fast monadic-style parser combinator designed to work on stable Rust."
+documentation = "http://m4rw3r.github.io/chomp"
+homepage      = "http://github.com/m4rw3r/chomp"
+repository    = "http://github.com/m4rw3r/chomp"
+readme        = "README.md"
+keywords      = ["parser", "parser-combinators", "parsing", "streaming"]
+license       = "MIT/Apache-2.0"
+
+include = [
+    "benches/**/*.rs",
+    "examples/**/*.rs",
+    "src/**/*.rs",
+    "tests/**/*.rs",
+    ".gitignore",
+    "CHANGELOG.md",
+    "README.md",
+    "Cargo.toml",
+]
+
+[dependencies]
+bitflags   = "0.7.0"
+conv       = { version = "0.3.3", default-features = false }
+#conv       = { version = "0.3.3", default-features = false, features = ["std"] }
+either     = { version = "0.1.7" }
+debugtrace = { version = "0.1.0" }
+tendril    = { version = "0.2.2", optional = true }
+
+# Technically a dev-dependency, but dev-dependencies are not allowed to be optional,
+# compiletest_rs fails to compile on stable and beta
+compiletest_rs = { version = "0.2.1", optional = true }
+clippy         = { version = ">0.0.1", optional = true }
+
+[features]
+# Feature for running extra (compiletime fail) tests on nightly
+unstable      = ["compiletest_rs"]
+noop_error    = []
+backtrace     = ["debugtrace/backtrace"]
+
+# Feature for travis, so that both noop_error and backtrace can be enabled simultaneously
+# without causing parse-errors in the argument parser in travis-cargo.
+noop_error_and_backtrace = ["noop_error", "backtrace"]

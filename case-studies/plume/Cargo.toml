@@ -60,8 +60,7 @@ path = "plume-common"
 path = "plume-models"
 
 [dependencies.rocket_csrf]
-git = "https://git.joinplu.me/plume/rocket_csrf"
-rev = "0.1.2"
+path = "vendored/rocket_csrf-6d089c81c15a49e3/446d306"
 
 [build-dependencies]
 ructe = "0.15.0"
@@ -84,3 +83,6 @@ members = [
     #"plume-front", 
     "plume-macro"
     ]
+
+[replace]
+"chomp:0.3.1" = { path = "vendored/chomp-0.3.1" }
