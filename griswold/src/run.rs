@@ -44,6 +44,9 @@ use crate::{
 ///   the `ablation_features` field of the experiment config.
 /// - A `case-study` experiment can cause up to 2 runs, one for the expected
 ///   success and one for expected failure.
+///
+/// In addition the `repeat` field in the experiment config causes replication
+/// of runs.
 #[derive(Clone)]
 pub struct Run<'c> {
     pub experiment_name: &'c str,
