@@ -9,3 +9,5 @@ allocative = "0.3.4"
 clap = { workspace = true }
 sysinfo = "0.34.2"
 stats_alloc = "0.1.10"
+bincode = { version = "1.*" }
+serde.workspace = true
