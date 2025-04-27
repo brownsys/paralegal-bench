@@ -1,11 +1,11 @@
 use crate::Perform;
 use actix_web::web::Data;
-use crate::lemmy_api_common::{
+use lemmy_api_common::{
   post::{GetSiteMetadata, GetSiteMetadataResponse},
   request::fetch_site_metadata,
 };
-use crate::lemmy_utils::{error::LemmyError, ConnectionId};
-use crate::lemmy_websocket::LemmyContext;
+use lemmy_utils::{error::LemmyError, ConnectionId};
+use lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for GetSiteMetadata {

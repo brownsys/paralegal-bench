@@ -14,13 +14,26 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
-activitypub_federation = "0.2.0"
-diesel = { version = "1.4.8", features = [
-	"postgres",
-	"chrono",
-	"r2d2",
-	"serde_json",
+lemmy_apub = { version = "=0.16.5", path = "../apub" }
+lemmy_utils = { version = "=0.16.5", path = "../utils" }
+lemmy_db_schema = { version = "=0.16.5", path = "../db_schema", features = [
+    "full",
 ] }
+lemmy_db_views = { version = "=0.16.5", path = "../db_views", features = [
+    "full",
+] }
+lemmy_db_views_moderator = { version = "=0.16.5", path = "../db_views_moderator", features = [
+    "full",
+] }
+lemmy_db_views_actor = { version = "=0.16.5", path = "../db_views_actor", features = [
+    "full",
+] }
+lemmy_api_common = { version = "=0.16.5", path = "../api_common", features = [
+    "full",
+] }
+lemmy_websocket = { version = "=0.16.5", path = "../websocket" }
+activitypub_federation = "0.2.0"
+diesel = "1.4.8"
 bcrypt = "0.12.1"
 chrono = { version = "0.4.19", features = ["serde"], default-features = false }
 serde_json = { version = "1.0.79", features = ["preserve_order"] }
@@ -30,63 +43,14 @@ base64 = "0.13.0"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 async-trait = "0.1.53"
 captcha = "0.0.9"
-cfg-if = "1.0.0"
 anyhow = "1.0.56"
 tracing = "0.1.32"
-url = { version = "2.2.2", features = ["serde"] }
-strum = "0.24.0"
-strum_macros = "0.24.0"
-diesel-derive-newtype = { version = "0.1.2" }
-diesel_migrations = { version = "1.4.0" }
-sha2 = { version = "0.10.2" }
-regex = { version = "1.5.5" }
-once_cell = { version = "1.10.0" }
-activitystreams-kinds = "0.2.1"
-serde_with = "1.12.0"
-actix = "0.13.0"
-actix-rt = { version = "2.7.0", default-features = false }
-http = "0.2.6"
-http-signature-normalization-actix = { version = "0.6.1", default-features = false, features = [
-	"server",
-	"sha-2",
-] }
-futures = "0.3.21"
-itertools = "0.10.3"
-reqwest = { version = "0.11.10", features = ["json"] }
-html2md = "0.2.13"
-lettre = "0.10.0-rc.7"
-tracing-error = "0.2.0"
-rand = "0.8.5"
-comrak = { version = "0.12.1", default-features = false }
-openssl = "0.10.38"
-reqwest-middleware = "0.1.5"
-smart-default = "0.6.0"
-jsonwebtoken = "8.0.1"
-doku = { git = "https://github.com/anixe/doku", features = ["url-2"] }
-html2text = "0.3.1"
-rosetta-i18n = "0.1.2"
-parking_lot = "0.12.0"
-percent-encoding = { version = "2.1.0" }
-background-jobs = "0.12.0"
-tokio = "1.17.0"
-actix-web-actors = { version = "4.1.0", default-features = false }
-opentelemetry = "0.17.0"
-tracing-opentelemetry = "0.17.2"
-encoding = { version = "0.2.33" }
-webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
-deser-hjson = "1.0.2"
-webmention = "0.4.0"
 paralegal = { git = "https://github.com/brownsys/paralegal", rev = "1f16ce2" }
 
-[build-dependencies]
-rosetta-build = "0.1.2"
-
 [features]
-
-# for bug 1, get_local_user_view_from_jwt versions
-bug-1-code = []
-bug-1-fix = []
-post-bug-1 = []
+bug-1-code = ["lemmy_api_common/bug-1-code"]
+bug-1-fix = ["lemmy_api_common/bug-1-fix"]
+post-bug-1 = ["lemmy_api_common/post-bug-1"]
 
 # for bugs 2/3, where they found/fixed (some of) the bug themselves
 correct = []
@@ -141,112 +105,53 @@ site-mod-log = []
 site-resolve-object = []
 site-search = []
 
-
-# api crud
-comment-create = []
-comment-delete = []
-comment-list = []
-comment-read = []
-comment-remove = []
-comment-update = []
-community-create = []
-community-delete = []
-community-list = []
-community-read = []
-community-remove = []
-community-update = []
-post-create = []
-post-delete = []
-post-list = []
-post-read = []
-post-remove = []
-post-update = []
-private-message-create = []
-private-message-delete = []
-private-message-read = []
-private-message-update = []
-site-create = []
-site-read = []
-site-update = []
-user-create = []
-user-delete = []
-user-read = []
-
-
 full = []
 default = ["full"]
 
 all-controllers = [
-	"comment-like",
-	"comment-mark-as-read",
-	"comment-save",
-	"comment-report-create",
-	"comment-report-list",
-	"comment-report-resolve",
-	"community-add-mod",
-	"community-ban",
-	"community-block",
-	"community-follow",
-	"community-hide",
-	"community-transfer",
-	"notification-list-mentions",
-	"notification-list-replies",
-	"notification-mark-all-read",
-	"notification-mark-mention-read",
-	"notification-unread-count",
-	"user-add-admin",
-	"user-ban-person",
-	"user-block",
-	"user-change-password",
-	"user-list-banned",
-	"user-login",
-	"user-report-count",
-	"user-save-settings",
-	"post-like",
-	"post-lock",
-	"post-mark-read",
-	"post-save",
-	"post-sticky",
-	"post-report-create",
-	"post-report-list",
-	"post-report-resolve",
-	"private-message-mark-read",
-	"purge-comment",
-	"purge-community",
-	"purge-person",
-	"purge-post",
-	"registration-approve",
-	"registration-list",
-	"registration-unread-counts",
-	"site-leave-admin",
-	"site-mod-log",
-	"site-resolve-object",
-	"site-search",
-	"comment-create",
-	"comment-delete",
-	"comment-list",
-	"comment-read",
-	"comment-remove",
-	"comment-update",
-	"community-create",
-	"community-delete",
-	"community-list",
-	"community-read",
-	"community-remove",
-	"community-update",
-	"post-create",
-	"post-delete",
-	"post-list",
-	"post-read",
-	"post-remove",
-	"post-update",
-	"private-message-create",
-	"private-message-delete",
-	"private-message-read",
-	"private-message-update",
-	"site-create",
-	"site-read",
-	"site-update",
-	"user-delete",
-	"user-read",
+    "comment-like",
+    "comment-mark-as-read",
+    "comment-save",
+    "comment-report-create",
+    "comment-report-list",
+    "comment-report-resolve",
+    "community-add-mod",
+    "community-ban",
+    "community-block",
+    "community-follow",
+    "community-hide",
+    "community-transfer",
+    "notification-list-mentions",
+    "notification-list-replies",
+    "notification-mark-all-read",
+    "notification-mark-mention-read",
+    "notification-unread-count",
+    "user-add-admin",
+    "user-ban-person",
+    "user-block",
+    "user-change-password",
+    "user-list-banned",
+    "user-login",
+    "user-report-count",
+    "user-save-settings",
+    "post-like",
+    "post-lock",
+    "post-mark-read",
+    "post-save",
+    "post-sticky",
+    "post-report-create",
+    "post-report-list",
+    "post-report-resolve",
+    "private-message-mark-read",
+    "purge-comment",
+    "purge-community",
+    "purge-person",
+    "purge-post",
+    "registration-approve",
+    "registration-list",
+    "registration-unread-counts",
+    "site-leave-admin",
+    "site-mod-log",
+    "site-resolve-object",
+    "site-search",
 ]

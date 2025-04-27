@@ -1,15 +1,15 @@
 use crate::Perform;
 use actix_web::web::Data;
-use crate::lemmy_api_common::{
+use lemmy_api_common::{
   person::{LoginResponse, PasswordChangeAfterReset},
   utils::{blocking, password_length_check},
 };
-use crate::lemmy_db_schema::source::{
+use lemmy_db_schema::source::{
   local_user::LocalUser,
   password_reset_request::PasswordResetRequest,
 };
-use crate::lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
-use crate::lemmy_websocket::LemmyContext;
+use lemmy_utils::{claims::Claims, error::LemmyError, ConnectionId};
+use lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for PasswordChangeAfterReset {

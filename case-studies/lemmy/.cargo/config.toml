@@ -1,2 +1,0 @@
-[build]
-rustflags = ["-L/opt/homebrew/opt/libpq/lib"] #, "-I/opt/homebrew/opt/libpq/include"]

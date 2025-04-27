@@ -1,19 +1,19 @@
 use crate::Perform;
 use actix_web::web::Data;
-use crate::lemmy_api_common::{
+use lemmy_api_common::{
   person::{VerifyEmail, VerifyEmailResponse},
   utils::{blocking, send_email_verification_success},
 };
-use crate::lemmy_db_schema::{
+use lemmy_db_schema::{
   source::{
     email_verification::EmailVerification,
     local_user::{LocalUser, LocalUserForm},
   },
   traits::Crud,
 };
-use crate::lemmy_db_views::structs::LocalUserView;
-use crate::lemmy_utils::error::LemmyError;
-use crate::lemmy_websocket::LemmyContext;
+use lemmy_db_views::structs::LocalUserView;
+use lemmy_utils::error::LemmyError;
+use lemmy_websocket::LemmyContext;
 
 #[async_trait::async_trait(?Send)]
 impl Perform for VerifyEmail {

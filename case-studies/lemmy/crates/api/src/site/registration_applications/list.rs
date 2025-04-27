@@ -1,55 +1,53 @@
-use crate::lemmy_api_common::{
-    site::{ListRegistrationApplications, ListRegistrationApplicationsResponse},
-    utils::{apply_label_read, blocking, get_local_user_view_from_jwt, is_admin},
-};
-use crate::lemmy_db_schema::source::site::Site;
-use crate::lemmy_db_views::registration_application_view::RegistrationApplicationQueryBuilder;
-use crate::lemmy_utils::{error::LemmyError, ConnectionId};
-use crate::lemmy_websocket::LemmyContext;
 use crate::Perform;
 use actix_web::web::Data;
+use lemmy_api_common::{
+  site::{ListRegistrationApplications, ListRegistrationApplicationsResponse},
+  utils::{blocking, get_local_user_view_from_jwt, is_admin},
+};
+use lemmy_db_schema::source::site::Site;
+use lemmy_db_views::registration_application_view::RegistrationApplicationQueryBuilder;
+use lemmy_utils::{error::LemmyError, ConnectionId};
+use lemmy_websocket::LemmyContext;
 
 /// Lists registration applications, filterable by undenied only.
 #[async_trait::async_trait(?Send)]
 impl Perform for ListRegistrationApplications {
-    type Response = ListRegistrationApplicationsResponse;
+  type Response = ListRegistrationApplicationsResponse;
 
-    #[cfg_attr(feature = "registration-list", paralegal::analyze)]
-    async fn perform(
-        &self,
-        context: &Data<LemmyContext>,
-        _websocket_id: Option<ConnectionId>,
-    ) -> Result<Self::Response, LemmyError> {
-        let data = self;
-        let local_user_view =
-            get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
+  #[cfg_attr(feature = "registration-list", paralegal::analyze)]
+  async fn perform(
+    &self,
+    context: &Data<LemmyContext>,
+    _websocket_id: Option<ConnectionId>,
+  ) -> Result<Self::Response, LemmyError> {
+    let data = self;
+    let local_user_view =
+      get_local_user_view_from_jwt(&data.auth, context.pool(), context.secret()).await?;
 
-        // Make sure user is an admin
-        is_admin(&local_user_view)?;
+    // Make sure user is an admin
+    is_admin(&local_user_view)?;
 
-        let unread_only = data.unread_only;
-        let verified_email_only =
-            apply_label_read(blocking(context.pool(), Site::read_local_site).await??)
-                .require_email_verification;
+    let unread_only = data.unread_only;
+    let verified_email_only = blocking(context.pool(), Site::read_local_site)
+      .await??
+      .require_email_verification;
 
-        let page = data.page;
-        let limit = data.limit;
-        let registration_applications = apply_label_read(
-            blocking(context.pool(), move |conn| {
-                RegistrationApplicationQueryBuilder::create(conn)
-                    .unread_only(unread_only)
-                    .verified_email_only(verified_email_only)
-                    .page(page)
-                    .limit(limit)
-                    .list()
-            })
-            .await??,
-        );
+    let page = data.page;
+    let limit = data.limit;
+    let registration_applications = blocking(context.pool(), move |conn| {
+      RegistrationApplicationQueryBuilder::create(conn)
+        .unread_only(unread_only)
+        .verified_email_only(verified_email_only)
+        .page(page)
+        .limit(limit)
+        .list()
+    })
+    .await??;
 
-        let res = Self::Response {
-            registration_applications,
-        };
+    let res = Self::Response {
+      registration_applications,
+    };
 
-        Ok(res)
-    }
+    Ok(res)
+  }
 }
