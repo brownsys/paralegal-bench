@@ -1,23 +1,29 @@
+#####################################################################
+# General settings
+#####################################################################
+
 stat-refresh-interval = "500ms"
-paralegal-home-dir = "../paralegal"
-# Bumped because lemmy without adaptive depth takes ~10min in analysis
-pdg-timeout = "15min"
+paralegal-home-dir = "/home/jadam/research/paralegal"
+# Tried 10 min as well but didn't improve
+pdg-timeout = "5min"
+
+#####################################################################
+# Defition of use case applications
+#####################################################################
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy-unhacked"
-flow-args = ["--relaxed"]
 external-annotations = "external-annotations.toml"
 
 [app-config.plume]
 source-dir = "case-studies/plume"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "plume-models", "--relaxed"]
+flow-args = ["--target", "plume-models"]
 cargo-args = ["--no-default-features", "--features", "postgres"]
 
 [app-config.websubmit]
 source-dir = "case-studies/websubmit"
 external-annotations = "baseline-external-annotations.toml"
-flow-args = ["--relaxed"]
 
 [app-config.freedit]
 source-dir = "case-studies/freedit"
@@ -28,7 +34,7 @@ external-annotations = "external-annotations.toml"
 [app-config.atomic-data]
 source-dir = "case-studies/atomic-server"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "atomic_lib", "--relaxed"]
+flow-args = ["--target", "atomic_lib"]
 cargo-args = ["--lib", "--features", "db"]
 
 [app-config.atomic-data.version-override.proc-macro2]
@@ -38,8 +44,11 @@ original = "1"
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
-flow-args = ["--target", "router", "--relaxed"]
+flow-args = ["--target", "router"]
 cargo-args = ["--lib"]
+
+[app-config.hyperswitch.env]
+LD_LIBRARY_PATH = "/home/jadam/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
 
 [app-config.contile]
 source-dir = "case-studies/contile"
@@ -71,34 +80,192 @@ cargo-args = ["--lib", "--features", "db"]
 [app-config.roll-forward-atomic.env]
 RUSTUP_TOOLCHAIN = "1.75"
 
+#####################################################################
+# Experiment 1: CI environment
+#####################################################################
+
+[[experiment.ci]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.ci]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+
+[[experiment.ci]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+
+#####################################################################
+# Experiment 1.5: Extra Contile run for the CI experiment
+#####################################################################
+
+# Special second contile run with a +1 depth to deal with the false positive.
+[[experiment.contile-extra]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+k-depth = 1
+
+#####################################################################
+# Experiment 2: IDE environment
+#####################################################################
+
+[[experiment.ide]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+include = [
+    "crate",
+    "lemmy_api_common",
+    "lemmy_api_crud",
+    "lemmy_api",
+    "lemmy_apub",
+    "lemmy_db_schema",
+    "lemmy_db_views",
+    "lemmy_db_views_actor",
+    "lemmy_db_views_moderator",
+    "lemmy_routes",
+    "lemmy_utils",
+    "lemmy_websocket",
+]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+include = [
+    "crate",
+    "lemmy_api_common",
+    "lemmy_api_crud",
+    "lemmy_api",
+    "lemmy_apub",
+    "lemmy_db_schema",
+    "lemmy_db_views",
+    "lemmy_db_views_actor",
+    "lemmy_db_views_moderator",
+    "lemmy_routes",
+    "lemmy_utils",
+    "lemmy_websocket",
+]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+include = ["crate"]
+
+[[experiment.ide]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+include = ["crate"]
+
+#####################################################################
+# Experiment 3: No Adaptive Depth
+#####################################################################
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 19
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 6
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 14
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 4
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -108,7 +275,7 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api"
-repeats = 5
+k-depth = 24
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -118,93 +285,33 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api-crud"
-repeats = 5
+k-depth = 24
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 6
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 11
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
-repeats = 5
+k-depth = 3
 
-[[experiment.case-studies]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "freedit"
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "atomic-data"
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api"
-controller-run-mode = "all"
-bugs = ["bug4"]
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api-crud"
-controller-run-mode = "all"
-bugs = ["bug4"]
-repeats = 5
-
-# Does not run on this machine sadly
-[[experiment.case-studies]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-policy-mode = "unified"
-repeats = 5
-
-[[experiment.case-studies]]
-mode = "case-study"
-application = "mcaptcha"
-policy-mode = "unified"
-repeats = 5
+#####################################################################
+# Experiment 4: Roll Forward
+#####################################################################
 
 [[experiment.atomic-roll-forward]]
 mode = "roll-forward"
@@ -260,6 +367,9 @@ commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 expectation = "fail"
 
+#####################################################################
+# Experiment 5: Per-Controller Time
+#####################################################################
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -322,68 +432,9 @@ application = "mcaptcha"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "plume"
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "freedit"
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "websubmit"
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "atomic-data"
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "lemmy"
-# new-version = "api"
-# controller-run-mode = "all"
-# bugs = ["bug4"]
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "lemmy"
-# new-version = "api-crud"
-# controller-run-mode = "all"
-# bugs = ["bug4"]
-# pdg-caching = false
-
-# # Does not run on this machine sadly
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "hyperswitch"
-# # Limiting policies for now, because only these actually make sense
-# policies = ["card-storage", "apikey-storage"]
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "contile"
-# # Otherwise we overtaint and don't pass the non-bug
-# policy-mode = "unified"
-# pdg-caching = false
-
-# [[experiment.no-cache]]
-# mode = "case-study"
-# application = "mcaptcha"
-# policy-mode = "unified"
-# pdg-caching = false
-
+#####################################################################
+# Experiment 6: Total Runtime, including dependency handling
+#####################################################################
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -425,11 +476,9 @@ controller-run-mode = "all"
 bugs = ["bug4"]
 clean = true
 
-# Does not run on this machine sadly
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 clean = true
@@ -437,7 +486,6 @@ clean = true
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
 clean = true
 
@@ -446,75 +494,3 @@ mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 clean = true
-
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "freedit"
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "websubmit"
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "atomic-data"
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api"
-controller-run-mode = "all"
-bugs = ["bug4"]
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "lemmy"
-new-version = "api-crud"
-controller-run-mode = "all"
-bugs = ["bug4"]
-repeats = 5
-cnl = true
-
-# Does not run on this machine sadly
-[[experiment.cnl]]
-mode = "case-study"
-application = "hyperswitch"
-# Limiting policies for now, because only these actually make sense
-policies = ["card-storage", "apikey-storage"]
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "contile"
-# Otherwise we overtaint and don't pass the non-bug
-policy-mode = "unified"
-repeats = 5
-cnl = true
-
-[[experiment.cnl]]
-mode = "case-study"
-application = "mcaptcha"
-policy-mode = "unified"
-repeats = 5
-cnl = true
