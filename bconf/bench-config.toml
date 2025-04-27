@@ -339,21 +339,25 @@ k-depth = 3
 mode = "roll-forward"
 application = "atomic-data"
 app-config-override = "roll-forward-atomic"
+repeats = 1
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
 expectation = "pass"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
 expectation = "pass"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/external-annotations.toml"
+repeats = 1
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
 expectation = "pass"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
 
 # Skipping this range of 73 commits, because they don't compile (even with
 # regular rustc, this is not a Paralegal issue). See
@@ -361,10 +365,12 @@ external-annotations = "../../research/paralegal-bench/roll-forward/atomic/aba49
 # for more information
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "8523e091e3e2cf9d3ac6067e1908b52ac5ace2a2"
+repeats = 1
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
 expectation = "pass"
+repeats = 1
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 
 # Skipping 8 commits that don't compile with rustc. This is not a Paralegal
@@ -373,20 +379,24 @@ external-annotations = "../../research/paralegal-bench/roll-forward/atomic/aba49
 # for more information
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "83f8f4f411b8a502f9e122a470629ab15ce29adc"
+repeats = 1
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+repeats = 1
 expectation = "pass"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
 expectation = "pass"
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../research/paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
+repeats = 1
 expectation = "fail"
 
 #####################################################################
