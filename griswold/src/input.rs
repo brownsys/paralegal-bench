@@ -71,6 +71,7 @@ pub struct EvaluationConfig {
     pub pdg_timeout: Option<Duration>,
     #[serde(default)]
     pub dump_analyzed_code: DumpCodeOption,
+    pub repeats: Option<u32>,
 }
 
 fn default_stat_refresh_interval() -> Duration {
@@ -110,8 +111,7 @@ pub struct ExperimentConfig {
     pub cargo_args: Box<[String]>,
     #[serde(default = "const_false")]
     pub clean: bool,
-    #[serde(default = "const_one")]
-    pub repeats: u32,
+    pub repeats: Option<u32>,
     /// Default to the application name
     pub app_config_override: Option<String>,
     #[serde(default)]

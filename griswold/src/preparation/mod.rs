@@ -45,7 +45,7 @@ impl EvaluationConfig {
                     .into_experiments(target_path)
                     .flat_map(|r| {
                         std::iter::repeat_with(move || r.clone())
-                            .take(experiment_config.repeats as usize)
+                            .take(experiment_config.repeats.or(self.repeats).unwrap_or(1) as usize)
                     })
                 })
             })
