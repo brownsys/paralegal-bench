@@ -140,7 +140,7 @@ policy-mode = "unified"
 #####################################################################
 
 # Special second contile run with a +1 depth to deal with the false positive.
-[[experiment.contile-extra]]
+[[experiment.ci-contile-extra]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
@@ -154,25 +154,32 @@ k-depth = 1
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = [
+    "--include=crate",
+    "--include=plume-api",
+    "--include=plume-macro",
+    "--include=plume-front",
+    "--include=plume-common",
+    "--include=plume-cli",
+]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
@@ -180,19 +187,19 @@ application = "lemmy"
 new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
-include = [
-    "crate",
-    "lemmy_api_common",
-    "lemmy_api_crud",
-    "lemmy_api",
-    "lemmy_apub",
-    "lemmy_db_schema",
-    "lemmy_db_views",
-    "lemmy_db_views_actor",
-    "lemmy_db_views_moderator",
-    "lemmy_routes",
-    "lemmy_utils",
-    "lemmy_websocket",
+extra-flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
 ]
 
 [[experiment.ide]]
@@ -201,19 +208,19 @@ application = "lemmy"
 new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
-include = [
-    "crate",
-    "lemmy_api_common",
-    "lemmy_api_crud",
-    "lemmy_api",
-    "lemmy_apub",
-    "lemmy_db_schema",
-    "lemmy_db_views",
-    "lemmy_db_views_actor",
-    "lemmy_db_views_moderator",
-    "lemmy_routes",
-    "lemmy_utils",
-    "lemmy_websocket",
+extra-flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
 ]
 
 [[experiment.ide]]
@@ -221,19 +228,34 @@ mode = "case-study"
 application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = [
+    "--include=crate",
+    "--include=api_models",
+    "--include=cards",
+    "--include=common_enums",
+    "--include=common_utils",
+    "--include=masking",
+    "--include=router_derive",
+    "--include=drainer",
+    "--include=diesel_models",
+    "--include=external_services",
+    "--include=redis_interface",
+    "--include=router_env",
+    "--include=scheduler",
+    "--include=storage_impl",
+]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
-include = ["crate"]
+extra-flow-args = ["--include=crate"]
 
 #####################################################################
 # Experiment 3: No Adaptive Depth
@@ -368,7 +390,7 @@ external-annotations = "../../research/paralegal-bench/roll-forward/atomic/97450
 expectation = "fail"
 
 #####################################################################
-# Experiment 5: Per-Controller Time
+# Experiment 5: Measuring analysis time for individual controllers
 #####################################################################
 
 [[experiment.per-controller-time]]
@@ -433,7 +455,7 @@ policy-mode = "unified"
 controller-run-mode = "all-separate"
 
 #####################################################################
-# Experiment 6: Total Runtime, including dependency handling
+# Experiment 6: Measuring the time taken to handle dependencies.
 #####################################################################
 
 [[experiment.total-runtime]]
