@@ -1,7 +1,7 @@
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "/home/jadam/research/paralegal"
 # Bumped because lemmy without adaptive depth takes ~10min in analysis
-pdg-timeout = "5min"
+pdg-timeout = "10min"
 
 [app-config.lemmy]
 source-dir = "case-studies/lemmy-unhacked"
@@ -37,6 +37,9 @@ source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
 flow-args = ["--target", "router"]
 cargo-args = ["--lib"]
+
+[app-config.hyperswitch.env]
+LD_LIBRARY_PATH = "/home/jadam/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
 
 [app-config.contile]
 source-dir = "case-studies/contile"
