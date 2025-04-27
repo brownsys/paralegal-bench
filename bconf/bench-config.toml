@@ -259,38 +259,38 @@ policy-mode = "unified"
 extra-flow-args = ["--include=crate"]
 
 #####################################################################
-# Experiment 3: No Adaptive Depth
+# Experiment 3: k-depth baseline
 #####################################################################
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 19
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 6
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 14
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 4
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 lemmy-controller-run-mode = "all"
 application = "lemmy"
@@ -300,7 +300,7 @@ bugs = ["bug4"]
 new-version = "api"
 k-depth = 24
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 lemmy-controller-run-mode = "all"
 application = "lemmy"
@@ -310,14 +310,14 @@ bugs = ["bug4"]
 new-version = "api-crud"
 k-depth = 24
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 6
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
@@ -325,12 +325,135 @@ policy-mode = "unified"
 adaptive-depth = false
 k-depth = 11
 
-[[experiment.adaptive-depth]]
+[[experiment.k-depth]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 3
+
+#####################################################################
+# Experiment 4: Old no-adaptive-depth experiment
+#####################################################################
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = [
+    "--include=crate",
+    "--include=plume-api",
+    "--include=plume-macro",
+    "--include=plume-front",
+    "--include=plume-common",
+    "--include=plume-cli",
+]
+
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = ["--include=crate"]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = ["--include=crate"]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = ["--include=crate"]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api"
+extra-flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
+]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api-crud"
+extra-flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
+]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = ["--include=crate"]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "hyperswitch"
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = [
+    "--include=crate",
+    "--include=api_models",
+    "--include=cards",
+    "--include=common_enums",
+    "--include=common_utils",
+    "--include=masking",
+    "--include=router_derive",
+    "--include=drainer",
+    "--include=diesel_models",
+    "--include=external_services",
+    "--include=redis_interface",
+    "--include=router_env",
+    "--include=scheduler",
+    "--include=storage_impl",
+]
+
+[[experiment.adaptive-depth]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+adaptive-depth = false
+extra-flow-args = ["--include=crate"]
 
 #####################################################################
 # Experiment 4: Roll Forward
