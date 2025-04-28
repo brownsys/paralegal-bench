@@ -10,6 +10,9 @@ repeats = 2
 
 #####################################################################
 # Defition of use case applications
+#
+# Starting with the base configurations for the use cases used in most
+# experiment.
 #####################################################################
 
 [app-config.lemmy]
@@ -61,6 +64,8 @@ source-dir = "case-studies/mCaptcha"
 flow-args = ["--target", "mcaptcha"]
 external-annotations = "external-annotations.toml"
 
+# Now comes the configuration for the roll-forward experiment.
+
 [app-config.roll-forward-atomic]
 # Must point to a directory containing the
 # https://github.com/atomicdata-dev/atomic-server git repository
@@ -80,6 +85,99 @@ cargo-args = ["--lib", "--features", "db"]
 
 [app-config.roll-forward-atomic.env]
 RUSTUP_TOOLCHAIN = "1.75"
+
+# Lastly a copy of all case studies in the "ide" configuration where only the
+# crates in the local workspace are included.
+
+[app-config.lemmy-ide]
+source-dir = "case-studies/lemmy"
+external-annotations = "external-annotations.toml"
+flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
+]
+
+[app-config.plume-ide]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--no-default-features", "--features", "postgres"]
+flow-args = [
+    "--target=plume-models",
+    "--include=crate",
+    "--include=plume-api",
+    "--include=plume-macro",
+    "--include=plume-front",
+    "--include=plume-common",
+    "--include=plume-cli",
+]
+
+[app-config.websubmit-ide]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+flow-args = ["--include=crate"]
+
+[app-config.freedit-ide]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed", "--include=crate"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data-ide]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib", "--include=crate"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data-ide.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch-ide]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+extra-flow-args = [
+    "--target=router",
+    "--include=crate",
+    "--include=api_models",
+    "--include=cards",
+    "--include=common_enums",
+    "--include=common_utils",
+    "--include=masking",
+    "--include=router_derive",
+    "--include=drainer",
+    "--include=diesel_models",
+    "--include=external_services",
+    "--include=redis_interface",
+    "--include=router_env",
+    "--include=scheduler",
+    "--include=storage_impl",
+]
+
+[app-config.hyperswitch-ide.env]
+LD_LIBRARY_PATH = "/home/jadam/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
+
+[app-config.contile-ide]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+flow-args = ["--include=crate"]
+
+[app-config.mcaptcha-ide]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha", "--include=crate"]
+external-annotations = "external-annotations.toml"
+
 
 #####################################################################
 # Experiment 1: CI environment
@@ -154,33 +252,26 @@ k-depth = 1
 [[experiment.ide]]
 mode = "case-study"
 application = "plume"
+app-config-override = "plume-ide"
 policy-mode = "unified"
-extra-flow-args = [
-    "--include=crate",
-    "--include=plume-api",
-    "--include=plume-macro",
-    "--include=plume-front",
-    "--include=plume-common",
-    "--include=plume-cli",
-]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "freedit"
+app-config-override = "freedit-ide"
 policy-mode = "unified"
-extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "websubmit"
+app-config-override = "websubmit-ide"
 policy-mode = "unified"
-extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
 application = "atomic-data"
+app-config-override = "atomic-data-ide"
 policy-mode = "unified"
-extra-flow-args = ["--include=crate"]
 
 [[experiment.ide]]
 mode = "case-study"
@@ -188,20 +279,7 @@ application = "lemmy"
 new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
-extra-flow-args = [
-    "--include=crate",
-    "--include=lemmy_api_crud",
-    "--include=lemmy_db_schema",
-    "--include=lemmy_db_views",
-    "--include=lemmy_db_views_actor",
-    "--include=lemmy_db_views_moderator",
-    "--include=lemmy_routes",
-    "--include=lemmy_utils",
-    "--include=lemmy_websocket",
-    "--include=lemmy_apub",
-    "--include=lemmy_api_common",
-    "--include=lemmy_api",
-]
+app-config-override = "lemmy-ide"
 
 [[experiment.ide]]
 mode = "case-study"
@@ -209,54 +287,26 @@ application = "lemmy"
 new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
-extra-flow-args = [
-    "--include=crate",
-    "--include=lemmy_api_crud",
-    "--include=lemmy_db_schema",
-    "--include=lemmy_db_views",
-    "--include=lemmy_db_views_actor",
-    "--include=lemmy_db_views_moderator",
-    "--include=lemmy_routes",
-    "--include=lemmy_utils",
-    "--include=lemmy_websocket",
-    "--include=lemmy_apub",
-    "--include=lemmy_api_common",
-    "--include=lemmy_api",
-]
+app-config-override = "lemmy-ide"
 
 [[experiment.ide]]
 mode = "case-study"
 application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
-extra-flow-args = [
-    "--include=crate",
-    "--include=api_models",
-    "--include=cards",
-    "--include=common_enums",
-    "--include=common_utils",
-    "--include=masking",
-    "--include=router_derive",
-    "--include=drainer",
-    "--include=diesel_models",
-    "--include=external_services",
-    "--include=redis_interface",
-    "--include=router_env",
-    "--include=scheduler",
-    "--include=storage_impl",
-]
+app-config-override = "hyperswitch-ide"
 
 [[experiment.ide]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
-extra-flow-args = ["--include=crate"]
+app-config-override = "contile-ide"
 
 [[experiment.ide]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
-extra-flow-args = ["--include=crate"]
+app-config-override = "mcaptcha-ide"
 
 #####################################################################
 # Experiment 3: k-depth baseline
@@ -341,14 +391,7 @@ mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = [
-    "--include=crate",
-    "--include=plume-api",
-    "--include=plume-macro",
-    "--include=plume-front",
-    "--include=plume-common",
-    "--include=plume-cli",
-]
+app-config-override = "plume-ide"
 
 
 [[experiment.adaptive-depth]]
@@ -356,21 +399,21 @@ mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = ["--include=crate"]
+app-config-override = "freedit-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = ["--include=crate"]
+app-config-override = "websubmit-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = ["--include=crate"]
+app-config-override = "atomic-data-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -380,20 +423,7 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api"
-extra-flow-args = [
-    "--include=crate",
-    "--include=lemmy_api_crud",
-    "--include=lemmy_db_schema",
-    "--include=lemmy_db_views",
-    "--include=lemmy_db_views_actor",
-    "--include=lemmy_db_views_moderator",
-    "--include=lemmy_routes",
-    "--include=lemmy_utils",
-    "--include=lemmy_websocket",
-    "--include=lemmy_apub",
-    "--include=lemmy_api_common",
-    "--include=lemmy_api",
-]
+app-config-override = "lemmy-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -403,27 +433,13 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api-crud"
-extra-flow-args = [
-    "--include=crate",
-    "--include=lemmy_api_crud",
-    "--include=lemmy_db_schema",
-    "--include=lemmy_db_views",
-    "--include=lemmy_db_views_actor",
-    "--include=lemmy_db_views_moderator",
-    "--include=lemmy_routes",
-    "--include=lemmy_utils",
-    "--include=lemmy_websocket",
-    "--include=lemmy_apub",
-    "--include=lemmy_api_common",
-    "--include=lemmy_api",
-]
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = ["--include=crate"]
+app-config-override = "contile-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -431,32 +447,17 @@ application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = [
-    "--include=crate",
-    "--include=api_models",
-    "--include=cards",
-    "--include=common_enums",
-    "--include=common_utils",
-    "--include=masking",
-    "--include=router_derive",
-    "--include=drainer",
-    "--include=diesel_models",
-    "--include=external_services",
-    "--include=redis_interface",
-    "--include=router_env",
-    "--include=scheduler",
-    "--include=storage_impl",
-]
+app-config-override = "hyperswitch-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
-extra-flow-args = ["--include=crate"]
+app-config-override = "mcaptcha-ide"
 
 #####################################################################
-# Experiment 4: Roll Forward
+# Experiment 5: Roll Forward
 #####################################################################
 
 [[experiment.atomic-roll-forward]]
@@ -524,7 +525,7 @@ repeats = 1
 expectation = "fail"
 
 #####################################################################
-# Experiment 5: Measuring analysis time for individual controllers
+# Experiment 6: Measuring analysis time for individual controllers
 #####################################################################
 
 [[experiment.per-controller-time]]
@@ -589,7 +590,7 @@ policy-mode = "unified"
 controller-run-mode = "all-separate"
 
 #####################################################################
-# Experiment 6: Measuring the time taken to handle dependencies.
+# Experiment 7: Measuring the time taken to handle dependencies.
 #####################################################################
 
 [[experiment.total-runtime]]
