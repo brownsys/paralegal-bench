@@ -18,7 +18,7 @@ pub mod run;
 /// Run benchmarks for the Paralegal static analyzer.
 ///
 /// The run is entirely guided by a [Config], which is read from the config-path
-/// argument (defaults to "bench-config.toml").
+/// argument.
 ///
 /// Results are written to "result-path" (defaults to "results"). Each time you
 /// call this program it creates a new set of directories. They all have the
@@ -38,6 +38,7 @@ pub mod run;
 ///     row belongs to.
 ///   - "sys.toml": information about the system that this experiment was run
 ///     on. Type [output::SysStat]
+///   - "bench-config.toml": a copy of the configuration that was input to this run
 #[derive(clap::Parser)]
 pub struct Arguments {
     /// Where to find the configuration file for this run

@@ -1890,8 +1890,10 @@ name = "graphtool"
 version = "0.0.1"
 dependencies = [
  "allocative",
+ "bincode",
  "clap",
  "paralegal-policy",
+ "serde",
  "stats_alloc",
  "sysinfo 0.34.2",
 ]
