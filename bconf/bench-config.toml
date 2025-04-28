@@ -6,7 +6,7 @@ stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
 # Tried 10 min as well but didn't improve
 pdg-timeout = "5min"
-repeats = 2
+repeats = 1
 
 #####################################################################
 # Defition of use case applications
@@ -146,7 +146,7 @@ original = "1"
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
 cargo-args = ["--lib"]
-extra-flow-args = [
+flow-args = [
     "--target=router",
     "--include=crate",
     "--include=api_models",
@@ -312,12 +312,12 @@ app-config-override = "mcaptcha-ide"
 # Experiment 3: k-depth baseline
 #####################################################################
 
-[[experiment.k-depth]]
-mode = "case-study"
-application = "plume"
-policy-mode = "unified"
-adaptive-depth = false
-k-depth = 19
+# [[experiment.k-depth]]
+# mode = "case-study"
+# application = "plume"
+# policy-mode = "unified"
+# adaptive-depth = false
+# k-depth = 19
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -340,25 +340,25 @@ policy-mode = "unified"
 adaptive-depth = false
 k-depth = 4
 
-[[experiment.k-depth]]
-mode = "case-study"
-lemmy-controller-run-mode = "all"
-application = "lemmy"
-policy-mode = "unified"
-adaptive-depth = false
-bugs = ["bug4"]
-new-version = "api"
-k-depth = 24
+# [[experiment.k-depth]]
+# mode = "case-study"
+# lemmy-controller-run-mode = "all"
+# application = "lemmy"
+# policy-mode = "unified"
+# adaptive-depth = false
+# bugs = ["bug4"]
+# new-version = "api"
+# k-depth = 24
 
-[[experiment.k-depth]]
-mode = "case-study"
-lemmy-controller-run-mode = "all"
-application = "lemmy"
-policy-mode = "unified"
-adaptive-depth = false
-bugs = ["bug4"]
-new-version = "api-crud"
-k-depth = 24
+# [[experiment.k-depth]]
+# mode = "case-study"
+# lemmy-controller-run-mode = "all"
+# application = "lemmy"
+# policy-mode = "unified"
+# adaptive-depth = false
+# bugs = ["bug4"]
+# new-version = "api-crud"
+# k-depth = 24
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -433,6 +433,7 @@ policy-mode = "unified"
 adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api-crud"
+app-config-override = "lemmy-ide"
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
