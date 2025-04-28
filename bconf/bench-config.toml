@@ -534,24 +534,28 @@ mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "plume-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "freedit-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "websubmit-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "atomic-data-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -560,6 +564,7 @@ policy-mode = "unified"
 bugs = ["bug4"]
 controller-run-mode = "all-separate"
 new-version = "api"
+app-config-override = "lemmy-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -568,6 +573,7 @@ policy-mode = "unified"
 bugs = ["bug4"]
 controller-run-mode = "all-separate"
 new-version = "api-crud"
+app-config-override = "lemmy-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -576,6 +582,7 @@ application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "hyperswitch-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -583,12 +590,14 @@ application = "contile"
 # Otherwise we overtaint and don't pass the non-bug
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "contile-ide"
 
 [[experiment.per-controller-time]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
+app-config-override = "mcaptcha-ide"
 
 #####################################################################
 # Experiment 7: Measuring the time taken to handle dependencies.
