@@ -47,6 +47,8 @@ pub struct RunMeasurements {
     adaptive_depth: bool,
     pdg_caching: bool,
     k_depth: Option<u32>,
+    /// Was a CNL policy used?
+    cnl: bool,
     result: Option<PolicyResult>,
     pdg_timed_out: bool,
     /// How long the `cargo paralegal-flow` command took in total
@@ -110,6 +112,7 @@ impl RunMeasurements {
             commit: exp.commit.clone(),
             bug: exp.bug.map(ToOwned::to_owned),
             package: exp.package,
+            cnl: exp.config.cnl,
             k_depth: exp.config.k_depth,
             result: None,
             adaptive_depth: exp.config.adaptive_depth,

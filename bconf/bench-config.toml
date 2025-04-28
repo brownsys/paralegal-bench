@@ -187,21 +187,25 @@ external-annotations = "external-annotations.toml"
 mode = "case-study"
 application = "plume"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
@@ -209,6 +213,7 @@ application = "lemmy"
 new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
@@ -216,6 +221,7 @@ application = "lemmy"
 new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
@@ -223,16 +229,19 @@ application = "hyperswitch"
 # Limiting policies for now, because only these actually make sense
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ci]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
+cnl = true
 
 #####################################################################
 # Experiment 1.5: Extra Contile run for the CI experiment
@@ -244,6 +253,7 @@ mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 k-depth = 1
+cnl = true
 
 #####################################################################
 # Experiment 2: IDE environment
@@ -254,24 +264,28 @@ mode = "case-study"
 application = "plume"
 app-config-override = "plume-ide"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
 application = "freedit"
 app-config-override = "freedit-ide"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
 application = "websubmit"
 app-config-override = "websubmit-ide"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
 application = "atomic-data"
 app-config-override = "atomic-data-ide"
 policy-mode = "unified"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
@@ -280,6 +294,7 @@ new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
@@ -288,6 +303,7 @@ new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
@@ -295,18 +311,21 @@ application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 app-config-override = "hyperswitch-ide"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 app-config-override = "contile-ide"
+cnl = true
 
 [[experiment.ide]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 app-config-override = "mcaptcha-ide"
+cnl = true
 
 #####################################################################
 # Experiment 3: k-depth baseline
@@ -318,6 +337,7 @@ app-config-override = "mcaptcha-ide"
 # policy-mode = "unified"
 # adaptive-depth = false
 # k-depth = 19
+# cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -325,6 +345,7 @@ application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 6
+cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -332,6 +353,7 @@ application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 14
+cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -339,6 +361,7 @@ application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 4
+cnl = true
 
 # [[experiment.k-depth]]
 # mode = "case-study"
@@ -349,6 +372,7 @@ k-depth = 4
 # bugs = ["bug4"]
 # new-version = "api"
 # k-depth = 24
+# cnl = true
 
 # [[experiment.k-depth]]
 # mode = "case-study"
@@ -359,6 +383,7 @@ k-depth = 4
 # bugs = ["bug4"]
 # new-version = "api-crud"
 # k-depth = 24
+# cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -366,6 +391,7 @@ application = "contile"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 6
+cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -374,6 +400,7 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 11
+cnl = true
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -381,6 +408,7 @@ application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
 k-depth = 3
+cnl = true
 
 #####################################################################
 # Experiment 4: Old no-adaptive-depth experiment
@@ -392,6 +420,7 @@ application = "plume"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "plume-ide"
+cnl = true
 
 
 [[experiment.adaptive-depth]]
@@ -400,6 +429,7 @@ application = "freedit"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "freedit-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -407,6 +437,7 @@ application = "websubmit"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "websubmit-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -414,6 +445,7 @@ application = "atomic-data"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "atomic-data-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -424,6 +456,7 @@ adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api"
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -434,6 +467,7 @@ adaptive-depth = false
 bugs = ["bug4"]
 new-version = "api-crud"
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -441,6 +475,7 @@ application = "contile"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "contile-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -449,6 +484,7 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "hyperswitch-ide"
+cnl = true
 
 [[experiment.adaptive-depth]]
 mode = "case-study"
@@ -456,6 +492,7 @@ application = "mcaptcha"
 policy-mode = "unified"
 adaptive-depth = false
 app-config-override = "mcaptcha-ide"
+cnl = true
 
 #####################################################################
 # Experiment 5: Roll Forward
@@ -466,24 +503,28 @@ mode = "roll-forward"
 application = "atomic-data"
 app-config-override = "roll-forward-atomic"
 repeats = 1
+cnl = true
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "79c9a91ae734ddd253d162a268de2a0365befcd7"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
 repeats = 1
+cnl = true
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "e0cf2d1b90a23fc817d2529d309e5b67be42515b"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/external-annotations.toml"
 repeats = 1
+cnl = true
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "51a665138875e2ef41c10e952b34c9d7eb5d5b79"
 expectation = "pass"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 repeats = 1
+cnl = true
 
 # Skipping this range of 73 commits, because they don't compile (even with
 # regular rustc, this is not a Paralegal issue). See
@@ -498,6 +539,7 @@ commit = "1b9aee9cbac33b3636ebf6153f4d866b4c310fe4"
 expectation = "pass"
 repeats = 1
 external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
+cnl = true
 
 # Skipping 8 commits that don't compile with rustc. This is not a Paralegal
 # issue. See
@@ -512,18 +554,21 @@ commit = "aba49fefb6e6e7def4faed4542b3436a358ef56f"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/aba49fefb6e6e7def4faed4542b3436a358ef56f-external-annotations.toml"
 repeats = 1
 expectation = "pass"
+cnl = true
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "46a503adbfc52678c97e52f6e8cfaf541aa6492d"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 repeats = 1
 expectation = "pass"
+cnl = true
 
 [[experiment.atomic-roll-forward.cutoff]]
 commit = "9745069392e25d70cf159fadcab6d2c22949fa49"
 external-annotations = "../../paralegal-bench/roll-forward/atomic/9745069392e25d70cf159fadcab6d2c22949fa49-external-annotations.toml"
 repeats = 1
 expectation = "fail"
+cnl = true
 
 #####################################################################
 # Experiment 6: Measuring analysis time for individual controllers
@@ -535,6 +580,7 @@ application = "plume"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "plume-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -542,6 +588,7 @@ application = "freedit"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "freedit-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -549,6 +596,7 @@ application = "websubmit"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "websubmit-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -556,6 +604,7 @@ application = "atomic-data"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "atomic-data-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -565,6 +614,7 @@ bugs = ["bug4"]
 controller-run-mode = "all-separate"
 new-version = "api"
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -574,6 +624,7 @@ bugs = ["bug4"]
 controller-run-mode = "all-separate"
 new-version = "api-crud"
 app-config-override = "lemmy-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -583,6 +634,7 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "hyperswitch-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -591,6 +643,7 @@ application = "contile"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "contile-ide"
+cnl = true
 
 [[experiment.per-controller-time]]
 mode = "case-study"
@@ -598,6 +651,7 @@ application = "mcaptcha"
 policy-mode = "unified"
 controller-run-mode = "all-separate"
 app-config-override = "mcaptcha-ide"
+cnl = true
 
 #####################################################################
 # Experiment 7: Measuring the time taken to handle dependencies.
@@ -608,24 +662,28 @@ mode = "case-study"
 application = "plume"
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "freedit"
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "websubmit"
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "atomic-data"
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -634,6 +692,7 @@ new-version = "api"
 controller-run-mode = "all"
 bugs = ["bug4"]
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -642,6 +701,7 @@ new-version = "api-crud"
 controller-run-mode = "all"
 bugs = ["bug4"]
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -649,15 +709,73 @@ application = "hyperswitch"
 policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 clean = true
+cnl = true
 
 [[experiment.total-runtime]]
 mode = "case-study"
 application = "mcaptcha"
 policy-mode = "unified"
 clean = true
+cnl = true
+
+#####################################################################
+# Experiment 8: Comparing with manual policies
+#####################################################################
+
+[[experiment.manual]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.manual]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+
+[[experiment.manual]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+
+[[experiment.manual]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"

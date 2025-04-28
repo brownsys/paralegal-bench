@@ -7,7 +7,7 @@ fn main() {
 
     let policies = ["expiration-marked", "store-date"];
     for policy in policies {
-        let mut p = Path::new("policies/freedit/paper").join(policy);
+        let mut p = Path::new("policies/freedit").join(policy);
         p.set_extension("txt");
         println!("cargo:rerun-if-changed={}", base_dir.join(&p).display());
         let out_dir = env::var_os("OUT_DIR").unwrap();
