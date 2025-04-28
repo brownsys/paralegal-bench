@@ -5,8 +5,8 @@
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
 # Tried 10 min as well but didn't improve
-pdg-timeout = "5min"
-repeats = 1
+pdg-timeout = "15min"
+#repeats = 5
 
 #####################################################################
 # Defition of use case applications
