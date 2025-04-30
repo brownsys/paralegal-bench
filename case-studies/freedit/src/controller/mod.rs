@@ -200,8 +200,10 @@ impl User {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             .timestamp();
-        let key = format!("{expire:x}_{uid}_{stat_type}");
         #[cfg(not(feature = "buggy"))]
+        let key = format!("{expire:x}_{uid}_{stat_type}");
+        #[cfg(feature = "buggy")]
+        let key = format!("{uid}_{stat_type}");
         incr_id(&db.open_tree(user_stats())?, key)?;
         Ok(())
     }
