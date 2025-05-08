@@ -594,7 +594,7 @@ cnl = true
 # Second run of roll forward to collect numbers for lines changed in just the
 # local crate
 
-[[experiment.atomic-roll-forward]]
+[[experiment.atomic-roll-forward-ws]]
 mode = "roll-forward"
 application = "atomic-data"
 app-config-override = "roll-forward-atomic-ws"
