@@ -6,13 +6,12 @@ stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
 # Tried 10 min as well but didn't improve
 pdg-timeout = "15min"
+# In the paper we run the experiment with 5 repeats for stable numbers. it is
+# commented out here for your convenience. You can uncomment it if you wish.
 #repeats = 5
 
 #####################################################################
-# Defition of use case applications
-#
-# Starting with the base configurations for the use cases used in most
-# experiment.
+# Definition of use case applications
 #####################################################################
 
 [app-config.lemmy]
