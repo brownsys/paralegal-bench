@@ -4,7 +4,7 @@
 
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
-pdg-timeout = "10min"
+pdg-timeout = "15min"
 
 #####################################################################
 # Defition of use case applications

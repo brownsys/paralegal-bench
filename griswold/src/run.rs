@@ -130,7 +130,7 @@ impl Output {
         paralegal_commit: String,
         repo_commit: String,
     ) -> std::io::Result<Self> {
-        let bench_num = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S");
+        let bench_num = chrono::Utc::now().format("%Y-%m-%dT%H-%M-%S");
         std::fs::create_dir_all(&args.result_path)?;
         let mut general_output_dir = args.result_path.canonicalize()?;
         let post_process_dir = general_output_dir.join(format!("{bench_num}-pp"));
