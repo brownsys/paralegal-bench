@@ -159,6 +159,9 @@ impl Metrics {
             }
             // Include any "hard coded" tags.
             // incr = incr.with_tag("version", env!("CARGO_PKG_VERSION"));
+            #[cfg(feature = "use-send")]
+            tagged.send();
+            #[cfg(not(feature = "use-send"))]
             match tagged.try_send() {
                 Err(e) => {
                     // eat the metric, but log the error
