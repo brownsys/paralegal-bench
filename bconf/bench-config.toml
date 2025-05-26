@@ -4,11 +4,10 @@
 
 stat-refresh-interval = "500ms"
 paralegal-home-dir = "../paralegal"
-# Tried 10 min as well but didn't improve
 pdg-timeout = "15min"
 # In the paper we run the experiment with 5 repeats for stable numbers. it is
 # commented out here for your convenience. You can uncomment it if you wish.
-#repeats = 5
+#repeats = 10
 
 #####################################################################
 # Definition of use case applications
@@ -255,6 +254,7 @@ cnl = true
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
+k-depth = 1
 cnl = true
 
 [[experiment.ci]]
@@ -272,7 +272,6 @@ cnl = true
 mode = "case-study"
 application = "contile"
 policy-mode = "unified"
-k-depth = 1
 cnl = true
 
 #####################################################################
@@ -338,6 +337,7 @@ mode = "case-study"
 application = "contile"
 policy-mode = "unified"
 app-config-override = "contile-ws"
+k-depth = 1
 cnl = true
 
 [[experiment.ws]]
@@ -346,6 +346,19 @@ application = "mcaptcha"
 policy-mode = "unified"
 app-config-override = "mcaptcha-ws"
 cnl = true
+
+#####################################################################
+# Experiment 2.5: Extra Contile run for the WS experiment
+#####################################################################
+
+# Contile run without the extra k-depth
+[[experiment.ws]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+app-config-override = "contile-ws"
+cnl = true
+
 
 #####################################################################
 # Experiment 3: k-depth baseline
@@ -383,27 +396,29 @@ adaptive-depth = false
 k-depth = 4
 cnl = true
 
-# [[experiment.k-depth]]
-# mode = "case-study"
-# lemmy-controller-run-mode = "all"
-# application = "lemmy"
-# policy-mode = "unified"
-# adaptive-depth = false
-# bugs = ["bug4"]
-# new-version = "api"
-# k-depth = 24
-# cnl = true
+[[experiment.k-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api"
+k-depth = 24
+cnl = true
+repeats = 1
 
-# [[experiment.k-depth]]
-# mode = "case-study"
-# lemmy-controller-run-mode = "all"
-# application = "lemmy"
-# policy-mode = "unified"
-# adaptive-depth = false
-# bugs = ["bug4"]
-# new-version = "api-crud"
-# k-depth = 24
-# cnl = true
+[[experiment.k-depth]]
+mode = "case-study"
+lemmy-controller-run-mode = "all"
+application = "lemmy"
+policy-mode = "unified"
+adaptive-depth = false
+bugs = ["bug4"]
+new-version = "api-crud"
+k-depth = 24
+cnl = true
+repeats = 1
 
 [[experiment.k-depth]]
 mode = "case-study"
@@ -758,6 +773,7 @@ application = "plume"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -765,6 +781,7 @@ application = "freedit"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -772,6 +789,7 @@ application = "websubmit"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -779,6 +797,7 @@ application = "atomic-data"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -788,6 +807,7 @@ controller-run-mode = "all"
 bugs = ["bug4"]
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -797,6 +817,7 @@ controller-run-mode = "all"
 bugs = ["bug4"]
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -805,6 +826,7 @@ policies = ["card-storage", "apikey-storage"]
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -812,6 +834,7 @@ application = "contile"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 [[experiment.total-runtime]]
 mode = "case-study"
@@ -819,6 +842,7 @@ application = "mcaptcha"
 policy-mode = "unified"
 clean = true
 cnl = true
+repeats = 1
 
 #####################################################################
 # Experiment 8: Comparing with manual policies
