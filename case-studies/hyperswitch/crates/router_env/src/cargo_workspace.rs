@@ -21,9 +21,9 @@ pub fn set_cargo_workspace_members_env() {
         .map(|package_id| {
             package_id
                 .repr
-                .split_once(' ')
+                .rsplit_once('/')
                 .expect("Unknown cargo metadata package ID format")
-                .0
+                .1
         })
         .collect::<Vec<_>>()
         .join(",");
@@ -53,14 +53,14 @@ pub fn verify_cargo_metadata_format() {
     let workspace_members = metadata.workspace_members;
 
     let package_id_entry_prefix =
-        format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+        format!("{}#{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     assert!(
         workspace_members
             .iter()
-            .any(|package_id| package_id.repr.starts_with(&package_id_entry_prefix)),
+            .any(|package_id| package_id.repr.ends_with(&package_id_entry_prefix)),
         "Unknown workspace members package ID format. \
          Please run `cargo metadata --format-version=1 | jq '.workspace_members'` and update this \
-         build script to match the updated package ID format."
+         build script to match the updated package ID format.",
     );
 }
 

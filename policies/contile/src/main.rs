@@ -16,6 +16,8 @@ struct Arguments {
     buggy: bool,
     #[clap(long)]
     verbose: bool,
+    #[clap(long)]
+    cnl: bool,
     #[clap(last = true)]
     extra_args: Vec<String>,
 }
@@ -52,7 +54,7 @@ fn main() -> Result<()> {
             args.policy.as_slice()
         };
         for p in policy {
-            p.runnable(false)(ctx.clone())?
+            p.runnable(args.cnl)(ctx.clone())?
         }
         Ok(())
     })?;

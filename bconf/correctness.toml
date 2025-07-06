@@ -1,0 +1,264 @@
+#####################################################################
+# General settings
+#####################################################################
+
+stat-refresh-interval = "500ms"
+paralegal-home-dir = "../paralegal"
+pdg-timeout = "15min"
+# In the paper we run the experiment with 5 repeats for stable numbers. it is
+# commented out here for your convenience. You can uncomment it if you wish.
+#repeats = 10
+
+#####################################################################
+# Definition of use case applications
+#####################################################################
+
+[app-config.lemmy]
+source-dir = "case-studies/lemmy"
+external-annotations = "external-annotations.toml"
+
+[app-config.plume]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "plume-models"]
+cargo-args = ["--no-default-features", "--features", "postgres"]
+
+[app-config.websubmit]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+
+[app-config.freedit]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "router"]
+cargo-args = ["--lib"]
+
+[app-config.hyperswitch.env]
+LD_LIBRARY_PATH = "/home/jadam/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
+
+[app-config.contile]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+
+[app-config.mcaptcha]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha"]
+external-annotations = "external-annotations.toml"
+
+# Now comes the configuration for the roll-forward experiment.
+
+[app-config.roll-forward-atomic]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# directory must exist however
+source-dir = "../clones/atomic-server"
+clone = "https://github.com/atomicdata-dev/atomic-server"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+    "--relaxed",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.roll-forward-atomic.env]
+RUSTUP_TOOLCHAIN = "1.75"
+
+[app-config.roll-forward-atomic-ws]
+# Must point to a directory containing the
+# https://github.com/atomicdata-dev/atomic-server git repository
+#
+# If the directory does not exist, the runner will to auto-clone. The parent
+# directory must exist however
+source-dir = "../clones/atomic-server"
+clone = "https://github.com/atomicdata-dev/atomic-server"
+flow-args = [
+    "--target",
+    "atomic_lib",
+    "--analyze",
+    "crate::commit::Commit::apply_opts",
+    "--relaxed",
+    "--include=crate",
+]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.roll-forward-atomic-ws.env]
+RUSTUP_TOOLCHAIN = "1.75"
+
+# Lastly a copy of all case studies in the "workspace" configuration where only the
+# crates in the local workspace are included.
+
+[app-config.lemmy-ws]
+source-dir = "case-studies/lemmy"
+external-annotations = "external-annotations.toml"
+flow-args = [
+    "--include=crate",
+    "--include=lemmy_api_crud",
+    "--include=lemmy_db_schema",
+    "--include=lemmy_db_views",
+    "--include=lemmy_db_views_actor",
+    "--include=lemmy_db_views_moderator",
+    "--include=lemmy_routes",
+    "--include=lemmy_utils",
+    "--include=lemmy_websocket",
+    "--include=lemmy_apub",
+    "--include=lemmy_api_common",
+    "--include=lemmy_api",
+]
+
+[app-config.plume-ws]
+source-dir = "case-studies/plume"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--no-default-features", "--features", "postgres"]
+flow-args = [
+    "--target=plume-models",
+    "--include=crate",
+    "--include=plume-api",
+    "--include=plume-macro",
+    "--include=plume-front",
+    "--include=plume-common",
+    "--include=plume-cli",
+]
+
+[app-config.websubmit-ws]
+source-dir = "case-studies/websubmit"
+external-annotations = "baseline-external-annotations.toml"
+flow-args = ["--include=crate"]
+
+[app-config.freedit-ws]
+source-dir = "case-studies/freedit"
+flow-args = ["--relaxed", "--include=crate"]
+cargo-args = ["--lib"]
+external-annotations = "external-annotations.toml"
+
+[app-config.atomic-data-ws]
+source-dir = "case-studies/atomic-server"
+external-annotations = "external-annotations.toml"
+flow-args = ["--target", "atomic_lib", "--include=crate"]
+cargo-args = ["--lib", "--features", "db"]
+
+[app-config.atomic-data-ws.version-override.proc-macro2]
+replacement = "1.0.78"
+original = "1"
+
+[app-config.hyperswitch-ws]
+source-dir = "case-studies/hyperswitch"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+flow-args = [
+    "--target=router",
+    "--include=crate",
+    "--include=api_models",
+    "--include=cards",
+    "--include=common_enums",
+    "--include=common_utils",
+    "--include=masking",
+    "--include=router_derive",
+    "--include=drainer",
+    "--include=diesel_models",
+    "--include=external_services",
+    "--include=redis_interface",
+    "--include=router_env",
+    "--include=scheduler",
+    "--include=storage_impl",
+]
+
+[app-config.hyperswitch-ws.env]
+LD_LIBRARY_PATH = "/home/jadam/.rustup/toolchains/nightly-2023-08-25-x86_64-unknown-linux-gnu/lib"
+
+[app-config.contile-ws]
+source-dir = "case-studies/contile"
+external-annotations = "external-annotations.toml"
+cargo-args = ["--lib"]
+flow-args = ["--include=crate"]
+
+[app-config.mcaptcha-ws]
+source-dir = "case-studies/mCaptcha"
+flow-args = ["--target", "mcaptcha", "--include=crate"]
+external-annotations = "external-annotations.toml"
+
+
+#####################################################################
+# Experiment 1: All crates (CI) environment
+#####################################################################
+
+[[experiment.ci]]
+mode = "case-study"
+application = "plume"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "freedit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "websubmit"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "atomic-data"
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api"
+controller-run-mode = "all"
+bugs = ["bug4"]
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "lemmy"
+new-version = "api-crud"
+controller-run-mode = "all"
+bugs = ["bug4"]
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "hyperswitch"
+# Limiting policies for now, because only these actually make sense
+policies = ["card-storage", "apikey-storage"]
+policy-mode = "unified"
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "contile"
+policy-mode = "unified"
+k-depth = 1
+cnl = true
+
+[[experiment.ci]]
+mode = "case-study"
+application = "mcaptcha"
+policy-mode = "unified"
+cnl = true
