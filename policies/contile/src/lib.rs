@@ -1,6 +1,7 @@
 use anyhow::{Ok, Result};
 use paralegal_policy::{
-    assert_error, paralegal_spdg::Identifier, Context, Diagnostics, EdgeSelection, NodeExt,
+    assert_error, paralegal_pdg::Identifier, Context, Diagnostics, EdgeSelection, NodeExt,
+    RootContext,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -16,7 +17,7 @@ pub enum Policy {
 pub const DEFAULT_CONTROLLERS: &[&str] = &[];
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
+    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
         match self {
             Policy::SendToAdm => send_to_adm as fn(_) -> _,
             Policy::SendToMetrics => send_to_metrics as _,
@@ -24,7 +25,7 @@ impl Policy {
     }
 }
 
-pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
+pub fn send_to_adm(ctx: Arc<RootContext>) -> Result<()> {
     let m_sink = Identifier::new_intern("sink");
     let m_sensitive = Identifier::new_intern("sensitive");
     ctx.clone().named_policy(
@@ -51,7 +52,7 @@ pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
                         for n in path.iter() {
                             msg.with_node_note(
                                 *n,
-                                format!("Passes through this {}", n.info(&ctx).description),
+                                format!("Passes through this {}", n.info(&ctx)),
                             );
                         }
                         msg.emit();
@@ -64,7 +65,7 @@ pub fn send_to_adm(ctx: Arc<Context>) -> Result<()> {
     )
 }
 
-pub fn send_to_metrics(ctx: Arc<Context>) -> Result<()> {
+pub fn send_to_metrics(ctx: Arc<RootContext>) -> Result<()> {
     let m_sensitive = Identifier::new_intern("sensitive");
     let m_send = Identifier::new_intern("metrics_server");
     ctx.named_policy(
@@ -89,7 +90,7 @@ pub fn send_to_metrics(ctx: Arc<Context>) -> Result<()> {
                         for p in path.iter() {
                             msg.with_node_note(
                                 *p,
-                                format!("Passes through this {}", p.info(&ctx).description),
+                                format!("Passes through this {}", p.info(&ctx)),
                             );
                         }
                         msg.emit();

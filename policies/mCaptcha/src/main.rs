@@ -67,7 +67,7 @@ fn main() -> Result<()> {
     };
     let result = graph_loc.with_context(|ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         let policies = if args.policy.is_empty() {
             Policy::value_variants()

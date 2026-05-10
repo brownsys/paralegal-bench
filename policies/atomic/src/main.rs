@@ -56,7 +56,7 @@ fn main() -> Result<()> {
 
     let result = graph_loc.with_context_configured(config, |ctx| {
         if let Some(target) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(target)?, false)?;
+            ctx.write_analyzed_code(File::create(target)?, false, false)?;
         }
         atomic::check_rights(ctx)
     })?;

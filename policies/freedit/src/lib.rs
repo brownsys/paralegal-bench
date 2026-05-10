@@ -2,8 +2,8 @@ use anyhow::Result;
 use clap::ValueEnum;
 use paralegal_policy::{
     assert_error, assert_warning,
-    paralegal_spdg::{CallString, GlobalNode, Identifier, InstructionKind, Node, SPDG},
-    Context, ControllerId, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries,
+    paralegal_pdg::{CallString, Endpoint as ControllerId, GlobalNode, Identifier, InstructionKind, Node, SPDG},
+    Context, DefId, EdgeSelection, IntoIterGlobalNodes, Marker, NodeQueries, RootContext,
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc};
@@ -103,7 +103,7 @@ trait ContextExt {
     fn marked(&self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
-impl ContextExt for Context {
+impl ContextExt for RootContext {
     fn call_sites_for<'a>(
         &'a self,
         ctrl: ControllerId,
@@ -149,7 +149,7 @@ impl CtrlExt for SPDG {
 
 #[allow(dead_code)]
 /// Not actually used, because it turns out the application doesn't do this. It just cleans up the database every 10min.
-fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
+fn check_no_expired_read(ctx: Arc<RootContext>) -> Result<()> {
     ctx.named_policy(Identifier::new_intern("no expired read"), |ctx| {
         let expirable_data = ctx.marked_nodes(marker!(pageviews)).collect::<Vec<_>>();
         let time_marker = marker!(time);
@@ -189,7 +189,7 @@ fn check_no_expired_read(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
-fn check_date_store(ctx: Arc<Context>) -> Result<()> {
+fn check_date_store(ctx: Arc<RootContext>) -> Result<()> {
     let pageview_data = ctx
         .marked(marker!(pageviews))
         .map(|d| d)
@@ -243,18 +243,18 @@ fn check_date_store(ctx: Arc<Context>) -> Result<()> {
                     .any(|time_source|
                         ctx.flows_to(GlobalNode::from_local_node(ctx.id(), *time_source), sink, EdgeSelection::Data)
                     );
-                assert_error!(ctx, any_fits, "Found no local source that influences to the pageview store {sink}");
+                assert_error!(ctx, any_fits, "Found no local source that influences to the pageview store {:?}", sink);
                 true
             )
         });
         // We expect this to happen in `edit_post_post`, `comment_post` and `solo_post`
-        assert_error!(ctx, storing_controller == 3, format!("Not as many controllers ({storing_controller} != 3) storing pageviews as expected found, policy must be wrong"));
+        assert_error!(ctx, storing_controller == 3, "Not as many controllers ({} != 3) storing pageviews as expected found, policy must be wrong", storing_controller);
         //println!("Last seen for first policy {}", farthest.load(std::sync::atomic::Ordering::Relaxed));
     });
     Ok(())
 }
 
-fn check_expiration(ctx: Arc<Context>) -> Result<()> {
+fn check_expiration(ctx: Arc<RootContext>) -> Result<()> {
     let pageview_data = ctx
         .marked(marker!(pageviews))
         .map(|d| d)
@@ -328,7 +328,7 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn check(self, ctx: Arc<Context>) -> Result<()> {
+    pub fn check(self, ctx: Arc<RootContext>) -> Result<()> {
         match self {
             Self::DateStore => check_date_store(ctx),
             Self::Expiration => check_expiration(ctx),

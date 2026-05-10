@@ -1,2 +1,5 @@
 [toolchain]
-channel = "1.75"
+# Bumped from 1.75 because newer transitive deps (time-core, etc.) require the
+# edition2024 Cargo feature, stabilized only in 1.85+. Aligns with the
+# paralegal analyzer's nightly so policy and analyzer share one toolchain.
+channel = "nightly-2026-04-20"

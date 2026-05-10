@@ -7,8 +7,8 @@ pub mod eval_driver;
 
 use paralegal_policy::{
     assert_warning,
-    paralegal_spdg::{traverse::EdgeSelection, Identifier},
-    Context, Diagnostics, Marker, PolicyContext,
+    paralegal_pdg::{traverse::EdgeSelection, Identifier},
+    Context, Diagnostics, Marker, PolicyContext, RootContext,
 };
 
 macro_rules! marker {
@@ -118,7 +118,7 @@ pub enum Prop {
 }
 
 impl Prop {
-    pub fn run(self, cx: Arc<Context>) -> anyhow::Result<()> {
+    pub fn run(self, cx: Arc<RootContext>) -> anyhow::Result<()> {
         match self {
             Self::Community => cx.named_policy(Identifier::new_intern("Community Policy"), |cx| {
                 CommunityProp::new(cx.clone()).check()

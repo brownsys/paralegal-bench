@@ -61,7 +61,7 @@ fn main() -> Result<()> {
     };
     let result = graph_loc.with_context(|ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         let edges: usize = ctx
             .desc()

@@ -45,7 +45,7 @@ fn main() -> Result<()> {
     config.always_happens_before_tracing = TraceLevel::Full;
     let result = graph.with_context_configured(config, |ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         let policy = if args.policy.is_empty() {
             Policy::value_variants()

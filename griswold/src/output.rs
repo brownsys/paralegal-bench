@@ -1,8 +1,8 @@
 //! Types describing data the runner emits
 
-use paralegal_policy::paralegal_spdg::utils::write_sep;
-use paralegal_policy::paralegal_spdg::{Identifier, SPDGStats, SPDG};
-use paralegal_policy::Context;
+use paralegal_policy::paralegal_pdg::utils::write_sep;
+use paralegal_policy::paralegal_pdg::{Identifier, SPDGStats, SPDG};
+use paralegal_policy::RootContext;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::process::Child;
@@ -125,7 +125,7 @@ impl RunMeasurements {
     pub fn add_policy_stat(
         &mut self,
         cmd_stat: CommandMeasurement,
-        ctx: &Context,
+        ctx: &RootContext,
         success: PolicyResult,
         traversal_time: Duration,
         file_size: u64,
@@ -148,13 +148,16 @@ impl RunMeasurements {
         );
         set!(traversal_time, traversal_time.into());
         set!(num_controllers, ctx.desc().controllers.len() as u16);
-        set!(rustc_time, ctx.desc().rustc_time.into());
+        // The following stats moved to a separately-loaded `AnalyzerStats` file
+        // in the new paralegal API; we stub them out so the bench still compiles.
+        // TODO(migration): load AnalyzerStats via GraphLocation::stats_path().
+        set!(rustc_time, Duration::default().into());
         set!(policy_time, cmd_stat.elapsed);
-        set!(num_markers, ctx.desc().marker_annotation_count);
-        set!(dedup_functions, ctx.desc().dedup_functions);
-        set!(dedup_locs, ctx.desc().dedup_locs);
-        set!(seen_locs, ctx.desc().seen_locs);
-        set!(seen_functions, ctx.desc().seen_functions);
+        set!(num_markers, 0);
+        set!(dedup_functions, 0);
+        set!(dedup_locs, 0);
+        set!(seen_locs, 0);
+        set!(seen_functions, 0);
         set!(file_size, file_size);
     }
 

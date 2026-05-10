@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
             if num_nodes < 999 {
                 println!(
                     "{} has only {num_nodes} nodes",
-                    paralegal_policy::paralegal_spdg::DisplayPath::from(&ctrl.path)
+                    paralegal_policy::paralegal_pdg::DisplayPath::from(&ctrl.path)
                 );
             }
         }

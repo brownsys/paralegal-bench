@@ -1,9 +1,10 @@
 use anyhow::Result;
 use paralegal_policy::{
     assert_error,
-    paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster, SourceUse},
-    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeQueries,
+    paralegal_pdg::{traverse::EdgeSelection, GlobalNode, Identifier, NodeCluster},
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeQueries, RootContext,
 };
+use petgraph::visit::EdgeRef;
 use petgraph::Direction::Outgoing;
 use std::{collections::HashSet, sync::Arc};
 
@@ -20,14 +21,14 @@ macro_rules! marker {
 
 macro_rules! policy {
     ($name:ident $(,)? $context:ident $(,)? $code:block) => {
-        pub fn $name(ctx: Arc<Context>) -> Result<()> {
+        pub fn $name(ctx: Arc<RootContext>) -> Result<()> {
             ctx.named_policy(Identifier::new_intern(stringify!($name)), |$context| $code)
         }
     };
 }
 
 trait NodeExt: Sized {
-    fn is_argument(self, ctx: &Context, num: u8) -> bool;
+    fn is_argument(self, ctx: &RootContext, num: u8) -> bool;
 }
 
 trait ContextExt {
@@ -36,7 +37,7 @@ trait ContextExt {
     fn determines_ctrl(&self, influencer: GlobalNode, target: GlobalNode) -> bool;
 }
 
-impl ContextExt for Context {
+impl ContextExt for RootContext {
     fn marked_nodes<'a>(&'a self, marker: Marker) -> Box<dyn Iterator<Item = GlobalNode> + 'a> {
         Box::new(
             self.desc()
@@ -55,11 +56,11 @@ impl ContextExt for Context {
 }
 
 impl NodeExt for GlobalNode {
-    fn is_argument(self, ctx: &Context, num: u8) -> bool {
-        ctx.desc().controllers[&self.controller_id()]
-            .graph
+    fn is_argument(self, ctx: &RootContext, num: u8) -> bool {
+        let graph = &ctx.desc().controllers[&self.controller_id()].graph;
+        graph
             .edges_directed(self.local_node(), Outgoing)
-            .any(|e| matches!(e.weight().source_use, SourceUse::Argument(n) if n == num))
+            .any(|e| matches!(graph[e.target()].is_arg, Some(n) if n as u8 == num))
     }
 }
 
