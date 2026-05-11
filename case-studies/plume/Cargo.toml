@@ -77,10 +77,13 @@ search-lindera = ["plume-models/search-lindera"]
 
 [workspace]
 members = [
-    "plume-api", 
-    "plume-cli", 
-    "plume-models", 
-    "plume-common", 
-    #"plume-front", 
+    "plume-api",
+    "plume-cli",
+    "plume-models",
+    "plume-common",
+    #"plume-front",
     "plume-macro"
     ]
+
+[patch.crates-io]
+conv = { path = "vendor/conv" }
