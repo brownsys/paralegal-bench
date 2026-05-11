@@ -574,10 +574,17 @@ impl PropRunner {
 
                     let sink_callsite = sink.siblings(self);
 
-                    // scopes for the store
+                    // scopes for the store. We chain the siblings themselves
+                    // because the `scopes` marker is attached to the
+                    // CallArgument node directly (via `marker(scopes,
+                    // arguments=[i])` on the sink-callee); `influencers`
+                    // returns predecessors of `sink_callsite` but does not
+                    // include the cluster's own nodes, which would miss the
+                    // marker.
                     let store_scopes = self
                         .cx
                         .influencers(&sink_callsite, EdgeSelection::Data)
+                        .chain(sink_callsite.iter_global_nodes())
                         .filter(|n| self.cx.has_marker(marker!(scopes), *n))
                         .collect::<Vec<_>>();
                     if store_scopes.is_empty() {
