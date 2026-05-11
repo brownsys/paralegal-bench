@@ -87,3 +87,7 @@ members = [
 
 [patch.crates-io]
 conv = { path = "vendor/conv" }
+devise_core = { path = "vendor/devise_core" }
+traitobject = { path = "vendor/traitobject" }
+rocket_http = { path = "vendor/rocket_http" }
+rocket = { path = "vendor/rocket" }
