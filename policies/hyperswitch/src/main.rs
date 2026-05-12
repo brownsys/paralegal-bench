@@ -35,7 +35,6 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.source_dir)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
-        cmd.abort_after_analysis();
         cmd.external_annotations("external-annotations.toml");
         cmd.get_command()
             .args(["--target", "router"])

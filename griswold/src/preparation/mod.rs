@@ -562,9 +562,6 @@ impl Run<'_> {
         {
             compile_cmd.external_annotations(path);
         }
-        if app_config.abort {
-            compile_cmd.abort_after_analysis();
-        }
         if self.config.adaptive_depth {
             compile_cmd.get_command().arg("--adaptive-depth");
         }

@@ -32,8 +32,7 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.directory)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
-        cmd.external_annotations(&args.annotations)
-            .abort_after_analysis();
+        cmd.external_annotations(&args.annotations);
 
         cmd.get_command()
             .args(["--target", "atomic_lib"])

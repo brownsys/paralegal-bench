@@ -27,8 +27,7 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.repo_dir)
     } else {
         let mut cmd = SPDGGenCommand::global();
-        cmd.abort_after_analysis()
-            .external_annotations("external-annotations.toml");
+        cmd.external_annotations("external-annotations.toml");
         cmd.get_command().args(args.extra_args.iter());
         if !args.extra_args.contains(&"--".to_owned()) {
             cmd.get_command().arg("--");

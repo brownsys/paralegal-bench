@@ -30,7 +30,6 @@ fn main() -> Result<()> {
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml")
-            .abort_after_analysis()
             .get_command()
             .args(["--", "--lib"]);
         if args.buggy {

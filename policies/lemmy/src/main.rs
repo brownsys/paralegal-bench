@@ -29,7 +29,6 @@ fn main() -> anyhow::Result<()> {
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml");
-        cmd.abort_after_analysis();
         let rcmd = cmd.get_command();
         rcmd.arg("--target").arg("lemmy_api").args(&args.extra_args);
         if !args.extra_args.contains(&"--".to_owned()) {

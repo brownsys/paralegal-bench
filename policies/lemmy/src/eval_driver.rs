@@ -489,7 +489,6 @@ fn run_batch(
     for ctrler in batch {
         let mut ana_cmd = Command::new("cargo");
         ana_cmd.arg("paralegal-flow").current_dir(lemmy_dir).args([
-            "--abort-after-analysis",
             "--target",
             "lemmy_api",
             "--external-annotations",
