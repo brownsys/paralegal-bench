@@ -44,12 +44,6 @@ original = "1"
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
-# Hyperswitch's transitive build scripts run `rustc -vV`, which (with
-# RUSTC_WRAPPER set) used to fail because the analyzer binary DT_NEEDEDs
-# librustc_driver / libLLVM and so couldn't start in a build-script env.
-# The `paralegal-flow` shim in cargo-paralegal-flow now intercepts trivial
-# rustc invocations (`-vV`, `--print …`) before that DT_NEEDED resolution,
-# so the historical `--rustc-reset-for-linux` flag is no longer needed.
 flow-args = ["--target", "router"]
 cargo-args = ["--lib"]
 
