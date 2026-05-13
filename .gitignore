@@ -20,8 +20,13 @@ target/
 explore
 **.ntgb.json
 /plume/po/
+/case-studies/plume/po/
 flow-graph.json
 flow-graph.o
+flow-graph.stat.json
+flow-graph.marker_stats.json
+paralegal-artifact.json
+/.claude/
 
 /results/
 

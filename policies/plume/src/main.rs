@@ -29,7 +29,6 @@ fn main() -> Result<()> {
     cmd_raw.args([
         "--external-annotations",
         "external-annotations.toml",
-        "--abort-after-analysis",
         "--target",
         "plume-models",
     ]);

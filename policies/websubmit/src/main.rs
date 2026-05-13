@@ -30,7 +30,6 @@ fn main() -> Result<()> {
     let mut command = paralegal_policy::SPDGGenCommand::global();
     command
         .external_annotations(args.flavour.external_annotations())
-        .abort_after_analysis()
         .get_command()
         .arg("--");
 

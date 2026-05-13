@@ -102,8 +102,6 @@ pub struct ApplicationConfig {
     pub clone: Option<String>,
     #[serde(default)]
     pub cargo_args: Box<[String]>,
-    #[serde(default = "const_true")]
-    pub abort: bool,
     #[serde(default)]
     pub flow_args: Box<[String]>,
     pub external_annotations: Option<PathBuf>,

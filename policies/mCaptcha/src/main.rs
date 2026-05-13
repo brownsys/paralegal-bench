@@ -32,7 +32,6 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.source_dir)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
-        cmd.abort_after_analysis();
         cmd.external_annotations("external-annotations.toml");
         cmd.get_command()
             .args(["--target", "mcaptcha"])
@@ -67,7 +66,7 @@ fn main() -> Result<()> {
     };
     let result = graph_loc.with_context(|ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         let policies = if args.policy.is_empty() {
             Policy::value_variants()

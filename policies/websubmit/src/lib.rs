@@ -6,9 +6,9 @@ use paralegal_policy::{
     assert_error,
     diagnostics::ControllerContext,
     loc,
-    paralegal_spdg::{self, FunctionCallInfo, InstructionKind, TypeId},
-    Context, ControllerId, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
-    PolicyContext,
+    paralegal_pdg::{self as paralegal_spdg, Endpoint as ControllerId, FunctionCallInfo, InstructionKind, TypeId},
+    Context, Diagnostics, IntoIterGlobalNodes, Marker, NodeExt as _, NodeQueries,
+    PolicyContext, RootContext,
 };
 use paralegal_spdg::{traverse::EdgeSelection, GlobalNode, Identifier};
 use petgraph::{csr, visit::EdgeRef};
@@ -41,17 +41,17 @@ impl Deref for PropRunner {
 }
 
 trait NodeExt {
-    fn unconditional(self, ctx: &Context) -> bool;
-    fn is_return(self, ctx: &Context) -> bool;
-    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode>;
+    fn unconditional(self, ctx: &RootContext) -> bool;
+    fn is_return(self, ctx: &RootContext) -> bool;
+    fn ctrl_influencer(self, ctx: &RootContext) -> Option<GlobalNode>;
 }
 
 impl NodeExt for GlobalNode {
-    fn unconditional(self, ctx: &Context) -> bool {
+    fn unconditional(self, ctx: &RootContext) -> bool {
         self.ctrl_influencer(ctx).is_none()
     }
 
-    fn ctrl_influencer(self, ctx: &Context) -> Option<GlobalNode> {
+    fn ctrl_influencer(self, ctx: &RootContext) -> Option<GlobalNode> {
         ctx.desc().controllers[&self.controller_id()]
             .graph
             .edges_directed(self.local_node(), petgraph::Incoming)
@@ -59,7 +59,7 @@ impl NodeExt for GlobalNode {
             .map(|e| GlobalNode::from_local_node(self.controller_id(), e.source()))
     }
 
-    fn is_return(self, ctx: &Context) -> bool {
+    fn is_return(self, ctx: &RootContext) -> bool {
         ctx.desc().controllers[&self.controller_id()]
             .return_
             .contains(&self.local_node())
@@ -70,7 +70,7 @@ trait ContextExt {
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_>;
 }
 
-impl ContextExt for Context {
+impl ContextExt for RootContext {
     fn all_returns(&self) -> Box<dyn Iterator<Item = GlobalNode> + '_> {
         Box::new(self.desc().controllers.iter().flat_map(|(id, spdg)| {
             spdg.return_
@@ -157,7 +157,7 @@ impl PropRunner {
                                     c,
                                     format!(
                                         "This is a checkpoint {}",
-                                        self.node_info(c).description
+                                        self.node_info(c)
                                     ),
                                 );
                                 true
@@ -174,7 +174,7 @@ impl PropRunner {
                         src,
                         format!(
                             "{} was a valid root, but did not reach delete",
-                            src.info(&self.cx).description
+                            src.info(&self.cx)
                         ),
                     );
                     msg.emit();
@@ -446,7 +446,7 @@ impl PropRunner {
                     f,
                     format!(
                         "This node is a disallowed modification {} at {}",
-                        f.info(&cx).description,
+                        f.info(&cx),
                         f.instruction(&cx).description
                     ),
                 );
@@ -503,10 +503,8 @@ impl PropRunner {
             assert_error!(
                 cx,
                 controller_valid,
-                format!(
-                    loc!("Violation detected for controller: {}"),
-                    cx.current().name
-                ),
+                loc!("Violation detected for controller: {}"),
+                cx.current().name
             );
 
             if !controller_valid {
@@ -576,10 +574,17 @@ impl PropRunner {
 
                     let sink_callsite = sink.siblings(self);
 
-                    // scopes for the store
+                    // scopes for the store. We chain the siblings themselves
+                    // because the `scopes` marker is attached to the
+                    // CallArgument node directly (via `marker(scopes,
+                    // arguments=[i])` on the sink-callee); `influencers`
+                    // returns predecessors of `sink_callsite` but does not
+                    // include the cluster's own nodes, which would miss the
+                    // marker.
                     let store_scopes = self
                         .cx
                         .influencers(&sink_callsite, EdgeSelection::Data)
+                        .chain(sink_callsite.iter_global_nodes())
                         .filter(|n| self.cx.has_marker(marker!(scopes), *n))
                         .collect::<Vec<_>>();
                     if store_scopes.is_empty() {
@@ -686,7 +691,7 @@ pub enum Policy {
 }
 
 impl Policy {
-    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<Context>) -> Result<()>> {
+    pub fn runnable(self, flavour: Flavour) -> Box<dyn Fn(Arc<RootContext>) -> Result<()>> {
         Box::new(move |ctx| {
             ctx.named_policy(Identifier::new_intern(self.as_ref()), |ctx| {
                 let runner = PropRunner::new(ctx, flavour);

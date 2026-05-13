@@ -6,9 +6,9 @@ Follow steps from [here](https://www.notion.so/justus-adam/Atomic-Data-applying-
 
 In `plume-models`:
 Pre-bug fix
-`cargo dfpp --external-annotations external-annotations.toml  --verbose --abort-after-analysis -- --lib --no-default-features --features postgres` 
+`cargo dfpp --external-annotations external-annotations.toml  --verbose -- --lib --no-default-features --features postgres` 
 
 Post-bug fix
-`cargo dfpp --external-annotations external-annotations.toml  --verbose --abort-after-analysis -- --lib --no-default-features --features postgres --features delete-comments` 
+`cargo dfpp --external-annotations external-annotations.toml  --verbose -- --lib --no-default-features --features postgres --features delete-comments` 
 
 Note: running this may sometimes return `could not resolve...` for the external annotations. Currently do not know why :( 

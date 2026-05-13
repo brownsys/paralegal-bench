@@ -1,11 +1,11 @@
 [workspace]
 members = ["griswold", "policies/*"]
+exclude = ["paralegal"]
 
 [workspace.dependencies]
-paralegal-policy = { git = "https://github.com/brownsys/paralegal", rev = "db06704d98f39394b125cfc5d5ec2d6553f54e04" }
-#paralegal-policy = { path = "../paralegal/crates/paralegal-policy" }
-paralegal-spdg = { git = "https://github.com/brownsys/paralegal", rev = "db06704d98f39394b125cfc5d5ec2d6553f54e04" }
-#paralegal-spdg = { path = "../paralegal/crates/paralegal-spdg" }
+paralegal-policy = { path = "paralegal/crates/policy" }
+# Cargo package alias: locally the crate was renamed paralegal-spdg → paralegal-pdg.
+paralegal-spdg = { path = "paralegal/crates/pdg", package = "paralegal-pdg" }
 clap = { version = "=4.4.18", features = ["derive"] }
 petgraph = { version = "0.6" }
 anyhow = { version = "1", features = ["backtrace"] }

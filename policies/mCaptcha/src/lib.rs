@@ -1,6 +1,7 @@
 use anyhow::{Ok, Result};
 use paralegal_policy::{
-    assert_error, paralegal_spdg::traverse::EdgeSelection, Context, Diagnostics, Marker, NodeExt,
+    assert_error, paralegal_pdg::traverse::EdgeSelection, Context, Diagnostics, Marker, NodeExt,
+    RootContext,
 };
 use std::sync::Arc;
 
@@ -24,7 +25,7 @@ pub enum Policy {
 pub const DEFAULT_CONTROLLERS: &[&str] = &["verify-pow", "delete-account"];
 
 impl Policy {
-    pub fn runnable(self) -> fn(Arc<Context>) -> Result<()> {
+    pub fn runnable(self) -> fn(Arc<RootContext>) -> Result<()> {
         match self {
             Self::Deletion => deletion_policy as _,
             Self::OptInBeforeSave => verify_opt_in_before_save_policy,
@@ -33,7 +34,7 @@ impl Policy {
 }
 
 #[allow(dead_code)]
-fn deletion_policy(ctx: Arc<Context>) -> Result<()> {
+fn deletion_policy(ctx: Arc<RootContext>) -> Result<()> {
     let user_data_types = ctx.marked_type(Marker::new_intern("user_data"));
 
     let found = ctx.all_controllers().any(|(deleter_id, _ignored)| {
@@ -51,7 +52,7 @@ fn deletion_policy(ctx: Arc<Context>) -> Result<()> {
     Ok(())
 }
 
-fn verify_opt_in_before_save_policy(ctx: Arc<Context>) -> Result<()> {
+fn verify_opt_in_before_save_policy(ctx: Arc<RootContext>) -> Result<()> {
     ctx.all_controllers().all(|(c_id, _)| {
         let mut save_stats_to_db_nodes = ctx.all_nodes_for_ctrl(c_id).filter(|n| n.has_marker(&ctx, Marker::new_intern("save_stats_to_db")));
         let mut verify_opt_in_nodes = ctx.all_nodes_for_ctrl(c_id).filter(|n| n.has_marker(&ctx, Marker::new_intern("verify_opt_in")));

@@ -44,13 +44,7 @@ original = "1"
 [app-config.hyperswitch]
 source-dir = "case-studies/hyperswitch"
 external-annotations = "external-annotations.toml"
-# There is a linker bug which triggers on transitive invocation of our
-# plugin in Hyperswitches build script. The --rustc-reset-for-linux overrides
-# environment variables set by cargo to use the "stock rustc" on such repeat
-# invocations. This is a hack that we only do here, becaus it could have other
-# incpatibility issues in other libraries if they rely on the rustc to be the
-# same version.
-flow-args = ["--target", "router", "--rustc-reset-for-linux"]
+flow-args = ["--target", "router"]
 cargo-args = ["--lib"]
 
 [app-config.contile]

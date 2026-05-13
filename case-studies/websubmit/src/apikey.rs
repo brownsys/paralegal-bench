@@ -92,7 +92,7 @@ pub(crate) fn generate(
         email::my_send(
             bg.log.clone(),
             "no-reply@csci2390-submit.cs.brown.edu".into(),
-            vec![data.email.clone()],
+            &vec![data.email.clone()],
             format!("{} API key", config.class),
             format!("Your {} API key is: {}\n", config.class, hash.as_str(),),
         )

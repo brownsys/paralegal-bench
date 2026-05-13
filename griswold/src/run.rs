@@ -9,7 +9,7 @@ use cargo::{
 use chrono;
 use csv::Writer;
 use indicatif::ProgressBar;
-use paralegal_policy::{Context, GraphLocation};
+use paralegal_policy::{GraphLocation, RootContext};
 use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
@@ -46,7 +46,7 @@ pub struct Run<'c> {
     /// Called before the analyzer runs. Arguments are a handle to use as stdout
     /// and stderr
     pub prepare: Option<Rc<dyn Fn(Stdio, Stdio)>>,
-    pub post_process: Option<Rc<dyn Fn(&Context, &mut RunMeasurements)>>,
+    pub post_process: Option<Rc<dyn Fn(&RootContext, &mut RunMeasurements)>>,
     pub policy: PolicyFn<'c>,
     pub extra_cargo_args: Vec<&'c str>,
 }
@@ -89,7 +89,7 @@ impl<'a> Run<'a> {
     }
 }
 
-pub type PolicyFn<'c> = Rc<dyn Fn(Arc<Context>) -> anyhow::Result<()> + 'c>;
+pub type PolicyFn<'c> = Rc<dyn Fn(Arc<RootContext>) -> anyhow::Result<()> + 'c>;
 
 pub struct Output {
     general_output_dir: PathBuf,

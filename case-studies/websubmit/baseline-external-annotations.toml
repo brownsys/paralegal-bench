@@ -9,3 +9,7 @@ on_argument = [0]
 [["alloc::alloc::exchange_malloc"]]
 marker = "safe_source"
 on_return = true
+# `exchange_malloc` was removed from `alloc::alloc` in newer Rust nightlies
+# (it used to be the box-allocation lang item). Tolerate the missing path
+# instead of erroring out the whole analyzer run.
+_internal_can_fail_resolve_silently = true

@@ -30,7 +30,6 @@ fn main() -> Result<()> {
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
         cmd.external_annotations("external-annotations.toml")
-            .abort_after_analysis()
             .get_command()
             .args(["--", "--lib"]);
         if args.buggy {
@@ -50,7 +49,7 @@ fn main() -> Result<()> {
     };
     let res = graph_loc.with_context(|ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         assert!(ctx.desc().controllers.len() > 1);
         assert!(ctx

@@ -27,8 +27,7 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.repo_dir)
     } else {
         let mut cmd = SPDGGenCommand::global();
-        cmd.abort_after_analysis()
-            .external_annotations("external-annotations.toml");
+        cmd.external_annotations("external-annotations.toml");
         cmd.get_command().args(args.extra_args.iter());
         if !args.extra_args.contains(&"--".to_owned()) {
             cmd.get_command().arg("--");
@@ -45,7 +44,7 @@ fn main() -> Result<()> {
     config.always_happens_before_tracing = TraceLevel::Full;
     let result = graph.with_context_configured(config, |ctx| {
         if let Some(path) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(path)?, false)?;
+            ctx.write_analyzed_code(File::create(path)?, false, false)?;
         }
         let policy = if args.policy.is_empty() {
             Policy::value_variants()

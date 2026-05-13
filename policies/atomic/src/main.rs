@@ -32,8 +32,7 @@ fn main() -> Result<()> {
         GraphLocation::std(&args.directory)
     } else {
         let mut cmd = paralegal_policy::SPDGGenCommand::global();
-        cmd.external_annotations(&args.annotations)
-            .abort_after_analysis();
+        cmd.external_annotations(&args.annotations);
 
         cmd.get_command()
             .args(["--target", "atomic_lib"])
@@ -56,7 +55,7 @@ fn main() -> Result<()> {
 
     let result = graph_loc.with_context_configured(config, |ctx| {
         if let Some(target) = args.dump_analyzed_code.as_ref() {
-            ctx.write_analyzed_code(File::create(target)?, false)?;
+            ctx.write_analyzed_code(File::create(target)?, false, false)?;
         }
         atomic::check_rights(ctx)
     })?;
